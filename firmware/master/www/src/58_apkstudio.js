@@ -102,9 +102,40 @@
     const items = [{ id: 'c1', type: 'title', text: d.name, sub: g.boardName }];
     d.vars.forEach((v, i) => items.push({ id: 'c' + (i + 2), type: 'value', label: v.label, var: v.name, unit: v.unit, decimals: 1, width: 'half' }));
     d.vars.slice(0, 2).forEach((v, i) => items.push({ id: 'c' + (d.vars.length + 2 + i), type: 'chart', label: v.label, var: v.name, points: 60, width: 'full' }));
-    if (!d.vars.length) items.push({ id: 'c2', type: 'text', text: 'Ce projet n\'envoie pas de mesure : ajoute des boutons pour le commander.', size: 's' });
+    if (!d.vars.length && !(g.controls || []).length) items.push({ id: 'c2', type: 'text', text: 'Ce projet n\'envoie pas de mesure : ajoute des boutons pour le commander.', size: 's' });
     d.screens[0].items = items;
+    if (g.app && (g.controls || []).length) addControls(d, g, used, items.length + 2);
     return d;
+  }
+  /* Montage avec « Pilotage par application » : un interrupteur ou un curseur par actionneur et variable réglable,
+   * qui appelle /set sur l'appareil (adresse connue grâce aux mesures reçues par le MASTER). */
+  function addControls(d, g, used, n) {
+    const feed = d.vars.find((v) => v.source === 'feed');
+    let host = feed ? `{${feed.name}_ip}` : '';
+    if (!host) { const ip = ident('ip_appareil', used); d.vars.push({ name: ip, source: 'local', type: 'text', default: '192.168.4.20', label: 'Adresse IP du montage' }); host = `{${ip}}`; }
+    const set = (q) => [{ a: 'http', method: 'GET', url: `http://${host}/set?${q}` }];
+    const items = [{ id: 'c' + n++, type: 'title', text: 'Commandes', sub: g.title }];
+    if (!feed) items.push({ id: 'c' + n++, type: 'input', label: 'Adresse IP du montage', var: d.vars[d.vars.length - 1].name, width: 'full' });
+    g.controls.forEach((c) => {
+      if (c.var) {   // variable réglable : déjà suivie via le MASTER (var_<nom>), sinon variable locale
+        let v = d.vars.find((x) => x.feed === `${g.device}/${c.key}`);
+        if (!v) { v = { name: ident(c.key, used), source: 'local', type: 'number', default: 0, unit: c.set.unit || '' }; d.vars.push(v); }
+        items.push({ id: 'c' + n++, type: 'slider', label: c.name, var: v.name, min: 0, max: 100, step: 0.5, width: 'full', do: set(`${c.key}={${v.name}}`) });
+        return;
+      }
+      const v = { name: ident(c.key + '_cmd', used), source: 'local', type: 'number', default: 0, label: c.name };
+      d.vars.push(v);
+      if (c.set && c.set.min != null) {
+        const span = Number(c.set.max) - Number(c.set.min);
+        v.default = Number(c.set.min) <= 0 && Number(c.set.max) >= 0 ? 0 : Number(c.set.min);
+        v.unit = c.set.unit || '';
+        items.push({ id: 'c' + n++, type: 'slider', label: `${c.name} (${c.set.unit || ''})`.replace(' ()', ''), var: v.name, min: Number(c.set.min), max: Number(c.set.max), step: span > 200 ? Math.round(span / 100) : span > 20 ? 1 : 0.1, width: 'full', do: set(`${c.key}={${v.name}}`) });
+      } else {
+        items.push({ id: 'c' + n++, type: 'switch', label: c.name, var: v.name, width: 'full', do: set(`${c.key}=on`), off: set(`${c.key}=off`) });
+      }
+    });
+    d.screens[0].title = 'Mesures';
+    d.screens.push({ id: 'commandes', title: 'Commandes', items });
   }
 
   /* ------------------------------------------------------------------ Pi */
@@ -508,6 +539,11 @@
   });
   async function start(q) {
       await loadFeeds();
+      if (q && q.studio) {
+        const spec = store.get('apkstudio.fromStudio', null);
+        if (spec) { try { S.D = fromSpec(spec, spec.title); S.sel = null; S.scr = null; fix(); save(); toast('Application préparée depuis le Studio', 'ok'); } catch (e) { toast('Projet non chargé : ' + e.message, 'warn'); } }
+        history.replaceState(null, '', '#apkstudio');
+      }
       if (q && q.p) {
         try {
           const p = A.projectById && A.projectById(q.p);

@@ -339,7 +339,8 @@
   /* ------------------------------------------------------------------ */
   LAB.generate = function (spec) {
     const board = LAB.BOARDS[spec.board || 'esp32'] || LAB.BOARDS.esp32;
-    const opts = Object.assign({ web: false, master: false, mqtt: false, home: true, wifi_ssid: 'ESP32-LAB', wifi_pass: 'ESP32-LAB-Setup2026!', mqtt_host: '192.168.4.2', device: '' }, spec.options || {});
+    const opts = Object.assign({ web: false, master: false, mqtt: false, home: true, app: false, wifi_ssid: 'ESP32-LAB', wifi_pass: 'ESP32-LAB-Setup2026!', mqtt_host: '192.168.4.2', device: '' }, spec.options || {});
+    if (opts.app) opts.web = true;   // le pilotage par application passe par le serveur web du montage
     const title = spec.title || 'Projet ESP32 LAB';
     const safeTitle = String(title).replace(/["\\]/g, '');
     const device = sanitize(opts.device || title).slice(0, 20);
@@ -439,22 +440,55 @@
     const outs = [];
     instances.forEach((x) => (x.mod.outs || []).forEach((o) => outs.push({ x, k: o.k, var: `${x.p}_${o.k}`, unit: o.u || '', label: o.l || o.k, pub: `${x.label}_${sanitize(o.k)}` })));
 
+    // Variables du programme (liées à une mesure ou réglées par l'application)
+    const vars = [];
+    (spec.vars || []).forEach((v, idx) => {
+      const name = sanitize(v.name || 'var' + (idx + 1));
+      if (vars.some((w) => w.name === name)) { warnings.push(`Variable « ${name} » en double : ignorée.`); return; }
+      const one = { name, c: 'v_' + name, pub: 'var_' + name, label: v.label || v.name || name, unit: v.unit || '', init: Number(v.init || 0), k: v.k == null || v.k === '' ? 1 : Number(v.k), b: Number(v.b || 0), app: !!v.app, src: null };
+      if (v.from && v.from.m != null && v.from.m !== '') {
+        const x = instances[v.from.m];
+        const o = x && (x.mod.outs || []).find((q) => q.k === v.from.out);
+        if (!o) warnings.push(`Variable « ${name} » : mesure introuvable, elle garde sa valeur initiale.`);
+        else { one.src = { x, o, expr: `${x.p}_${o.k}` }; if (!one.unit && one.k === 1 && !one.b) one.unit = o.u || ''; }
+      }
+      vars.push(one);
+    });
+    const varBy = (n) => vars.find((w) => w.name === sanitize(n));
+
     // Règles
     const rules = (spec.rules || []).map((r, idx) => {
-      const src = instances[r.if.m];
+      const vsrc = r.if.var != null && r.if.var !== '' ? varBy(r.if.var) : null;
+      const src = vsrc ? null : instances[r.if.m];
       const dst = instances[r.then.m];
-      if (!src || !dst) { warnings.push(`Règle ${idx + 1} ignorée : module introuvable.`); return null; }
-      const out = (src.mod.outs || []).find((o) => o.k === r.if.out);
+      if ((!src && !vsrc) || !dst) { warnings.push(`Règle ${idx + 1} ignorée : ${r.if.var != null && r.if.var !== '' && !vsrc ? 'variable' : 'module'} introuvable.`); return null; }
+      const out = vsrc ? { k: vsrc.name, l: vsrc.label, u: vsrc.unit } : (src.mod.outs || []).find((o) => o.k === r.if.out);
       if (!out) { warnings.push(`Règle ${idx + 1} ignorée : mesure « ${r.if.out} » inconnue.`); return null; }
+      const expr = vsrc ? vsrc.c : `${src.p}_${out.k}`;
+      const srcName = vsrc ? 'Variable' : src.mod.name;
+      const vthr = r.if.vv != null && r.if.vv !== '' ? varBy(r.if.vv) : null;
+      if (r.if.vv != null && r.if.vv !== '' && !vthr) warnings.push(`Règle ${idx + 1} : variable de seuil « ${r.if.vv} » introuvable, seuil fixe utilisé.`);
       if (!dst.mod.act) { warnings.push(`Règle ${idx + 1} ignorée : ${dst.mod.name} n'est pas un actionneur.`); return null; }
       if (r.if.op === 'map') {
         if (!dst.mod.act.set) { warnings.push(`Règle ${idx + 1} ignorée : ${dst.mod.name} n'accepte pas de consigne proportionnelle.`); return null; }
         const inR = (r.if.in || [0, 100]).map(Number), outR = (r.then.out || [dst.mod.act.set.min, dst.mod.act.set.max]).map(Number);
-        return { idx: idx + 1, src, dst, out, op: 'map', inR, outR, then: r.then };
+        return { idx: idx + 1, src, dst, out, expr, srcName, op: 'map', inR, outR, then: r.then };
       }
-      return { idx: idx + 1, src, dst, out, op: compareOp(r.if.op), v: Number(r.if.v), hyst: Number(r.if.hyst || 0), then: r.then, else: r.else };
+      return { idx: idx + 1, src, dst, out, expr, srcName, vthr, op: compareOp(r.if.op), v: Number(r.if.v), hyst: Number(r.if.hyst || 0), then: r.then, else: r.else };
     }).filter(Boolean);
     const ruled = new Set(rules.map((r) => r.dst.n));
+
+    // Pilotage par application (/set) : actionneurs et variables réglables
+    const controls = [];
+    if (opts.app) {
+      instances.forEach((x) => {
+        const a = x.mod.act;
+        if (!a || typeof a !== 'object' || !(a.on || a.set)) return;
+        controls.push({ key: x.label, x, name: x.mod.name, on: !!a.on, off: !!a.off, toggle: !!a.toggle, set: a.set || null });
+        ruled.add(x.n);   // l'application commande : pas de programme de démonstration
+      });
+      vars.filter((v) => v.app).forEach((v) => controls.push({ key: v.pub, v, name: v.label, set: { min: null, max: null, unit: v.unit } }));
+    }
 
     /* ---------------- composition du code ---------------- */
     const L = [];
@@ -510,6 +544,12 @@
     if (outs.length) {
       L.push('// ---------- Mesures publiées ----------');
       outs.forEach((o) => L.push(`float ${o.var} = NAN;${' '.repeat(Math.max(1, 22 - o.var.length))}// ${o.x.mod.name} — ${o.label}${o.unit ? ' (' + o.unit + ')' : ''}`));
+      L.push('');
+    }
+
+    if (vars.length) {
+      L.push('// ---------- Variables ----------');
+      vars.forEach((v) => L.push(`float ${v.c} = ${v.src ? 'NAN' : fmtNum(v.init)};${' '.repeat(Math.max(1, 22 - v.c.length))}// ${v.label}${v.src ? ' ← ' + v.src.x.mod.name + ' ' + (v.src.o.l || v.src.o.k) : ''}${v.app ? ' (réglable par l\'application)' : ''}`));
       L.push('');
     }
 
@@ -594,6 +634,19 @@
       mo.forEach((o, k) => L.push(`  lab_value(${cStr(o.pub)}, ${o.var}, ${cStr(o.unit)}, ${k === mo.length - 1 ? 'true' : 'false'});`));
       L.push('}');
     });
+    if (vars.length) {
+      L.push('void lab_vars() {');
+      vars.filter((v) => v.src).forEach((v) => {
+        const e = v.src.expr;
+        const calc = v.k === 1 && !v.b ? e : `${e} * ${fmtNum(v.k)}${v.b ? ' + ' + fmtNum(v.b) : ''}`;
+        L.push(`  if (!isnan(${e})) ${v.c} = ${calc};`);
+      });
+      L.push('  static uint32_t printed = 0;');
+      L.push('  if (millis() - printed < 1000) return;');
+      L.push('  printed = millis();');
+      vars.forEach((v, k) => L.push(`  lab_value(${cStr(v.pub)}, ${v.c}, ${cStr(v.unit)}, ${k === vars.length - 1 ? 'true' : 'false'});`));
+      L.push('}');
+    }
     L.push('');
 
     // Règles
@@ -604,10 +657,10 @@
       L.push('  if (millis() - last < 200) return;');
       L.push('  last = millis();');
       rules.forEach((r) => {
-        const v = r.src.p + '_' + r.out.k;
+        const v = r.expr;
         if (r.op === 'map') {
           const [a, b] = r.inR, [c, d] = r.outR;
-          L.push(`  // Règle ${r.idx} : ${r.dst.mod.name} suit ${r.src.mod.name} ${r.out.l || r.out.k} (${a}…${b} → ${c}…${d})`);
+          L.push(`  // Règle ${r.idx} : ${r.dst.mod.name} suit ${r.srcName} ${r.out.l || r.out.k} (${a}…${b} → ${c}…${d})`);
           L.push(`  if (!isnan(${v})) {`);
           L.push(`    static float last${r.idx} = NAN;`);
           L.push(`    const float y = ${fmtNum(c)} + (constrain(${v}, ${fmtNum(Math.min(a, b))}, ${fmtNum(Math.max(a, b))}) - ${fmtNum(a)}) * (${fmtNum(d - c)}) / (${fmtNum(b - a || 1)});`);
@@ -625,17 +678,18 @@
         };
         const thenCode = actCall(r.then, r.dst);
         const elseCode = r.else ? actCall(r.else, instances[r.else.m] || r.dst) : '';
-        const desc = `${r.src.mod.name} ${r.out.l || r.out.k} ${r.op} ${r.v}${r.out.u ? ' ' + r.out.u : ''} → ${r.dst.mod.name} ${r.then.act}${r.then.v !== undefined ? ' ' + r.then.v : ''}`;
+        const thr = r.vthr ? r.vthr.c : fmtNum(r.v);
+        const desc = `${r.srcName} ${r.out.l || r.out.k} ${r.op} ${r.vthr ? r.vthr.label : r.v}${r.out.u ? ' ' + r.out.u : ''} → ${r.dst.mod.name} ${r.then.act}${r.then.v !== undefined ? ' ' + r.then.v : ''}`;
         L.push(`  // Règle ${r.idx} : ${desc}`);
         L.push(`  static int8_t rule${r.idx} = -1;`);
         L.push(`  if (!isnan(${v})) {`);
-        const lo = r.op.startsWith('>') ? `${fmtNum(r.v - r.hyst)}` : `${fmtNum(r.v + r.hyst)}`;
+        const lo = r.vthr ? `(${thr} ${r.op.startsWith('>') ? '-' : '+'} ${fmtNum(r.hyst)})` : r.op.startsWith('>') ? `${fmtNum(r.v - r.hyst)}` : `${fmtNum(r.v + r.hyst)}`;
         if (r.hyst > 0 && (r.op.startsWith('>') || r.op.startsWith('<'))) {
           const back = r.op.startsWith('>') ? '<' : '>';
-          L.push(`    if (rule${r.idx} != 1 && ${v} ${r.op} ${fmtNum(r.v)}) { rule${r.idx} = 1; ${thenCode} }`);
+          L.push(`    if (rule${r.idx} != 1 && ${v} ${r.op} ${thr}) { rule${r.idx} = 1; ${thenCode} }`);
           L.push(`    else if (rule${r.idx} != 0 && ${v} ${back} ${lo}) { rule${r.idx} = 0; ${elseCode} }`);
         } else {
-          L.push(`    const int8_t st = (${v} ${r.op} ${fmtNum(r.v)}) ? 1 : 0;`);
+          L.push(`    const int8_t st = (${v} ${r.op} ${thr}) ? 1 : 0;`);
           L.push(`    if (st != rule${r.idx}) { rule${r.idx} = st; if (st) { ${thenCode} } else { ${elseCode} } }`);
         }
         L.push('  }');
@@ -659,15 +713,58 @@
       L.push('');
       L.push('void lab_web_api() {');
       L.push(`  String j = F("{\\"title\\":\\"${safeTitle}\\",\\"values\\":[");`);
-      outs.forEach((o, k) => {
-        L.push(`  j += F("${k ? ',' : ''}{\\"label\\":\\"${(o.x.mod.name + ' ' + o.label).replace(/"/g, '')}\\",\\"unit\\":\\"${o.unit.replace(/"/g, '')}\\",\\"value\\":");`);
-        L.push(`  j += isnan(${o.var}) ? String("null") : String(${o.var}, 3);`);
+      const webVals = outs.map((o) => ({ label: o.x.mod.name + ' ' + o.label, unit: o.unit, c: o.var }))
+        .concat(vars.map((v) => ({ label: 'Variable ' + v.label, unit: v.unit, c: v.c })));
+      webVals.forEach((o, k) => {
+        L.push(`  j += F("${k ? ',' : ''}{\\"label\\":\\"${o.label.replace(/["\\]/g, '')}\\",\\"unit\\":\\"${o.unit.replace(/["\\]/g, '')}\\",\\"value\\":");`);
+        L.push(`  j += isnan(${o.c}) ? String("null") : String(${o.c}, 3);`);
         L.push('  j += "}";');
       });
-      L.push('  j += "]}";');
+      L.push(vars.length || opts.app ? '  j += "]";' : '  j += "]}";');
+      if (vars.length) {
+        L.push('  j += F(",\\"vars\\":{");');
+        vars.forEach((v, k) => L.push(`  j += F("${k ? ',' : ''}\\"${v.name}\\":"); j += isnan(${v.c}) ? String("null") : String(${v.c}, 3);`));
+        L.push('  j += "}";');
+      }
+      if (opts.app) {
+        L.push(`  j += F(",\\"device\\":\\"${device}\\",\\"controls\\":[${controls.map((c) => '\\"' + c.key + '\\"').join(',')}]");`);
+        L.push('  lab_web.sendHeader("Access-Control-Allow-Origin", "*");');
+      }
+      if (vars.length || opts.app) L.push('  j += "}";');
       L.push('  lab_web.send(200, "application/json", j);');
       L.push('}');
       L.push('');
+      if (opts.app) {
+        L.push('// Commandes de l\'application : /set?<nom>=on|off|toggle|<nombre>  (plusieurs à la fois possible)');
+        L.push('void lab_web_set() {');
+        L.push('  lab_web.sendHeader("Access-Control-Allow-Origin", "*");');
+        L.push('  int done = 0;');
+        L.push('  for (int i = 0; i < lab_web.args(); i++) {');
+        L.push('    const String k = lab_web.argName(i), a = lab_web.arg(i);');
+        L.push('    const bool on = a == "on" || a == "1" || a == "true", off = a == "off" || a == "0" || a == "false";');
+        L.push('    (void)on; (void)off;');
+        controls.forEach((c, n) => {
+          const kw = n ? '    else if' : '    if';
+          if (c.v) { L.push(`${kw} (k == ${cStr(c.key)}) { ${c.v.c} = a.toFloat(); done++; }`); return; }
+          const p = c.x.p, parts = [];
+          if (c.set) {
+            if (c.on) parts.push(`if (a == "on") ${p}_on();`);
+            if (c.off) parts.push(`else if (a == "off") ${p}_off();`);
+            if (c.toggle) parts.push(`else if (a == "toggle") ${p}_toggle();`);
+            parts.push(`${parts.length ? 'else ' : ''}${p}_set(a.toFloat());`);
+          } else {
+            parts.push(`if (on) ${p}_on();`);
+            if (c.off) parts.push(`else if (off) ${p}_off();`);
+            if (c.toggle) parts.push(`else if (a == "toggle") ${p}_toggle();`);
+            parts.push('else continue;');
+          }
+          L.push(`${kw} (k == ${cStr(c.key)}) { ${parts.join(' ')} done++; }`);
+        });
+        L.push('  }');
+        L.push('  lab_web.send(done ? 200 : 400, "application/json", done ? "{\\"ok\\":true}" : "{\\"ok\\":false,\\"error\\":\\"commande inconnue\\"}");');
+        L.push('}');
+        L.push('');
+      }
     }
 
     // Retour au mode worker (projet chargé sur un worker depuis le MASTER)
@@ -766,6 +863,7 @@ static void lab_home_loop() {
       if (opts.web) {
         L.push('  lab_web.on("/", []() { lab_web.send_P(200, "text/html; charset=utf-8", LAB_PAGE); });');
         L.push('  lab_web.on("/api", lab_web_api);');
+        if (opts.app) L.push('  lab_web.on("/set", lab_web_set);');
         L.push('  lab_web.begin();');
       }
       if (opts.master) L.push('  lab_udp.begin(4214);');
@@ -811,6 +909,7 @@ static void lab_home_loop() {
       }
       L.push('  }');
     });
+    if (vars.length) L.push('  lab_vars();');
     if (rules.length) L.push('  lab_rules();');
     if (needWifi) {
       L.push('  // Reconnexion Wi-Fi');
@@ -838,7 +937,11 @@ static void lab_home_loop() {
       wiring,
       warnings,
       power,
-      outs: outs.map((o) => ({ key: o.pub, unit: o.unit, label: o.label, module: o.x.mod.name })),
+      outs: outs.map((o) => ({ key: o.pub, unit: o.unit, label: o.label, module: o.x.mod.name }))
+        .concat(vars.map((v) => ({ key: v.pub, unit: v.unit, label: v.label, module: 'Variable', var: v.name }))),
+      vars: vars.map((v) => ({ name: v.name, key: v.pub, c: v.c, label: v.label, unit: v.unit, app: v.app, from: v.src ? { module: v.src.x.mod.name, label: v.src.x.label, out: v.src.o.k } : null })),
+      controls: controls.map((c) => ({ key: c.key, name: c.name, label: c.v ? 'Variable' : c.x.label, on: !!c.on, off: !!c.off, toggle: !!c.toggle, set: c.set, var: !!c.v })),
+      app: !!opts.app,
       pins: alloc.assign,
       used: alloc.used,
       device,

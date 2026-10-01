@@ -268,7 +268,7 @@
   function modal(opts) {
     return new Promise((resolve) => {
       const m = document.createElement('div');
-      m.className = 'modal';
+      m.className = 'modal' + (opts.wide ? ' wide' : '');
       m.setAttribute('role', 'dialog');
       m.setAttribute('aria-modal', 'true');
       m.innerHTML = `<div class="modal-h"><h2>${esc(opts.title || '')}</h2></div>

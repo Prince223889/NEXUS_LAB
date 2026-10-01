@@ -7,7 +7,7 @@ Patricia vit sur le Raspberry Pi (`pi/patricia/`) et s'affiche dans l'interface 
 | Demande (exemples) | Ce qui se passe |
 |---|---|
 | « Je veux faire une station météo avec un BME280 et un écran OLED » | Projet créé dans sa mémoire, **montage** (schéma), **code** généré, bibliothèques, conseils ; boutons Studio, `.ino`, enregistrer sur le Pi |
-| « Flashe la station météo sur W3 » | Proposition à confirmer → compilation sur le Pi → flash du worker → **lecture du moniteur** et verdict (ça marche / échec / incertain) |
+| « Flashe la station météo sur W3 » | Proposition à confirmer → compilation sur le Pi → **schéma du montage à vérifier** → flash du worker → **lecture du moniteur** et verdict (ça marche / échec / incertain) |
 | « Vérifie W3 » | Lit le journal du worker (et le port USB si tu es admin) et explique ce qu'il voit |
 | Coller une erreur de compilation ou un moniteur série | Diagnostic : bibliothèque manquante (installation proposée), mauvaise carte, API LEDC 3.x, brownout, Guru Meditation, watchdog, boucle de redémarrage, capteur absent, I2C… |
 | « Note : commander des résistances 2 kΩ », « Rappelle-toi que ma carte est un S3 » | Notes et faits gardés en mémoire, recherche plein texte |
@@ -55,7 +55,7 @@ Simulateur sans matériel : `python3 scripts/simulate_fleet.py --key "<NEXUS_FLE
 
 ## API (Pi, port 8088, jeton Bearer)
 
-`GET /api/v1/patricia/hello`, `POST /api/v1/patricia/chat` (`text`, `session`, `context`), `POST /api/v1/patricia/actions/<id>/confirm|cancel|report`, `GET actions|history|memory|notes|projects|facts|export`, `POST notes`, `notes/<id>`, `projects/<id>/delete`, `facts`, `followups/<id>`, `diagnose`, `verify`, `wipe`, `stt` (WAV), `tts`, `GET voice`.
+`GET /api/v1/patricia/hello`, `POST /api/v1/patricia/chat` (`q`, `session`, `context`), `POST /api/v1/patricia/actions/<id>/confirm|cancel|report`, `GET actions|history|memory|export|voice` (notes, projets et faits sont dans `memory`), `POST notes`, `notes/<id>`, `projects/<id>/delete`, `facts`, `followups/<id>`, `diagnose`, `verify`, `wipe`, `stt` (WAV), `tts`, `GET voice`.
 
 Flotte : `GET /api/v1/fleet`, `POST /api/v1/fleet/register|remove|arena|goal|manual|estop|release`.
 

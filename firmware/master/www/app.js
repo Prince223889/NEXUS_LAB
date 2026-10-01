@@ -270,7 +270,7 @@
   function modal(opts) {
     return new Promise((resolve) => {
       const m = document.createElement('div');
-      m.className = 'modal';
+      m.className = 'modal' + (opts.wide ? ' wide' : '');
       m.setAttribute('role', 'dialog');
       m.setAttribute('aria-modal', 'true');
       m.innerHTML = `<div class="modal-h"><h2>${esc(opts.title || '')}</h2></div>
@@ -1562,7 +1562,7 @@
 
   const BOARD_LABEL = { esp32: 'ESP32', esp32s3: 'ESP32-S3', esp32c3: 'ESP32-C3' };
   const OPS = [['<', 'est inférieur à'], ['>', 'est supérieur à'], ['<=', '≤'], ['>=', '≥'], ['==', 'est égal à'], ['!=', 'est différent de'], ['map', 'pilote proportionnellement']];
-  const blank = () => ({ board: 'esp32', title: 'Mon projet ESP32', description: '', modules: [], rules: [], options: { web: false, master: false, mqtt: false } });
+  const blank = () => ({ board: 'esp32', title: 'Mon projet ESP32', description: '', modules: [], rules: [], vars: [], options: { web: false, master: false, mqtt: false } });
   let spec = null;
   let tab = 'code';
   let open = -1;
@@ -1570,8 +1570,8 @@
   const b64e = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const b64d = (s) => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
   function saveSpec() { store.set('studio.spec', spec); }
-  function loadSpec() { spec = store.get('studio.spec', null) || blank(); spec.rules = spec.rules || []; spec.options = spec.options || {}; }
-  A.openInStudio = (s, initialTab) => { spec = JSON.parse(JSON.stringify(s)); spec.rules = spec.rules || []; spec.options = spec.options || {}; tab = ['code', 'wiring', 'pins', 'power', 'bom'].includes(initialTab) ? initialTab : 'code'; saveSpec(); open = -1; if (S.route === 'studio') draw(); else A.go('studio'); };
+  function loadSpec() { spec = store.get('studio.spec', null) || blank(); spec.rules = spec.rules || []; spec.vars = spec.vars || []; spec.options = spec.options || {}; }
+  A.openInStudio = (s, initialTab) => { spec = JSON.parse(JSON.stringify(s)); spec.rules = spec.rules || []; spec.vars = spec.vars || []; spec.options = spec.options || {}; tab = ['code', 'wiring', 'pins', 'power', 'bom', 'app'].includes(initialTab) ? initialTab : 'code'; saveSpec(); open = -1; if (S.route === 'studio') draw(); else A.go('studio'); };
 
   const modOf = (m) => LAB.module(typeof m === 'string' ? m : m.id);
   const labelOf = (i) => { const m = spec.modules[i], mod = modOf(m); return `${i + 1}. ${m.alias || (mod ? mod.name : m.id)}`; };
@@ -1605,6 +1605,45 @@
     setTimeout(() => $('#pk-q', d.el).focus(), 60);
   }
 
+  /* ---------- Variables liées aux capteurs ---------- */
+  const varName = (v) => LAB.sanitize(v.name || 'var');
+  function varsHtml() {
+    const outs = sensorOuts();
+    return (spec.vars.length ? spec.vars.map((v, i) => {
+      const src = v.from && v.from.m != null ? `${v.from.m}:${v.from.out}` : '';
+      return `<div class="rule var-row"><div class="row between"><code class="small">v_${esc(varName(v))}</code><button class="btn sm icon ghost" data-var-del="${i}" aria-label="Supprimer">${icon('trash')}</button></div>
+        <div class="rule-line"><span class="rule-kw">Nom</span><input class="input sm" data-v="${i}" data-vf="name" value="${esc(v.name || '')}" placeholder="consigne" maxlength="24"><input class="input sm" data-v="${i}" data-vf="unit" value="${esc(v.unit || '')}" placeholder="unité" style="max-width:80px"></div>
+        <div class="rule-line"><span class="rule-kw">Lié à</span><select class="select sm" data-v="${i}" data-vf="src"><option value="">(aucun : valeur réglable)</option>${outs.map((o) => `<option value="${o.m}:${o.k}" ${src === o.m + ':' + o.k ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
+        ${src ? `<div class="rule-line"><span class="rule-kw">Calcul</span><span class="small">mesure ×</span><input class="input sm" type="number" step="any" data-v="${i}" data-vf="k" value="${esc(v.k != null ? v.k : 1)}" style="max-width:90px"><span class="small">+</span><input class="input sm" type="number" step="any" data-v="${i}" data-vf="b" value="${esc(v.b || 0)}" style="max-width:90px"></div>`
+          : `<div class="rule-line"><span class="rule-kw">Départ</span><input class="input sm" type="number" step="any" data-v="${i}" data-vf="init" value="${esc(v.init || 0)}" style="max-width:110px"></div>`}
+        <label class="switch small"><input type="checkbox" data-v="${i}" data-vf="app" ${v.app ? 'checked' : ''}><span class="track"></span>Réglable depuis l'application (APK / page web)</label>
+      </div>`;
+    }).join('') : `<div class="small muted">Une variable garde une valeur dans le programme. Liée à un capteur, elle suit sa mesure (avec conversion, ex. × 1,8 + 32 pour des °F). Libre, elle sert de consigne réglable par l'application et de seuil dans les automatismes.</div>`) +
+      `<button class="btn sm" data-var-add>${icon('plus')}Ajouter une variable</button>`;
+  }
+  function addVar() {
+    const outs = sensorOuts();
+    const used = new Set(spec.vars.map(varName));
+    let n = outs.length && !spec.vars.length ? LAB.sanitize(outs[0].k) : 'consigne';
+    for (let k = 2; used.has(n); k++) n = (outs.length && !spec.vars.length ? LAB.sanitize(outs[0].k) : 'consigne') + k;
+    spec.vars.push(outs.length && !spec.vars.length ? { name: n, from: { m: outs[0].m, out: outs[0].k }, k: 1, b: 0 } : { name: n, init: 0, app: true });
+  }
+  function setVarField(i, f, v, checked) {
+    const x = spec.vars[i];
+    if (!x) return;
+    if (f === 'name') {
+      const old = varName(x);
+      x.name = v.trim();
+      const now = varName(x);
+      spec.rules.forEach((r) => { if (r.if.var && LAB.sanitize(r.if.var) === old) r.if.var = now; if (r.if.vv && LAB.sanitize(r.if.vv) === old) r.if.vv = now; });
+    } else if (f === 'src') {
+      if (!v) delete x.from;
+      else { const [m, k] = v.split(':'); x.from = { m: Number(m), out: k }; x.k = x.k == null ? 1 : x.k; x.b = x.b || 0; }
+    } else if (f === 'app') x.app = !!checked;
+    else if (f === 'unit') x.unit = v;
+    else x[f] = v === '' ? 0 : Number(v);
+  }
+
   /* ---------- Règles ---------- */
   function sensorOuts() {
     const r = [];
@@ -1620,31 +1659,42 @@
     return `<select class="select sm" data-r="${idx}" data-f="${kind}.m"><option value="">${kind === 'else' ? '(rien)' : 'actionneur…'}</option>${acts.map((a) => `<option value="${a.i}" ${t && t.m === a.i ? 'selected' : ''}>${esc(labelOf(a.i))}</option>`).join('')}</select>
       ${t && t.m != null && t.m !== '' ? `<select class="select sm" data-r="${idx}" data-f="${kind}.act">${actOpts.map((k) => `<option value="${k}" ${t.act === k ? 'selected' : ''}>${names[k] || k}</option>`).join('')}</select>${t.act === 'set' && mod && mod.mod.act.set ? `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="${kind}.v" value="${esc(t.v != null ? t.v : mod.mod.act.set.max)}" style="max-width:110px" title="${esc(mod.mod.act.set.unit || '')}"><span class="small muted">${esc(mod.mod.act.set.unit || '')}</span>` : ''}` : ''}`;
   }
+  function ruleSources() {
+    return sensorOuts().map((o) => ({ value: `${o.m}:${o.k}`, label: o.label }))
+      .concat(spec.vars.map((v) => ({ value: 'var:' + varName(v), label: `Variable ${varName(v)}${v.unit ? ' (' + v.unit + ')' : ''}` })));
+  }
+  const ruleSrc = (r) => (r.if.var ? 'var:' + LAB.sanitize(r.if.var) : `${r.if.m}:${r.if.out}`);
   function rulesHtml() {
-    const outs = sensorOuts(), acts = actuators();
+    const outs = ruleSources(), acts = actuators();
     if (!outs.length || !acts.length) return `<div class="small muted">${!outs.length ? 'Ajoutez un capteur' : 'Ajoutez un actionneur (relais, LED, servo, buzzer, moteur…)'} pour créer un automatisme : « si la température &lt; 19 °C alors allumer le chauffage ».</div>`;
     return spec.rules.map((r, idx) => {
       const isMap = r.if.op === 'map';
       const dst = acts.find((a) => a.i === r.then.m);
       return `<div class="rule"><div class="row between"><b class="small">Règle ${idx + 1}</b><button class="btn sm icon ghost" data-rule-del="${idx}" aria-label="Supprimer">${icon('trash')}</button></div>
-        <div class="rule-line"><span class="rule-kw">Si</span><select class="select sm" data-r="${idx}" data-f="src">${outs.map((o) => `<option value="${o.m}:${o.k}" ${r.if.m === o.m && r.if.out === o.k ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
+        <div class="rule-line"><span class="rule-kw">Si</span><select class="select sm" data-r="${idx}" data-f="src">${outs.map((o) => `<option value="${esc(o.value)}" ${ruleSrc(r) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
         <div class="rule-line"><span class="rule-kw"></span><select class="select sm" data-r="${idx}" data-f="op">${OPS.filter(([k]) => k !== 'map' || acts.some((a) => a.mod.act.set)).map(([k, n]) => `<option value="${k}" ${r.if.op === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
           ${isMap ? `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="in0" value="${esc((r.if.in || [0, 100])[0])}" title="début de plage"><span class="small">→</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="in1" value="${esc((r.if.in || [0, 100])[1])}" title="fin de plage">`
-            : `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="v" value="${esc(r.if.v)}" title="seuil"><input class="input sm" type="number" step="any" min="0" data-r="${idx}" data-f="hyst" value="${esc(r.if.hyst || 0)}" title="hystérésis (évite les oscillations)" style="max-width:90px">`}</div>
+            : `${spec.vars.length ? `<select class="select sm" data-r="${idx}" data-f="vv" title="seuil fixe ou variable" style="max-width:150px"><option value="">valeur</option>${spec.vars.map((v) => `<option value="${esc(varName(v))}" ${r.if.vv && LAB.sanitize(r.if.vv) === varName(v) ? 'selected' : ''}>variable ${esc(varName(v))}</option>`).join('')}</select>` : ''}${r.if.vv ? '' : `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="v" value="${esc(r.if.v)}" title="seuil">`}<input class="input sm" type="number" step="any" min="0" data-r="${idx}" data-f="hyst" value="${esc(r.if.hyst || 0)}" title="hystérésis (évite les oscillations)" style="max-width:90px">`}</div>
         ${isMap ? `<div class="rule-line"><span class="rule-kw">Alors</span><select class="select sm" data-r="${idx}" data-f="then.m">${acts.filter((a) => a.mod.act.set).map((a) => `<option value="${a.i}" ${r.then.m === a.i ? 'selected' : ''}>${esc(labelOf(a.i))}</option>`).join('')}</select></div>
           <div class="rule-line"><span class="rule-kw"></span><span class="small">de</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out0" value="${esc((r.then.out || [0, 100])[0])}"><span class="small">à</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out1" value="${esc((r.then.out || [0, 100])[1])}"><span class="small muted">${esc(dst && dst.mod.act.set ? dst.mod.act.set.unit : '')}</span></div>`
           : `<div class="rule-line"><span class="rule-kw">Alors</span>${actSelect(r.then, 'then', idx)}</div><div class="rule-line"><span class="rule-kw">Sinon</span>${actSelect(r.else, 'else', idx)}</div>`}
-        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}
+        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.vv ? 'la variable ' + r.if.vv : r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}
       </div>`;
     }).join('') + `<button class="btn sm" data-rule-add>${icon('plus')}Ajouter une règle</button>`;
   }
   function addRule() {
-    const outs = sensorOuts(), acts = actuators();
+    const outs = ruleSources(), acts = actuators();
     if (!outs.length || !acts.length) return;
-    spec.rules.push({ if: { m: outs[0].m, out: outs[0].k, op: '>', v: 25, hyst: 0.5 }, then: { m: acts[0].i, act: 'on' }, else: { m: acts[0].i, act: 'off' } });
+    const r = { if: { op: '>', v: 25, hyst: 0.5 }, then: { m: acts[0].i, act: 'on' } };
+    setRuleField(r, 'src', outs[0].value);
+    spec.rules.push(Object.assign(r, { then: { m: acts[0].i, act: 'on' }, else: { m: acts[0].i, act: 'off' } }));
   }
   function setRuleField(r, f, v) {
-    if (f === 'src') { const [m, k] = v.split(':'); r.if.m = Number(m); r.if.out = k; }
+    if (f === 'src') {
+      if (v.startsWith('var:')) { r.if.var = v.slice(4); delete r.if.m; delete r.if.out; }
+      else { const [m, k] = v.split(':'); r.if.m = Number(m); r.if.out = k; delete r.if.var; }
+    }
+    else if (f === 'vv') { if (v) r.if.vv = v; else delete r.if.vv; }
     else if (f === 'op') {
       r.if.op = v;
       if (v === 'map') { const a = actuators().find((x) => x.mod.act.set); r.if.in = r.if.in || [0, 100]; r.then = { m: a ? a.i : r.then.m, act: 'set', out: a ? [a.mod.act.set.min, a.mod.act.set.max] : [0, 100] }; delete r.else; }
@@ -1666,10 +1716,12 @@
   }
   /* Renumérote les règles après suppression / déplacement d'un module. */
   function remapRules(mapFn) {
+    spec.vars.forEach((v) => { if (v.from) { const m = mapFn(v.from.m); if (m < 0) delete v.from; else v.from.m = m; } });
     spec.rules = spec.rules.map((r) => {
-      const a = mapFn(r.if.m), b = mapFn(r.then.m);
+      const a = r.if.var ? 0 : mapFn(r.if.m), b = mapFn(r.then.m);
       if (a < 0 || b < 0) return null;
-      r.if.m = a; r.then.m = b;
+      if (!r.if.var) r.if.m = a;
+      r.then.m = b;
       if (r.else) { const c = mapFn(r.else.m); if (c < 0) delete r.else; else r.else.m = c; }
       return r;
     }).filter(Boolean);
@@ -1726,13 +1778,15 @@
                   <div class="small muted">${esc(mod.desc || '')}</div>${(mod.notes || []).length ? `<ul class="small" style="margin:0;padding-left:18px;color:var(--text-2)">${mod.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>` : ''}</div>`;
             }).join('') : `<div class="empty" style="padding:18px">${icon('box')}<div class="small">Ajoutez des capteurs, afficheurs et actionneurs.<br>Les broches sont choisies automatiquement, sans conflit.</div></div>`}
           </div></div>
+          <div class="card"><div class="card-h"><h2 class="grow">Variables <span class="badge">${spec.vars.length}</span></h2></div><div class="card-b stack" style="gap:10px" id="st-vars">${varsHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Automatismes</h2></div><div class="card-b stack" style="gap:10px" id="st-rules">${rulesHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Connectivité</h2></div><div class="card-b stack" style="gap:12px">
-            <label class="switch"><input type="checkbox" data-opt="web" ${o.web ? 'checked' : ''}><span class="track"></span>Page web locale (mesures + commandes)</label>
+            <label class="switch"><input type="checkbox" data-opt="web" ${o.web || o.app ? 'checked' : ''} ${o.app ? 'disabled' : ''}><span class="track"></span>Page web locale (mesures + commandes)</label>
+            <label class="switch"><input type="checkbox" data-opt="app" ${o.app ? 'checked' : ''}><span class="track"></span>Pilotage par application (APK, page web : actionneurs et variables)</label>
             <label class="switch"><input type="checkbox" data-opt="master" ${o.master ? 'checked' : ''}><span class="track"></span>Envoyer les mesures au MASTER</label>
             <label class="switch"><input type="checkbox" data-opt="mqtt" ${o.mqtt ? 'checked' : ''}><span class="track"></span>Publier en MQTT (Home Assistant, Node-RED…)</label>
             <label class="switch"><input type="checkbox" data-opt="home" ${o.home !== false ? 'checked' : ''}><span class="track"></span>Retour au mode worker (projet chargé depuis le MASTER)</label>
-            ${o.web || o.master || o.mqtt ? `<div class="form-grid"><div class="field"><label>Wi-Fi (SSID)</label><input class="input sm" data-o="wifi_ssid" value="${esc(o.wifi_ssid || 'ESP32-LAB')}"></div><div class="field"><label>Mot de passe</label><input class="input sm" data-o="wifi_pass" type="password" value="${esc(o.wifi_pass || '')}" placeholder="ESP32-LAB-Setup2026!"></div>
+            ${o.web || o.app || o.master || o.mqtt ? `<div class="form-grid"><div class="field"><label>Wi-Fi (SSID)</label><input class="input sm" data-o="wifi_ssid" value="${esc(o.wifi_ssid || 'ESP32-LAB')}"></div><div class="field"><label>Mot de passe</label><input class="input sm" data-o="wifi_pass" type="password" value="${esc(o.wifi_pass || '')}" placeholder="ESP32-LAB-Setup2026!"></div>
               <div class="field"><label>Nom de l'appareil</label><input class="input sm" data-o="device" value="${esc(o.device || '')}" placeholder="${esc(LAB.sanitize(spec.title).slice(0, 20))}"></div>${o.mqtt ? `<div class="field"><label>Serveur MQTT</label><input class="input sm" data-o="mqtt_host" value="${esc(o.mqtt_host || '192.168.4.2')}"></div>` : ''}</div>` : ''}
           </div></div>
         </div>
@@ -1741,7 +1795,7 @@
           ${res ? res.warnings.map((w) => `<div class="banner warn" style="margin:0">${icon('alert')}<div>${esc(w)}</div></div>`).join('') : ''}
           <div class="card"><div class="card-h"><div class="grow"><h2 class="ellipsis">${esc(spec.title)}</h2><div class="card-sub">${res ? `${res.code.split('\n').length} lignes · ${res.libs.length} bibliothèque(s) · ${res.power.total_mA} mA` : ''}</div></div>
             <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm primary" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
-            <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Câblage'], ['pins', 'Brochage'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
+            <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['app', 'Application'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
         </div></div>`;
       A.studioResult = res;
       const side2 = $('.studio-side', root);
@@ -1753,7 +1807,11 @@
 
   function panel(res) {
     if (tab === 'code') return A.codeBlock(res.code, 'calc(100vh - 260px)');
-    if (tab === 'wiring') return A.wiringTable(res);
+    if (tab === 'wiring') {
+      const m = LAB.montageSvg && res.wiring && res.wiring.length ? LAB.montageSvg(res, { id: projId(), title: spec.title }) : null;
+      return (m ? `<div class="montage">${m.svg}</div><div class="row" style="margin:10px 0"><button class="btn sm" data-act="st-svg">${icon('download')}Schéma .svg</button></div>` : '') + A.wiringTable(res);
+    }
+    if (tab === 'app') return appPanel(res);
     if (tab === 'pins') return A.boardView(res.board, A.usedFromWiring(res.board, res.wiring)) + `<div class="small muted" style="margin-top:10px">${(LAB.BOARDS[res.board].notes || []).map(esc).join('<br>')}</div>`;
     if (tab === 'power') {
       const rows = spec.modules.map((m, i) => { const mod = modOf(m); return mod ? [labelOf(i), mod.vcc || '3V3', mod.mA || 1, mod.peak_mA || mod.mA || 1] : null; }).filter(Boolean);
@@ -1779,12 +1837,30 @@
       ${res.outs.length ? `<div class="card pad span-2"><h3 style="margin-bottom:10px">Mesures publiées</h3><div class="row wrap">${res.outs.map((x) => `<span class="badge outline"><span class="mono">${esc(x.key)}</span>${x.unit ? ' · ' + esc(x.unit) : ''}</span>`).join('')}</div><p class="hint" style="margin-top:8px">Visibles dans le moniteur/traceur série${spec.options.master ? ', sur la page Capteurs du MASTER' : ''}${spec.options.web ? ', sur la page web du montage' : ''}${spec.options.mqtt ? ', et en MQTT (lab/&lt;appareil&gt;/&lt;mesure&gt;)' : ''}.</p></div>` : ''}</div>`;
   }
 
+  /* Onglet Application : ce que l'APK peut lire et commander sur ce montage. */
+  function appPanel(res) {
+    const o = spec.options;
+    const ctl = res.controls || [];
+    const vars = res.vars || [];
+    return `<div class="stack" style="gap:12px">
+      ${o.app ? '' : `<div class="banner">${icon('info')}<div>Active « Pilotage par application » dans Connectivité : le montage ouvre alors <code>/api</code> (mesures et variables) et <code>/set</code> (commandes) pour l'APK et la page web.</div></div>`}
+      <div class="grid g-2">
+        <div class="card pad"><h3 style="margin-bottom:10px">Lu par l'application</h3><div class="statlist">${res.outs.map((x) => `<div><span>${esc(x.module === 'Variable' ? 'Variable ' + x.label : x.label + ' · ' + x.module)}</span><span class="badge outline mono">${esc(x.key)}${x.unit ? ' ' + esc(x.unit) : ''}</span></div>`).join('') || '<div><span class="muted">Aucune mesure</span></div>'}</div>
+          <p class="hint" style="margin-top:8px">${o.master ? 'Via le MASTER : source « Capteur du MASTER » <code>' + esc(res.device) + '/&lt;clé&gt;</code> dans le Studio APK.' : 'Active « Envoyer les mesures au MASTER » pour les lire depuis n\'importe quelle APK du labo.'}${o.app ? ' En direct : <code>http://&lt;ip&gt;/api</code>.' : ''}</p></div>
+        <div class="card pad"><h3 style="margin-bottom:10px">Commandé par l'application</h3>${o.app ? `<div class="statlist">${ctl.map((c) => `<div><span>${esc(c.var ? 'Variable ' + c.name : c.name)}</span><span class="badge outline mono">/set?${esc(c.key)}=${c.set && !c.on ? '&lt;nombre&gt;' : [c.on ? 'on' : '', c.off ? 'off' : '', c.toggle ? 'toggle' : '', c.set ? (c.set.min != null ? c.set.min + '…' + c.set.max : '&lt;n&gt;') : ''].filter(Boolean).join('|')}</span></div>`).join('') || '<div><span class="muted">Ajoute un actionneur ou une variable réglable</span></div>'}</div>
+          <p class="hint" style="margin-top:8px">Les actionneurs commandés par l'application n'exécutent plus leur programme de démonstration.</p>` : '<div class="small muted">Pilotage désactivé.</div>'}</div>
+      </div>
+      <div class="row wrap"><button class="btn primary" data-act="st-apk">${icon('phone')}Créer l'application dans le Studio APK</button>${vars.length ? `<span class="small muted">${vars.length} variable(s) : ${vars.map((v) => `<code>${esc(v.c)}</code>`).join(', ')}</span>` : ''}</div>
+    </div>`;
+  }
+
   function bind(el) {
     const rerender = A.debounce(() => { saveSpec(); draw(); }, 300);
     el.addEventListener('input', (e) => {
       const t = e.target;
       if (t.dataset.s) { spec[t.dataset.s] = t.value; rerender(); }
       else if (t.dataset.o) { spec.options[t.dataset.o] = t.value; rerender(); }
+      else if (t.dataset.v != null && t.type !== 'checkbox' && t.tagName !== 'SELECT') { setVarField(Number(t.dataset.v), t.dataset.vf, t.value); rerender(); }
       else if (t.dataset.malias != null) { spec.modules[Number(t.dataset.malias)].alias = t.value.trim() || undefined; rerender(); }
       else if (t.id === 'pw-cap') { store.set('studio.batt', Number(t.value) || 2000); rerender(); }
       else if (t.id === 'pw-sleep') { $('#pw-sv').textContent = t.value; store.set('studio.sleep', Number(t.value)); rerender(); }
@@ -1794,6 +1870,7 @@
       if (t.dataset.opt) { spec.options[t.dataset.opt] = t.checked; saveSpec(); draw(); }
       else if (t.dataset.mparam != null) { const m = spec.modules[Number(t.dataset.mparam)]; m.params = m.params || {}; m.params[t.dataset.k] = t.value; saveSpec(); draw(); }
       else if (t.dataset.r != null) { setRuleField(spec.rules[Number(t.dataset.r)], t.dataset.f, t.value); saveSpec(); draw(); }
+      else if (t.dataset.v != null && (t.type === 'checkbox' || t.tagName === 'SELECT')) { setVarField(Number(t.dataset.v), t.dataset.vf, t.value, t.checked); saveSpec(); draw(); }
     });
     el.addEventListener('click', (e) => {
       const t = e.target.closest('button,[data-mopen]');
@@ -1811,6 +1888,14 @@
       } else if (t.dataset.mopen != null && !e.target.closest('button')) { const i = Number(t.dataset.mopen); open = open === i ? -1 : i; draw(); }
       else if (t.hasAttribute('data-rule-add')) { addRule(); saveSpec(); draw(); }
       else if (t.dataset.ruleDel != null) { spec.rules.splice(Number(t.dataset.ruleDel), 1); saveSpec(); draw(); }
+      else if (t.hasAttribute('data-var-add')) { addVar(); saveSpec(); draw(); }
+      else if (t.dataset.varDel != null) {
+        const gone = varName(spec.vars[Number(t.dataset.varDel)] || {});
+        spec.vars.splice(Number(t.dataset.varDel), 1);
+        spec.rules = spec.rules.filter((r) => !(r.if.var && LAB.sanitize(r.if.var) === gone));
+        spec.rules.forEach((r) => { if (r.if.vv && LAB.sanitize(r.if.vv) === gone) delete r.if.vv; });
+        saveSpec(); draw();
+      }
     });
   }
 
@@ -1834,6 +1919,12 @@
       spec.title = title.trim(); saveSpec(); draw();
       try { const result = LAB.generate(spec); A.studioResult = result; await A.saveProjectToSd(clean, asProject(), result); }
       catch (e) { A.toast(e.message || String(e), 'bad'); }
+    },
+    'st-svg': () => A.studioResult && LAB.montageSvg && download(`montage_${projId()}_${A.studioResult.board}.svg`, LAB.montageSvg(A.studioResult, { id: projId(), title: spec.title }).svg, 'image/svg+xml'),
+    'st-apk': () => {
+      if (!A.AppStudio) return toast('Studio APK non chargé', 'bad');
+      store.set('apkstudio.fromStudio', JSON.parse(JSON.stringify(spec)));
+      A.go('apkstudio', { studio: '1' });
     },
     'st-bench': () => A.openBench(JSON.parse(JSON.stringify(spec)), projId()),
     'st-new': async () => { if (spec.modules.length && !(await confirmBox('Nouveau projet', 'Le projet en cours sera remplacé (pensez à le télécharger).', 'Nouveau'))) return; spec = blank(); saveSpec(); open = -1; draw(); },
@@ -3791,11 +3882,24 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     const q = await piJSON('/api/v1/build', { project_id: p.project, board, priority: 70 });
     const j = await watchBuild(q.id, row, log);
     if (!j || j.status !== 'success') { report(a.id, false, { stage: 'build' }); return; }
-    if (!(await A.confirmBox('Flasher le worker ' + p.worker, `« ${p.title || p.project} » (${board}), SHA-256 ${String(j.sha256).slice(0, 16)}… Le worker quitte le mode labo pendant le projet (BOOT 3 s pour revenir).`, 'Flasher maintenant', true))) { say('Flash annulé.'); report(a.id, false, { stage: 'annule' }); return; }
+    const ok = await A.modal({ title: 'Flasher le worker ' + p.worker, wide: true, danger: true, ok: 'Le montage est prêt, flasher',
+      html: `<p>« ${esc(p.title || p.project)} » (${esc(board)}), SHA-256 ${esc(String(j.sha256).slice(0, 16))}… Le worker quitte le mode labo pendant le projet (BOOT 3 s pour revenir).</p><h3 style="margin:10px 0 8px">Vérifie le montage avant de flasher</h3>${await montageFor(p, board)}` });
+    if (!ok) { say('Flash annulé.'); report(a.id, false, { stage: 'annule' }); return; }
     const link = await pi('/api/v1/jobs/' + encodeURIComponent(q.id) + '/firmware-link');
     await A.post('/api/worker/flash/remote', { id: p.worker, url: link.url, sha256: j.sha256, mode: 'project' });
     say('OTA autorisée par le S3 ; transfert et redémarrage du worker…');
     await verifyFlow(p.worker, 25, row, a, log, true);
+  }
+  /* Schéma + tableau de câblage du projet : catalogue du S3 si connu, sinon généré depuis les modules en mémoire. */
+  async function montageFor(p, board) {
+    try {
+      if (A.projectById && A.projectById(p.project)) return await A.montageHtml({ kind: 'esp', id: p.project, board });
+      if (!(p.modules || []).length || !window.LAB.generate) return '<div class="small muted">Montage inconnu pour ce projet : vérifie le câblage avec la fiche du projet.</div>';
+      const res = window.LAB.generate({ board, title: p.title || p.project, modules: p.modules.map((id) => (typeof id === 'string' ? { id } : id)) });
+      const m = window.LAB.montageSvg ? window.LAB.montageSvg(res, { title: p.title }) : null;
+      return (m ? `<div class="montage">${m.svg}</div>` : '') + `<div style="margin-top:10px">${A.wiringTable(res)}</div>` +
+        (res.warnings || []).map((w) => `<div class="banner warn" style="margin-top:8px">${icon('alert')}<div>${esc(w)}</div></div>`).join('');
+    } catch (e) { return `<div class="banner warn">${icon('alert')}<div>${esc(e.message)}</div></div>`; }
   }
   async function readSerial(worker, seconds, onTick) {
     let since = 0, text = '', usbPos = 0;
@@ -4816,9 +4920,40 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     const items = [{ id: 'c1', type: 'title', text: d.name, sub: g.boardName }];
     d.vars.forEach((v, i) => items.push({ id: 'c' + (i + 2), type: 'value', label: v.label, var: v.name, unit: v.unit, decimals: 1, width: 'half' }));
     d.vars.slice(0, 2).forEach((v, i) => items.push({ id: 'c' + (d.vars.length + 2 + i), type: 'chart', label: v.label, var: v.name, points: 60, width: 'full' }));
-    if (!d.vars.length) items.push({ id: 'c2', type: 'text', text: 'Ce projet n\'envoie pas de mesure : ajoute des boutons pour le commander.', size: 's' });
+    if (!d.vars.length && !(g.controls || []).length) items.push({ id: 'c2', type: 'text', text: 'Ce projet n\'envoie pas de mesure : ajoute des boutons pour le commander.', size: 's' });
     d.screens[0].items = items;
+    if (g.app && (g.controls || []).length) addControls(d, g, used, items.length + 2);
     return d;
+  }
+  /* Montage avec « Pilotage par application » : un interrupteur ou un curseur par actionneur et variable réglable,
+   * qui appelle /set sur l'appareil (adresse connue grâce aux mesures reçues par le MASTER). */
+  function addControls(d, g, used, n) {
+    const feed = d.vars.find((v) => v.source === 'feed');
+    let host = feed ? `{${feed.name}_ip}` : '';
+    if (!host) { const ip = ident('ip_appareil', used); d.vars.push({ name: ip, source: 'local', type: 'text', default: '192.168.4.20', label: 'Adresse IP du montage' }); host = `{${ip}}`; }
+    const set = (q) => [{ a: 'http', method: 'GET', url: `http://${host}/set?${q}` }];
+    const items = [{ id: 'c' + n++, type: 'title', text: 'Commandes', sub: g.title }];
+    if (!feed) items.push({ id: 'c' + n++, type: 'input', label: 'Adresse IP du montage', var: d.vars[d.vars.length - 1].name, width: 'full' });
+    g.controls.forEach((c) => {
+      if (c.var) {   // variable réglable : déjà suivie via le MASTER (var_<nom>), sinon variable locale
+        let v = d.vars.find((x) => x.feed === `${g.device}/${c.key}`);
+        if (!v) { v = { name: ident(c.key, used), source: 'local', type: 'number', default: 0, unit: c.set.unit || '' }; d.vars.push(v); }
+        items.push({ id: 'c' + n++, type: 'slider', label: c.name, var: v.name, min: 0, max: 100, step: 0.5, width: 'full', do: set(`${c.key}={${v.name}}`) });
+        return;
+      }
+      const v = { name: ident(c.key + '_cmd', used), source: 'local', type: 'number', default: 0, label: c.name };
+      d.vars.push(v);
+      if (c.set && c.set.min != null) {
+        const span = Number(c.set.max) - Number(c.set.min);
+        v.default = Number(c.set.min) <= 0 && Number(c.set.max) >= 0 ? 0 : Number(c.set.min);
+        v.unit = c.set.unit || '';
+        items.push({ id: 'c' + n++, type: 'slider', label: `${c.name} (${c.set.unit || ''})`.replace(' ()', ''), var: v.name, min: Number(c.set.min), max: Number(c.set.max), step: span > 200 ? Math.round(span / 100) : span > 20 ? 1 : 0.1, width: 'full', do: set(`${c.key}={${v.name}}`) });
+      } else {
+        items.push({ id: 'c' + n++, type: 'switch', label: c.name, var: v.name, width: 'full', do: set(`${c.key}=on`), off: set(`${c.key}=off`) });
+      }
+    });
+    d.screens[0].title = 'Mesures';
+    d.screens.push({ id: 'commandes', title: 'Commandes', items });
   }
 
   /* ------------------------------------------------------------------ Pi */
@@ -5222,6 +5357,11 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
   });
   async function start(q) {
       await loadFeeds();
+      if (q && q.studio) {
+        const spec = store.get('apkstudio.fromStudio', null);
+        if (spec) { try { S.D = fromSpec(spec, spec.title); S.sel = null; S.scr = null; fix(); save(); toast('Application préparée depuis le Studio', 'ok'); } catch (e) { toast('Projet non chargé : ' + e.message, 'warn'); } }
+        history.replaceState(null, '', '#apkstudio');
+      }
       if (q && q.p) {
         try {
           const p = A.projectById && A.projectById(q.p);

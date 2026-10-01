@@ -30,6 +30,8 @@ L'écran **Studio APK** (menu Créer) fonctionne comme MIT App Inventor, avec qu
    - le QR à scanner ;
    - l'appli web `http://<pi>:8088/apps/<id>/`.
 
+Depuis le **Studio** (onglet Application), un projet avec l'option « Pilotage par application » donne directement une application à deux écrans : mesures, et commandes de ses actionneurs et variables (voir [STUDIO_VARIABLES.md](STUDIO_VARIABLES.md)).
+
 Patricia sait le faire aussi : « fais-moi une APK pour la serre » crée une première version depuis le projet en mémoire et répond avec le lien et le QR.
 
 ## Composants

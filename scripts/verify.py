@@ -258,6 +258,41 @@ console.log(JSON.stringify(bad));
     if r.returncode == 0:
         print("Patricia et Studio APK : " + next((l for l in tail if l.startswith("Ran ")), "tests OK"))
 
+    # 12. Variables liées aux capteurs, pilotage par application, montage avant flash, ligne de commande
+    st_src = read(WWW / "src" / "35_studio.js")
+    check("data-var-add" in st_src and "'st-apk'" in st_src and "LAB.montageSvg(res" in st_src, "Studio : variables, onglet Montage ou passage au Studio APK manquant")
+    check("function addControls" in read(WWW / "src" / "58_apkstudio.js"), "Studio APK : commandes des actionneurs (/set) absentes")
+    check("montageFor(p, board)" in read(WWW / "src" / "55_patricia.js"), "Patricia ne montre plus le montage avant de flasher")
+    cli = ROOT / "scripts" / "nexus.py"
+    r = subprocess.run([sys.executable, str(cli), "--help"], capture_output=True, text=True)
+    check(r.returncode == 0 and "generate" in r.stdout, "scripts/nexus.py --help en échec")
+    node = shutil.which("node")
+    if node:
+        with tempfile.TemporaryDirectory(prefix="nexus-gen-") as d:
+            spec = pathlib.Path(d) / "spec.json"
+            spec.write_text(json.dumps({"title": "Serre test", "modules": [{"id": "dht22"}, {"id": "led"}, {"id": "servo_sg90"}],
+                                        "vars": [{"name": "temp", "from": {"m": 0, "out": "temp"}}, {"name": "temp F", "from": {"m": 0, "out": "temp"}, "k": 1.8, "b": 32},
+                                                 {"name": "consigne", "init": 24, "app": True}, {"name": "absente", "from": {"m": 0, "out": "rien"}}],
+                                        "rules": [{"if": {"var": "temp", "op": ">", "vv": "consigne", "hyst": 0.5}, "then": {"m": 1, "act": "on"}, "else": {"m": 1, "act": "off"}},
+                                                  {"if": {"var": "inconnue", "op": ">", "v": 1}, "then": {"m": 1, "act": "on"}}],
+                                        "options": {"app": True, "master": True}}), encoding="utf-8")
+            r = subprocess.run([sys.executable, str(cli), "generate", str(spec), "--out", str(pathlib.Path(d) / "out")], capture_output=True, text=True)
+            ino = pathlib.Path(d) / "out" / "serre_test.ino"
+            check(r.returncode == 0 and ino.exists(), "nexus.py generate en échec : " + r.stderr.strip()[:300])
+            if ino.exists():
+                code = ino.read_text(encoding="utf-8")
+                loop = code[code.index("void loop()"):]
+                for frag, why in (("v_temp > v_consigne", "règle sur variable avec seuil variable"), ("v_temp < (v_consigne - 0.5f)", "hystérésis sur seuil variable"),
+                                  ("v_temp_f = m1_temp * 1.8f + 32.0f", "conversion d'une variable liée"), ('lab_web.on("/set", lab_web_set)', "route /set"),
+                                  ('if (k == "led")', "commande de la LED"), ('else if (k == "servo")', "consigne du servo"), ('else if (k == "var_consigne") { v_consigne = a.toFloat();', "variable réglable"),
+                                  ('"Access-Control-Allow-Origin", "*"', "CORS pour l'appli web"), ('"vars\\":{', "variables dans /api"), ("lab_vars();", "mise à jour des variables")):
+                    check(frag in code, f"générateur : {why} absent(e) ({frag})")
+                check("m2_toggle();" not in loop and "m3_set(v);" not in loop, "générateur : un actionneur piloté par l'application garde son programme de démonstration")
+                check(code.index("lab_vars();", code.index("void loop()")) < code.index("lab_rules();", code.index("void loop()")), "générateur : les variables doivent être mises à jour avant les règles")
+                md = (pathlib.Path(d) / "out" / "MONTAGE.md").read_text(encoding="utf-8")
+                check("mesure introuvable" in md and "Règle 2 ignorée : variable introuvable" in md, "générateur : variables ou règles invalides non signalées")
+                check((pathlib.Path(d) / "out" / "montage.svg").exists(), "nexus.py generate ne produit pas le schéma de montage")
+
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):
         t = read(p)

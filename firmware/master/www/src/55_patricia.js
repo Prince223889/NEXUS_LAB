@@ -261,11 +261,24 @@
     const q = await piJSON('/api/v1/build', { project_id: p.project, board, priority: 70 });
     const j = await watchBuild(q.id, row, log);
     if (!j || j.status !== 'success') { report(a.id, false, { stage: 'build' }); return; }
-    if (!(await A.confirmBox('Flasher le worker ' + p.worker, `« ${p.title || p.project} » (${board}), SHA-256 ${String(j.sha256).slice(0, 16)}… Le worker quitte le mode labo pendant le projet (BOOT 3 s pour revenir).`, 'Flasher maintenant', true))) { say('Flash annulé.'); report(a.id, false, { stage: 'annule' }); return; }
+    const ok = await A.modal({ title: 'Flasher le worker ' + p.worker, wide: true, danger: true, ok: 'Le montage est prêt, flasher',
+      html: `<p>« ${esc(p.title || p.project)} » (${esc(board)}), SHA-256 ${esc(String(j.sha256).slice(0, 16))}… Le worker quitte le mode labo pendant le projet (BOOT 3 s pour revenir).</p><h3 style="margin:10px 0 8px">Vérifie le montage avant de flasher</h3>${await montageFor(p, board)}` });
+    if (!ok) { say('Flash annulé.'); report(a.id, false, { stage: 'annule' }); return; }
     const link = await pi('/api/v1/jobs/' + encodeURIComponent(q.id) + '/firmware-link');
     await A.post('/api/worker/flash/remote', { id: p.worker, url: link.url, sha256: j.sha256, mode: 'project' });
     say('OTA autorisée par le S3 ; transfert et redémarrage du worker…');
     await verifyFlow(p.worker, 25, row, a, log, true);
+  }
+  /* Schéma + tableau de câblage du projet : catalogue du S3 si connu, sinon généré depuis les modules en mémoire. */
+  async function montageFor(p, board) {
+    try {
+      if (A.projectById && A.projectById(p.project)) return await A.montageHtml({ kind: 'esp', id: p.project, board });
+      if (!(p.modules || []).length || !window.LAB.generate) return '<div class="small muted">Montage inconnu pour ce projet : vérifie le câblage avec la fiche du projet.</div>';
+      const res = window.LAB.generate({ board, title: p.title || p.project, modules: p.modules.map((id) => (typeof id === 'string' ? { id } : id)) });
+      const m = window.LAB.montageSvg ? window.LAB.montageSvg(res, { title: p.title }) : null;
+      return (m ? `<div class="montage">${m.svg}</div>` : '') + `<div style="margin-top:10px">${A.wiringTable(res)}</div>` +
+        (res.warnings || []).map((w) => `<div class="banner warn" style="margin-top:8px">${icon('alert')}<div>${esc(w)}</div></div>`).join('');
+    } catch (e) { return `<div class="banner warn">${icon('alert')}<div>${esc(e.message)}</div></div>`; }
   }
   async function readSerial(worker, seconds, onTick) {
     let since = 0, text = '', usbPos = 0;
