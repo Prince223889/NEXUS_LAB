@@ -140,6 +140,8 @@ else
 fi
 systemctl daemon-reload
 systemctl enable --now nexus-agent
+# À chaque démarrage : SSH, Wi-Fi du S3, contrôle de l'agent et scripts de /etc/nexus/boot.d (voir pi/enable_boot.sh).
+bash "$SRC/pi/enable_boot.sh" || echo "Service de démarrage non activé : relance sudo bash pi/enable_boot.sh"
 if [[ -f "$SRC/packages/nexus-lab.apk" ]]; then install -o nexus -g nexus -m 0640 "$SRC/packages/nexus-lab.apk" /srv/nexus/packages/nexus-lab.apk; fi
 echo "microSD de 64 Go du Pi montée: $SHARED_ROOT. La microSD 2 Go du S3 reste dans le S3; les appareils échangent par Wi-Fi."
 echo "NEXUS-AGENT installé. Santé: curl http://127.0.0.1:8088/api/v1/health"
