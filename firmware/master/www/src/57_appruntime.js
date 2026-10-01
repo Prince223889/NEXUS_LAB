@@ -38,7 +38,7 @@
     set: { label: 'Mettre une variable à', fields: [['var', 'Variable', 'var'], ['value', 'Valeur ou calcul ({x} + 1)', 'text']] },
     toggle: { label: 'Inverser une variable (0 ↔ 1)', fields: [['var', 'Variable', 'var']] },
     http: { label: 'Envoyer une requête à un appareil', fields: [['method', 'Méthode', 'select:GET=GET|POST=POST'], ['url', 'Adresse ({variables} permises)', 'text'], ['body', 'Corps (POST)', 'text']] },
-    job: { label: 'Lancer un job du MASTER', fields: [['type', 'Job', 'select:PING=Ping|SYSTEM_TEST=Check-up|I2C_SCAN=Scan I2C|WIFI_SCAN=Scan Wi-Fi|IDENTIFY=Faire clignoter|BENCHMARK=Benchmark'], ['worker', 'Worker (0 = auto)', 'number']] },
+    job: { label: 'Lancer un job du MASTER', fields: [['type', 'Job', 'select:PING=Ping|SYSTEM_TEST=Check-up|I2C_SCAN=Scan I2C|WIFI_SCAN=Scan Wi-Fi|IDENTIFY=Faire clignoter|BENCHMARK=Benchmark|ADC_READ=Voltmètre|GPIO_TEST=Test des broches|ONEWIRE_SCAN=Scan 1-Wire|LOGIC_SAMPLE=Analyseur logique|PWM_GEN=Générateur PWM|SERVO_SWEEP=Balayage servo|TONE_TEST=Test buzzer'], ['worker', 'Worker (0 = auto)', 'number']] },
     goto: { label: 'Aller à l\'écran', fields: [['screen', 'Écran', 'screen']] },
     speak: { label: 'Dire à voix haute', fields: [['text', 'Texte ({variables} permises)', 'text']] },
     listen: { label: 'Écouter la voix dans une variable', fields: [['var', 'Variable', 'var']] },

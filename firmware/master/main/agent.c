@@ -63,6 +63,10 @@ static void safe_actions(const char *q, cJSON *actions)
         {"check-up", "SYSTEM_TEST", 60}, {"checkup", "SYSTEM_TEST", 60}, {"teste tous", "SYSTEM_TEST", 60},
         {"benchmark", "BENCHMARK", 70},  {"scan i2c", "I2C_SCAN", 50},   {"scanner i2c", "I2C_SCAN", 50},
         {"ping", "PING", 40},            {"identifie", "IDENTIFY", 40},
+        /* jobs matériel en lecture seule (aucune broche pilotée) */
+        {"voltm", "ADC_READ", 50},       {"tensions", "ADC_READ", 50},   {"test gpio", "GPIO_TEST", 50},
+        {"teste les broches", "GPIO_TEST", 50}, {"1-wire", "ONEWIRE_SCAN", 50}, {"onewire", "ONEWIRE_SCAN", 50},
+        {"ds18b20", "ONEWIRE_SCAN", 50}, {"analyseur logique", "LOGIC_SAMPLE", 50},
     };
     for (size_t i = 0; i < sizeof(map) / sizeof(map[0]); ++i) {
         if (has(l, map[i].kw)) {
@@ -103,8 +107,8 @@ static void local_answer(const char *q, cJSON *res)
     lab_context(ctx, sizeof(ctx));
     if (has(l, "aide") || has(l, "help") || has(l, "que peux")) {
         snprintf(ans, sizeof(ans),
-                 "Je peux : lancer un check-up (« check-up »), un benchmark, un scan I2C ou faire clignoter les workers "
-                 "(« identifie »), résumer l'état du labo (« état »). La bibliothèque contient plus de 300 projets "
+                 "Je peux : lancer un check-up (« check-up »), un benchmark, un scan I2C, un voltmètre, un test GPIO, "
+                 "un scan 1-Wire, l'analyseur logique ou faire clignoter les workers (« identifie »), résumer l'état du labo (« état »). La bibliothèque contient plus de 300 projets "
                  "et le Studio génère un programme complet à partir de vos capteurs. Pour des réponses IA en ligne, "
                  "configurez une API compatible OpenAI dans l'administration.");
     } else if (has(l, "temp") || has(l, "humid")) {

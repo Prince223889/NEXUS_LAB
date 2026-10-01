@@ -458,6 +458,12 @@
 
     // Règles
     const rules = (spec.rules || []).map((r, idx) => {
+      if (r.if && r.if.every != null) {   // minuterie : « toutes les N s, faire … (puis …) »
+        const dst = instances[r.then.m];
+        if (!dst || !dst.mod.act) { warnings.push(`Règle ${idx + 1} ignorée : actionneur introuvable.`); return null; }
+        const ms = Math.max(200, Math.round(Number(r.if.every) * 1000) || 1000);
+        return { idx: idx + 1, dst, op: 'every', ms, then: r.then, else: r.else && r.else.m != null && instances[r.else.m] ? r.else : null };
+      }
       const vsrc = r.if.var != null && r.if.var !== '' ? varBy(r.if.var) : null;
       const src = vsrc ? null : instances[r.if.m];
       const dst = instances[r.then.m];
@@ -656,8 +662,28 @@
       L.push('  static uint32_t last = 0;');
       L.push('  if (millis() - last < 200) return;');
       L.push('  last = millis();');
+      const actCall = (t, dst) => {
+        if (!t) return '';
+        if (t.act === 'on') return `${dst.p}_on();`;
+        if (t.act === 'off') return `${dst.p}_off();`;
+        if (t.act === 'set') return `${dst.p}_set(${fmtNum(t.v)});`;
+        if (t.act === 'toggle') return `${dst.p}_toggle();`;
+        return '';
+      };
       rules.forEach((r) => {
         const v = r.expr;
+        if (r.op === 'every') {
+          const thenCode = actCall(r.then, r.dst), elseCode = r.else ? actCall(r.else, instances[r.else.m]) : '';
+          L.push(`  // Règle ${r.idx} : toutes les ${String(r.ms / 1000).replace(".", ",")} s → ${r.dst.mod.name} ${r.then.act}${r.else ? ' / ' + r.else.act : ''}`);
+          L.push(`  static uint32_t every${r.idx} = 0;`);
+          if (r.else) {
+            L.push(`  static int8_t phase${r.idx} = 0;`);
+            L.push(`  if (millis() - every${r.idx} >= ${r.ms}) { every${r.idx} = millis(); phase${r.idx} = !phase${r.idx}; if (phase${r.idx}) { ${thenCode} } else { ${elseCode} } }`);
+          } else {
+            L.push(`  if (millis() - every${r.idx} >= ${r.ms}) { every${r.idx} = millis(); ${thenCode} }`);
+          }
+          return;
+        }
         if (r.op === 'map') {
           const [a, b] = r.inR, [c, d] = r.outR;
           L.push(`  // Règle ${r.idx} : ${r.dst.mod.name} suit ${r.srcName} ${r.out.l || r.out.k} (${a}…${b} → ${c}…${d})`);
@@ -668,14 +694,6 @@
           L.push('  }');
           return;
         }
-        const actCall = (t, dst) => {
-          if (!t) return '';
-          if (t.act === 'on') return `${dst.p}_on();`;
-          if (t.act === 'off') return `${dst.p}_off();`;
-          if (t.act === 'set') return `${dst.p}_set(${fmtNum(t.v)});`;
-          if (t.act === 'toggle') return `${dst.p}_toggle();`;
-          return '';
-        };
         const thenCode = actCall(r.then, r.dst);
         const elseCode = r.else ? actCall(r.else, instances[r.else.m] || r.dst) : '';
         const thr = r.vthr ? r.vthr.c : fmtNum(r.v);
@@ -1029,6 +1047,7 @@ static void lab_home_loop() {
     const last = rules.map(() => NaN);
     return function tick(values, act) {
       rules.forEach((r, k) => {
+        if (r.if.every != null) return;   // minuterie : non vérifiable par le banc
         const x = values[r.if.m];
         if (x === undefined || isNaN(x)) return;
         if (r.if.op === 'map') {
@@ -1134,6 +1153,7 @@ static void lab_home_loop() {
     rulesIn.forEach((r, k) => {
       const src = byInst[r.if && r.if.m], dst = byInst[r.then && r.then.m];
       const tag = `Règle ${k + 1}`;
+      if (r.if && r.if.every != null) { reasons.push(`${tag} : minuterie, vérifiée seulement sur le vrai montage.`); return; }
       if (!src || src.dir !== 'in') { reasons.push(`${tag} : capteur source non émulable.`); return; }
       if (src.out !== r.if.out) { reasons.push(`${tag} : la mesure « ${r.if.out} » n'est pas émulée (seulement « ${src.out} »).`); return; }
       if (!dst || dst.dir !== 'out') { reasons.push(`${tag} : actionneur non observable.`); return; }
@@ -1359,7 +1379,7 @@ static void lab_home_loop() {
       .replace(/\bfabsf\(/g, 'Math.abs(');
     // eslint-disable-next-line no-new-func
     const fn = new Function('env', 'with (env) {\n' + body + '\n}');
-    const env = Object.assign({ constrain: (v, a, b) => Math.min(Math.max(v, a), b), NAN: NaN }, statics);
+    const env = Object.assign({ constrain: (v, a, b) => Math.min(Math.max(v, a), b), NAN: NaN, millis: () => Date.now() }, statics);
     const mods = (spec.modules || []).map((m) => LAB.module(typeof m === 'string' ? m : m.id));
     const state = {};
     mods.forEach((mod, i) => {

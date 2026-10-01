@@ -61,7 +61,10 @@ static bool finished(job_state_t s) { return s == JS_SUCCESS || s == JS_FAILED |
 bool job_type_valid(const char *type)
 {
     static const char *ok[] = {"PING", "SYSTEM_TEST", "CHECKUP", "BENCHMARK", "FS_TEST",
-                               "I2C_SCAN", "WIFI_SCAN", "MEM_TEST", "IDENTIFY"};
+                               "I2C_SCAN", "WIFI_SCAN", "MEM_TEST", "IDENTIFY",
+                               /* jobs « matériel » (broches fixées dans firmware/worker/config.h) */
+                               "ADC_READ", "GPIO_TEST", "PWM_GEN", "SERVO_SWEEP", "TONE_TEST",
+                               "ONEWIRE_SCAN", "LOGIC_SAMPLE"};
     if (!type) return false;
     for (size_t i = 0; i < sizeof(ok) / sizeof(ok[0]); ++i) if (!strcmp(type, ok[i])) return true;
     return false;

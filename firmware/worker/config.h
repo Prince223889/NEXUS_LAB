@@ -51,3 +51,44 @@
 #define BENCH_DIN_PINS {6, 7}
 #endif
 #define BENCH_IDLE_TIMEOUT_MS 120000UL   // sans ordre du MASTER pendant ce délai, l'émulateur s'arrête seul
+
+// Jobs « matériel » : ADC_READ, GPIO_TEST, PWM_GEN, SERVO_SWEEP, TONE_TEST, ONEWIRE_SCAN, LOGIC_SAMPLE.
+// Les jobs du MASTER ne portent pas de paramètres : broches et réglages sont fixés ici.
+// Chaque broche doit figurer dans les broches sûres du worker (gpioSafe dans worker.ino : jamais la flash,
+// la PSRAM, l'USB, la console ni une broche de démarrage), sinon le job est refusé (PIN_REFUSED).
+// Les valeurs par défaut évitent aussi la LED, le bus I2C et le connecteur du banc fantôme ci-dessus.
+#if CONFIG_IDF_TARGET_ESP32
+#define WORKER_PWM_PIN 13                 // générateur de signal (PWM_GEN)
+#define WORKER_SERVO_PIN 27               // servomoteur (SERVO_SWEEP) : pas d'impulsion parasite au démarrage
+#define WORKER_TONE_PIN 14                // buzzer passif (TONE_TEST)
+#define WORKER_ONEWIRE_PIN 32             // bus 1-Wire (ONEWIRE_SCAN) : résistance de 4,7 kΩ vers 3V3 conseillée
+#define WORKER_LOGIC_PINS {33, 34, 35, 36}  // analyseur logique (LOGIC_SAMPLE) : entrées seules
+#elif CONFIG_IDF_TARGET_ESP32S3
+#define WORKER_PWM_PIN 10
+#define WORKER_SERVO_PIN 11
+#define WORKER_TONE_PIN 12
+#define WORKER_ONEWIRE_PIN 13
+#define WORKER_LOGIC_PINS {14, 17, 18, 21}
+#else
+// ESP32-C3 & co : peu de broches libres, PWM/servo/buzzer partagent GPIO10 (jamais en même temps).
+#define WORKER_PWM_PIN 10
+#define WORKER_SERVO_PIN 10
+#define WORKER_TONE_PIN 10
+#define WORKER_ONEWIRE_PIN 3
+#define WORKER_LOGIC_PINS {0, 1, 3, 10}
+#endif
+#define WORKER_ADC_SAMPLES 16             // ADC_READ : moyenne de N mesures par broche (ADC1 uniquement, ADC2 gêné par le Wi-Fi)
+#define WORKER_PWM_FREQ_HZ 1000UL         // PWM_GEN : fréquence
+#define WORKER_PWM_DUTY_PCT 50            // PWM_GEN : rapport cyclique (%)
+#define WORKER_PWM_DURATION_MS 10000UL    // PWM_GEN : durée du signal, broche relâchée ensuite
+#define WORKER_SERVO_MIN_US 500           // SERVO_SWEEP : impulsion à 0°
+#define WORKER_SERVO_MAX_US 2500          // SERVO_SWEEP : impulsion à 180°
+#define WORKER_SERVO_STEP_DEG 5           // SERVO_SWEEP : pas du balayage 0 → 180 → 0
+#define WORKER_SERVO_STEP_MS 50UL
+#define WORKER_TONE_FROM_HZ 200UL         // TONE_TEST : balayage de fréquence
+#define WORKER_TONE_TO_HZ 4000UL
+#define WORKER_TONE_STEPS 20
+#define WORKER_TONE_STEP_MS 150UL
+#define WORKER_ONEWIRE_MAX 8              // ONEWIRE_SCAN : nombre maximal de composants listés
+#define WORKER_LOGIC_RATE_HZ 20000UL      // LOGIC_SAMPLE : échantillonnage (signaux jusqu'à ~10 kHz)
+#define WORKER_LOGIC_WINDOW_MS 1000UL     // LOGIC_SAMPLE : durée de la capture (par tranches de 100 ms)

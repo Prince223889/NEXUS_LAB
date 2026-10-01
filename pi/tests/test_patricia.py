@@ -331,6 +331,132 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(e.confirm(r["actions"][0]["id"])["result"]["installed"], "Adafruit BME280 Library")
 
 
+class Phase6Tests(unittest.TestCase):
+    """Qui es-tu, actions directes, cartes branchées, fichiers, dépôts, APK sur simple demande."""
+
+    LAB = {"master": {"version": "6.1.0"}, "worker_capacity": 10,
+           "workers": [{"id": 1, "state": "PROJECT"}, {"id": 2, "state": "READY", "rssi": -50}, {"id": 5, "state": "OFFLINE"}]}
+    SPEC = {"title": "Serre balcon", "board": "esp32", "modules": [{"id": "dht22"}, {"id": "relay"}],
+            "rules": [{"if": {"m": 0, "out": "temp", "op": ">", "v": 28, "hyst": 1}, "then": {"m": 1, "act": "on"}, "else": {"m": 1, "act": "off"}}]}
+
+    def test_intents(self):
+        for text, name in [("qui es-tu ?", "identity"), ("tu es ma copine ?", "identity"), ("quelles cartes sont branchées ?", "boards"),
+                           ("fais un check-up de toutes les cartes", "boards"), ("lance un check-up", "job"), ("crée un dossier serre", "files"),
+                           ("crée un fichier serre/notes.txt avec : arroser à 19 h", "files"), ("liste mes fichiers", "files"),
+                           ("supprime le dossier essais", "files"), ("crée un dépôt github mon-robot", "github_create"),
+                           ("analyse mon projet", "analyze"), ("corrige les erreurs de mon code", "analyze"), ("flash", "flash"), ("compile", "build"),
+                           ("fais-moi une apk pour la serre", "apk"), ("lance un voltmètre sur le worker 2", "job"), ("c'est quoi flasher ?", "question")]:
+            self.assertEqual(detect(text).name, name, text)
+        self.assertTrue(detect("tu es qui pour moi").slots["relation"])
+        self.assertEqual(detect("crée un fichier notes.txt avec : bonjour").slots["content"], "bonjour")
+        self.assertEqual(detect("fais un test des broches du worker 1").slots, {"job": "GPIO_TEST", "workers": [1]})
+
+    def test_identity_is_warm_and_not_a_girlfriend(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            a = e.chat("qui es-tu ?")["answer"]
+            self.assertIn("Patricia", a)
+            r = e.chat("tu es ma copine")["answer"]
+            self.assertIn("partenaire de labo", r)
+            self.assertIn("IA", r)
+            self.assertEqual(e.chat("qui es-tu ?")["answer"], a)   # toujours la même réponse
+
+    def test_flash_and_build_target_the_studio(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            ctx = {"lab": self.LAB, "studio": {"spec": self.SPEC, "warnings": []}}
+            r = e.chat("flash", context=ctx)
+            a = r["actions"][0]
+            self.assertEqual((a["kind"], a["params"]["worker"], a["params"]["title"]), ("flash_studio", 2, "Serre balcon"))
+            self.assertTrue(a["auto"])
+            self.assertTrue(e.confirm(a["id"])["execute_in_ui"])
+            b = e.chat("compile", context=ctx)["actions"][0]
+            self.assertEqual(b["kind"], "build_studio")
+            self.assertIn("Aucun worker", e.chat("flash", context={"lab": {"master": {}, "workers": []}, "studio": ctx["studio"]})["answer"])
+            self.assertIn("Quel projet", e.chat("flash", context={"lab": self.LAB})["answer"])
+
+    def test_boards_and_apk(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            r = e.chat("quelles cartes sont branchées ?", context={"lab": self.LAB, "usb": {"connected": True, "chip": "CH340"}})
+            self.assertIn("W1", r["answer"])
+            self.assertIn("W5", r["answer"])
+            self.assertIn("CH340", r["answer"])
+            self.assertEqual(r["cards"][0]["type"], "boards")
+            r = e.chat("fais un check-up de toutes les cartes", context={"lab": self.LAB})
+            self.assertEqual([a["params"]["worker"] for a in r["actions"]], [1, 2])
+            r = e.chat("fais-moi une apk pour la serre")
+            a = r["actions"][0]
+            self.assertEqual(a["kind"], "apk")
+            self.assertTrue(a["auto"])
+            self.assertIn("serre", a["params"]["title"].lower())
+            r = e.chat("crée une apk", context={"studio": {"spec": self.SPEC}})
+            self.assertEqual(r["actions"][0]["params"]["spec"]["title"], "Serre balcon")
+
+    def test_files_in_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            root = Path(td) / "ws"
+            e.host.workspace_root = lambda: root
+            r = e.chat("crée un dossier serre")
+            e.confirm(r["actions"][0]["id"])
+            self.assertTrue((root / "serre").is_dir())
+            r = e.chat("crée un fichier serre/notes.txt avec : arroser à 19 h")
+            self.assertTrue(r["actions"][0]["auto"])
+            e.confirm(r["actions"][0]["id"])
+            self.assertEqual((root / "serre" / "notes.txt").read_text(), "arroser à 19 h")
+            r = e.chat("crée un fichier serre/notes.txt avec : arroser à 20 h")
+            self.assertFalse(r["actions"][0]["auto"])   # remplacement : toujours à valider
+            e.confirm(r["actions"][0]["id"])
+            self.assertIn("20 h", e.chat("lis le fichier serre/notes.txt")["answer"])
+            self.assertIn("notes.txt", e.chat("liste mes fichiers")["answer"])
+            r = e.chat("supprime le dossier serre")
+            self.assertFalse(r["actions"][0]["auto"])
+            e.confirm(r["actions"][0]["id"])
+            self.assertFalse((root / "serre").exists())
+            self.assertTrue(any((root / ".corbeille").rglob("notes.txt")))
+            for bad in ("../etc/passwd", ".ssh/x", "a/../../b"):
+                self.assertNotIn("actions", {k: v for k, v in e.chat("crée un fichier " + bad).items() if v})
+
+    def test_analyze_and_fix(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            root = Path(td) / "ws"
+            (root / "lampe").mkdir(parents=True)
+            (root / "lampe" / "lampe.ino").write_text("void setup() {\n}\nvoid loop() {\n  digitalWrite(13, HIGH);\n  Serial.println(1);\n}\n")
+            e.host.workspace_root = lambda: root
+            e.host.user_projects = lambda: ["lampe"]
+            e.host.project_path = lambda pid: root / pid
+            r = e.chat("analyse lampe")
+            self.assertEqual(r["intent"], "analyze")
+            a = r["actions"][0]
+            self.assertEqual(a["kind"], "apply_fix")
+            self.assertFalse(a["auto"])   # corriger le code : toujours à valider
+            res = e.confirm(a["id"])["result"]
+            self.assertTrue(res["applied"])
+            code = (root / "lampe" / "lampe.ino").read_text()
+            self.assertIn("Serial.begin(115200);", code)
+            self.assertIn("pinMode(13, OUTPUT);", code)
+            self.assertFalse(e.chat("analyse lampe")["actions"])
+            r = e.chat("analyse mon projet", context={"studio": {"spec": self.SPEC, "warnings": ["GPIO2 : broche de démarrage"]}})
+            self.assertIn("GPIO2", r["answer"])
+
+    def test_workspace_safety(self):
+        from patricia.workspace import Workspace, WorkspaceError
+        with tempfile.TemporaryDirectory() as td:
+            ws = Workspace(Path(td) / "ws")
+            ws.mkdir("a")
+            os.symlink("/etc", ws.root / "lien")
+            for bad in ("../x", "a/../../x", ".cache", "lien/passwd", "a/" + "/".join("b" * 9)):
+                with self.assertRaises(WorkspaceError, msg=bad):
+                    ws.path(bad)
+            with self.assertRaises(WorkspaceError):
+                ws.write("a/prog.exe", "x")
+            with self.assertRaises(WorkspaceError):
+                ws.delete("")
+            self.assertEqual([i["name"] for i in ws.list("")["items"]], ["a"])
+
+
 class StyleTests(unittest.TestCase):
     def test_flavor_rules(self):
         from patricia import style
@@ -476,6 +602,36 @@ class GitHubTests(unittest.TestCase):
             finally:
                 github.API, github.CONFIG = old
                 fake.server.shutdown()
+
+class VoiceTests(unittest.TestCase):
+    def test_spoken_text(self):
+        from patricia import voice
+        t = voice.spoken("**W3** chauffe à 45°C → 80% sur 3.3 V\n```cpp\nint x;\n```\nhttps://exemple.fr 😅")
+        self.assertEqual(t, "worker 3 chauffe à 45 degrés vers 80 pour cent sur 3,3 volts. (le code est affiché à l'écran). le lien affiché.")
+        self.assertIn("192.168.4.1", voice.spoken("ouvre 192.168.4.1"))
+
+    def test_piper_pace(self):
+        from unittest import mock
+        from patricia import voice
+        seen = {}
+
+        def fake_run(cmd, **kw):
+            seen["cmd"] = cmd
+            return mock.Mock(returncode=0, stdout=b"RIFF....", stderr=b"")
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(voice, "PIPER_VOICE", Path(d) / "v.onnx"), \
+                mock.patch.object(voice.subprocess, "run", fake_run), mock.patch.dict(os.environ, {}, clear=False):
+            (Path(d) / "v.onnx").write_bytes(b"x")
+            os.environ.pop("NEXUS_PIPER_SPEED", None)
+            voice.synthesize("Bonjour. Je suis Patricia.")
+            cmd = seen["cmd"]
+            self.assertEqual(cmd[cmd.index("--length_scale") + 1], "1.08")
+            self.assertEqual(cmd[cmd.index("--sentence_silence") + 1], "0.25")
+            os.environ["NEXUS_PIPER_SPEED"] = "1.2"
+            voice.synthesize("Bonjour.", rate=0.95)        # débit normal de l'interface = base du Pi
+            self.assertEqual(seen["cmd"][seen["cmd"].index("--length_scale") + 1], "1.20")
+            voice.synthesize("Bonjour.", speed=0.9)        # ancien client : length_scale absolu
+            self.assertEqual(seen["cmd"][seen["cmd"].index("--length_scale") + 1], "0.90")
+
 
 class AgentHttpTests(unittest.TestCase):
     """Démarre le vrai serveur de l'agent sur un port libre, avec des dossiers temporaires."""

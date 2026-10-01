@@ -272,6 +272,12 @@
 
     // Règles
     const rules = (spec.rules || []).map((r, idx) => {
+      if (r.if && r.if.every != null) {   // minuterie : « toutes les N s, faire … (puis …) »
+        const dst = instances[r.then.m];
+        if (!dst || !dst.mod.act) { warnings.push(`Règle ${idx + 1} ignorée : actionneur introuvable.`); return null; }
+        const ms = Math.max(200, Math.round(Number(r.if.every) * 1000) || 1000);
+        return { idx: idx + 1, dst, op: 'every', ms, then: r.then, else: r.else && r.else.m != null && instances[r.else.m] ? r.else : null };
+      }
       const vsrc = r.if.var != null && r.if.var !== '' ? varBy(r.if.var) : null;
       const src = vsrc ? null : instances[r.if.m];
       const dst = instances[r.then.m];
@@ -470,8 +476,28 @@
       L.push('  static uint32_t last = 0;');
       L.push('  if (millis() - last < 200) return;');
       L.push('  last = millis();');
+      const actCall = (t, dst) => {
+        if (!t) return '';
+        if (t.act === 'on') return `${dst.p}_on();`;
+        if (t.act === 'off') return `${dst.p}_off();`;
+        if (t.act === 'set') return `${dst.p}_set(${fmtNum(t.v)});`;
+        if (t.act === 'toggle') return `${dst.p}_toggle();`;
+        return '';
+      };
       rules.forEach((r) => {
         const v = r.expr;
+        if (r.op === 'every') {
+          const thenCode = actCall(r.then, r.dst), elseCode = r.else ? actCall(r.else, instances[r.else.m]) : '';
+          L.push(`  // Règle ${r.idx} : toutes les ${String(r.ms / 1000).replace(".", ",")} s → ${r.dst.mod.name} ${r.then.act}${r.else ? ' / ' + r.else.act : ''}`);
+          L.push(`  static uint32_t every${r.idx} = 0;`);
+          if (r.else) {
+            L.push(`  static int8_t phase${r.idx} = 0;`);
+            L.push(`  if (millis() - every${r.idx} >= ${r.ms}) { every${r.idx} = millis(); phase${r.idx} = !phase${r.idx}; if (phase${r.idx}) { ${thenCode} } else { ${elseCode} } }`);
+          } else {
+            L.push(`  if (millis() - every${r.idx} >= ${r.ms}) { every${r.idx} = millis(); ${thenCode} }`);
+          }
+          return;
+        }
         if (r.op === 'map') {
           const [a, b] = r.inR, [c, d] = r.outR;
           L.push(`  // Règle ${r.idx} : ${r.dst.mod.name} suit ${r.srcName} ${r.out.l || r.out.k} (${a}…${b} → ${c}…${d})`);
@@ -482,14 +508,6 @@
           L.push('  }');
           return;
         }
-        const actCall = (t, dst) => {
-          if (!t) return '';
-          if (t.act === 'on') return `${dst.p}_on();`;
-          if (t.act === 'off') return `${dst.p}_off();`;
-          if (t.act === 'set') return `${dst.p}_set(${fmtNum(t.v)});`;
-          if (t.act === 'toggle') return `${dst.p}_toggle();`;
-          return '';
-        };
         const thenCode = actCall(r.then, r.dst);
         const elseCode = r.else ? actCall(r.else, instances[r.else.m] || r.dst) : '';
         const thr = r.vthr ? r.vthr.c : fmtNum(r.v);

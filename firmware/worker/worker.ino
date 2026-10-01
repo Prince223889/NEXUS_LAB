@@ -16,6 +16,7 @@
 #include <mbedtls/sha256.h>
 #include <esp_ota_ops.h>
 #include <esp_system.h>
+#include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include "config.h"
@@ -51,7 +52,14 @@ enum ServiceJob : uint8_t {
   SERVICE_I2C_SCAN,
   SERVICE_WIFI_SCAN,
   SERVICE_MEM_TEST,
-  SERVICE_IDENTIFY
+  SERVICE_IDENTIFY,
+  SERVICE_ADC_READ,
+  SERVICE_GPIO_TEST,
+  SERVICE_PWM_GEN,
+  SERVICE_SERVO_SWEEP,
+  SERVICE_TONE_TEST,
+  SERVICE_ONEWIRE_SCAN,
+  SERVICE_LOGIC_SAMPLE
 };
 
 ServiceJob serviceJobKind = SERVICE_NONE;
@@ -76,6 +84,7 @@ uint32_t lastCheckpointMs = 0;
 uint32_t lastCheckpointProgress = 0;
 
 static void logLine(const String &s);
+static void serviceReleasePins();
 
 // ---------------------------------------------------------------------------
 // Utilitaires
@@ -378,6 +387,25 @@ static void sendHeartbeat() {
 }
 
 // ---------------------------------------------------------------------------
+// Broches sûres (panneau GPIO et jobs « matériel ») : jamais la flash, la PSRAM, l'USB ni la console.
+// ---------------------------------------------------------------------------
+
+#if CONFIG_IDF_TARGET_ESP32
+static const int8_t gpioSafe[] = {2, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
+#elif CONFIG_IDF_TARGET_ESP32S3
+static const int8_t gpioSafe[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 38, 39, 40, 41, 42, 47, 48};
+#else
+static const int8_t gpioSafe[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+#endif
+int8_t gpioPwmPin = -1;
+
+static bool gpioAllowed(int pin) {
+  for (int8_t p : gpioSafe)
+    if (p == pin) return true;
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Jobs de diagnostic
 // ---------------------------------------------------------------------------
 
@@ -396,6 +424,7 @@ static void cancelServiceJob() {
   progress = 0;
   clearCheckpoint();
   setLed(false);
+  serviceReleasePins();
   WiFi.scanDelete();
   lastResult = "CANCELLED";
   currentJob = "";
@@ -406,6 +435,7 @@ static void cancelServiceJob() {
 }
 
 static void finishServiceJob(bool ok, const String &result) {
+  serviceReleasePins();
   serviceJobKind = SERVICE_NONE;
   servicePhase = 0;
   progress = ok ? 100 : 0;
@@ -503,6 +533,13 @@ static void startServiceJob(String type, bool turbo) {
   else if (type == "WIFI_SCAN") serviceJobKind = SERVICE_WIFI_SCAN;
   else if (type == "MEM_TEST") serviceJobKind = SERVICE_MEM_TEST;
   else if (type == "IDENTIFY") serviceJobKind = SERVICE_IDENTIFY;
+  else if (type == "ADC_READ") serviceJobKind = SERVICE_ADC_READ;
+  else if (type == "GPIO_TEST") serviceJobKind = SERVICE_GPIO_TEST;
+  else if (type == "PWM_GEN") serviceJobKind = SERVICE_PWM_GEN;
+  else if (type == "SERVO_SWEEP") serviceJobKind = SERVICE_SERVO_SWEEP;
+  else if (type == "TONE_TEST") serviceJobKind = SERVICE_TONE_TEST;
+  else if (type == "ONEWIRE_SCAN") serviceJobKind = SERVICE_ONEWIRE_SCAN;
+  else if (type == "LOGIC_SAMPLE") serviceJobKind = SERVICE_LOGIC_SAMPLE;
   else serviceJobKind = SERVICE_SYSTEM_TEST;
   logLine("JOB START " + type);
 }
@@ -684,6 +721,427 @@ static void serviceIdentify() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Jobs « matériel » : voltmètre, test des broches, générateur, servo, buzzer, 1-Wire, analyseur logique.
+// Les broches viennent de config.h et doivent être dans gpioSafe ; chaque job relâche ses broches à la fin
+// (et sur annulation ou dépassement de délai) en les repassant en entrée.
+// ---------------------------------------------------------------------------
+
+static const int8_t logicPinsCfg[] = WORKER_LOGIC_PINS;
+#define LOGIC_MAX_PINS (sizeof(logicPinsCfg) / sizeof(logicPinsCfg[0]))
+int8_t serviceLedcPin = -1;  // broche PWM tenue par PWM_GEN / SERVO_SWEEP / TONE_TEST
+uint16_t hwIndex = 0;        // broche ou étape en cours
+uint16_t hwCount = 0;
+String hwText = "";
+String hwText2 = "";
+uint16_t hwFree = 0, hwLow = 0, hwHigh = 0, hwOdd = 0;
+uint8_t owRoms[WORKER_ONEWIRE_MAX][8];
+uint8_t owFound = 0, owCrcErrors = 0;
+uint8_t owRom[8];
+int owLastDisc = 0;
+bool owLastDevice = false;
+int8_t owPin = -1;
+portMUX_TYPE owMux = portMUX_INITIALIZER_UNLOCKED;
+int8_t logicPins[LOGIC_MAX_PINS];
+uint8_t logicN = 0;
+uint8_t logicLast[LOGIC_MAX_PINS];
+uint32_t logicRises[LOGIC_MAX_PINS];
+uint32_t logicHigh[LOGIC_MAX_PINS];
+uint32_t logicSamples = 0;
+
+static void serviceReleasePins() {
+  if (serviceLedcPin >= 0) {
+    ledcWrite(serviceLedcPin, 0);
+    ledcDetach(serviceLedcPin);
+    pinMode(serviceLedcPin, INPUT);
+    serviceLedcPin = -1;
+  }
+  if (owPin >= 0) {
+    pinMode(owPin, INPUT);
+    owPin = -1;
+  }
+}
+
+// Broche de sortie utilisable par un job : sûre, non tenue par le panneau GPIO, capable de sortie.
+static bool hwOutputPinOk(int pin) {
+  if (!gpioAllowed(pin) || pin == gpioPwmPin || pin == WORKER_LED_PIN) return false;
+#if CONFIG_IDF_TARGET_ESP32
+  if (pin >= 34) return false;  // GPIO34-39 : entrées seules
+#endif
+  return true;
+}
+
+static bool hwAttachLedc(int pin, uint32_t freq, uint8_t bits) {
+  if (!hwOutputPinOk(pin)) return false;
+  if (!ledcAttach(pin, freq, bits)) return false;
+  serviceLedcPin = pin;
+  return true;
+}
+
+// ADC_READ : voltmètre sur toutes les broches sûres reliées à l'ADC1, une broche par passage de loop().
+static void serviceAdcRead() {
+  if (servicePhase == 0) {
+    hwIndex = 0;
+    hwCount = 0;
+    hwText = "";
+    servicePhase = 1;
+  }
+  while (hwIndex < sizeof(gpioSafe)) {
+    const int pin = gpioSafe[hwIndex++];
+    const int ch = digitalPinToAnalogChannel(pin);
+    if (pin == WORKER_LED_PIN || pin == gpioPwmPin || ch < 0 || ch >= SOC_ADC_MAX_CHANNEL_NUM) continue;  // ADC1 seulement
+    uint32_t sum = 0;
+    for (uint8_t k = 0; k < WORKER_ADC_SAMPLES; ++k) sum += analogReadMilliVolts(pin);
+    hwText += " " + String(pin) + ":" + String(sum / WORKER_ADC_SAMPLES);
+    hwCount++;
+    break;
+  }
+  progress = static_cast<uint32_t>((hwIndex * 100UL) / sizeof(gpioSafe));
+  if (hwIndex >= sizeof(gpioSafe)) {
+    if (!hwCount) finishServiceJob(false, "ADC_READ=NO_PIN");
+    else finishServiceJob(true, "ADC mV N=" + String(hwCount) + hwText);
+  }
+}
+
+// GPIO_TEST : tirage interne haut puis bas sur chaque broche sûre.
+// Haut→1 et bas→0 : broche libre ; toujours 0 : tenue à GND ; toujours 1 : tenue à 3V3 (court-circuit,
+// résistance de tirage externe ou composant branché). La broche repart en entrée.
+static void serviceGpioTest() {
+  if (servicePhase == 0) {
+    hwIndex = 0;
+    hwCount = 0;
+    hwFree = hwLow = hwHigh = hwOdd = 0;
+    hwText = "";
+    hwText2 = "";
+    servicePhase = 1;
+  }
+  for (uint8_t k = 0; k < 4 && hwIndex < sizeof(gpioSafe); ++k) {
+    const int pin = gpioSafe[hwIndex++];
+    if (!hwOutputPinOk(pin)) continue;  // LED, PWM du panneau, entrées seules sans tirage interne
+    pinMode(pin, INPUT_PULLUP);
+    delayMicroseconds(200);
+    const int up = digitalRead(pin);
+    pinMode(pin, INPUT_PULLDOWN);
+    delayMicroseconds(200);
+    const int down = digitalRead(pin);
+    pinMode(pin, INPUT);
+    hwCount++;
+    if (up && !down) hwFree++;
+    else if (!up && !down) {
+      hwLow++;
+      hwText += " " + String(pin);
+    } else if (up && down) {
+      hwHigh++;
+      hwText2 += " " + String(pin);
+    } else hwOdd++;
+  }
+  progress = static_cast<uint32_t>((hwIndex * 100UL) / sizeof(gpioSafe));
+  if (hwIndex >= sizeof(gpioSafe)) {
+    String result = "GPIO_TEST PINS=" + String(hwCount) + " FREE=" + String(hwFree) + " GND=" + String(hwLow) +
+                    " 3V3=" + String(hwHigh);
+    if (hwOdd) result += " ODD=" + String(hwOdd);
+    if (hwLow) result += " | GND:" + hwText;
+    if (hwHigh) result += " | 3V3:" + hwText2;
+    finishServiceJob(hwCount > 0, result);
+  }
+}
+
+// PWM_GEN : générateur de signal carré sur WORKER_PWM_PIN pendant WORKER_PWM_DURATION_MS.
+static void servicePwmGen() {
+  if (servicePhase == 0) {
+    if (!hwAttachLedc(WORKER_PWM_PIN, WORKER_PWM_FREQ_HZ, 10)) {
+      finishServiceJob(false, "PWM_GEN=PIN_REFUSED GPIO=" + String(WORKER_PWM_PIN));
+      return;
+    }
+    ledcWrite(WORKER_PWM_PIN, static_cast<uint32_t>((WORKER_PWM_DUTY_PCT * 1023UL) / 100UL));
+    servicePhaseAt = millis();
+    servicePhase = 1;
+    return;
+  }
+  const uint32_t elapsed = millis() - servicePhaseAt;
+  progress = elapsed >= WORKER_PWM_DURATION_MS ? 99 : static_cast<uint32_t>((elapsed * 100UL) / WORKER_PWM_DURATION_MS);
+  if (elapsed < WORKER_PWM_DURATION_MS) return;
+  const uint32_t real = ledcReadFreq(WORKER_PWM_PIN);
+  serviceReleasePins();
+  finishServiceJob(true, "PWM GPIO=" + String(WORKER_PWM_PIN) + " FREQ=" + String(WORKER_PWM_FREQ_HZ) + "Hz REAL=" +
+                             String(real) + "Hz DUTY=" + String(WORKER_PWM_DUTY_PCT) + "% MS=" + String(WORKER_PWM_DURATION_MS));
+}
+
+// SERVO_SWEEP : balayage 0° → 180° → 0° d'un servomoteur standard (50 Hz, 14 bits).
+static void serviceServoSweep() {
+  const uint16_t half = 180 / WORKER_SERVO_STEP_DEG;
+  if (servicePhase == 0) {
+    if (!hwAttachLedc(WORKER_SERVO_PIN, 50, 14)) {
+      finishServiceJob(false, "SERVO_SWEEP=PIN_REFUSED GPIO=" + String(WORKER_SERVO_PIN));
+      return;
+    }
+    hwIndex = 0;
+    servicePhaseAt = 0;
+    servicePhase = 1;
+  }
+  if (servicePhaseAt && millis() - servicePhaseAt < WORKER_SERVO_STEP_MS) return;
+  servicePhaseAt = millis();
+  if (hwIndex > 2 * half) {
+    serviceReleasePins();
+    finishServiceJob(true, "SERVO GPIO=" + String(WORKER_SERVO_PIN) + " SWEEP=0-180-0 STEP=" + String(WORKER_SERVO_STEP_DEG) +
+                               "deg PULSE=" + String(WORKER_SERVO_MIN_US) + "-" + String(WORKER_SERVO_MAX_US) + "us");
+    return;
+  }
+  const uint32_t angle = (hwIndex <= half ? hwIndex : 2 * half - hwIndex) * WORKER_SERVO_STEP_DEG;
+  const uint32_t us = WORKER_SERVO_MIN_US + ((WORKER_SERVO_MAX_US - WORKER_SERVO_MIN_US) * angle) / 180UL;
+  ledcWrite(WORKER_SERVO_PIN, (us * 16383UL) / 20000UL);  // période de 20 ms
+  hwIndex++;
+  progress = static_cast<uint32_t>((hwIndex * 100UL) / (2UL * half + 2UL));
+}
+
+// TONE_TEST : balayage de fréquence sur un buzzer passif (ou un haut-parleur via transistor).
+static void serviceToneTest() {
+  if (servicePhase == 0) {
+    if (!hwAttachLedc(WORKER_TONE_PIN, WORKER_TONE_FROM_HZ, 10)) {
+      finishServiceJob(false, "TONE_TEST=PIN_REFUSED GPIO=" + String(WORKER_TONE_PIN));
+      return;
+    }
+    hwIndex = 0;
+    servicePhaseAt = 0;
+    servicePhase = 1;
+  }
+  if (servicePhaseAt && millis() - servicePhaseAt < WORKER_TONE_STEP_MS) return;
+  servicePhaseAt = millis();
+  if (hwIndex >= WORKER_TONE_STEPS) {
+    serviceReleasePins();
+    finishServiceJob(true, "TONE GPIO=" + String(WORKER_TONE_PIN) + " SWEEP=" + String(WORKER_TONE_FROM_HZ) + "-" +
+                               String(WORKER_TONE_TO_HZ) + "Hz STEPS=" + String(WORKER_TONE_STEPS));
+    return;
+  }
+  const uint32_t span = WORKER_TONE_TO_HZ - WORKER_TONE_FROM_HZ;
+  const uint32_t f = WORKER_TONE_FROM_HZ + (WORKER_TONE_STEPS > 1 ? (span * hwIndex) / (WORKER_TONE_STEPS - 1) : 0);
+  ledcWriteTone(WORKER_TONE_PIN, f);
+  hwIndex++;
+  progress = static_cast<uint32_t>((hwIndex * 100UL) / (WORKER_TONE_STEPS + 1UL));
+}
+
+// --- 1-Wire « bit-bang » (sans bibliothèque) : collecteur ouvert + tirage interne, créneaux standard ---
+
+static inline void owDrive(bool low) { gpio_set_level(static_cast<gpio_num_t>(owPin), low ? 0 : 1); }
+static inline int owSample() { return gpio_get_level(static_cast<gpio_num_t>(owPin)); }
+
+static bool owReset() {
+  owDrive(true);
+  delayMicroseconds(480);
+  portENTER_CRITICAL(&owMux);
+  owDrive(false);
+  delayMicroseconds(70);
+  const bool presence = owSample() == 0;
+  portEXIT_CRITICAL(&owMux);
+  delayMicroseconds(410);
+  return presence;
+}
+
+static void owWriteBit(uint8_t bit) {
+  portENTER_CRITICAL(&owMux);
+  owDrive(true);
+  delayMicroseconds(bit ? 6 : 60);
+  owDrive(false);
+  portEXIT_CRITICAL(&owMux);
+  delayMicroseconds(bit ? 64 : 10);
+}
+
+static uint8_t owReadBit() {
+  portENTER_CRITICAL(&owMux);
+  owDrive(true);
+  delayMicroseconds(3);
+  owDrive(false);
+  delayMicroseconds(10);
+  const uint8_t bit = owSample() ? 1 : 0;
+  portEXIT_CRITICAL(&owMux);
+  delayMicroseconds(53);
+  return bit;
+}
+
+static void owWriteByte(uint8_t v) {
+  for (uint8_t i = 0; i < 8; ++i) owWriteBit((v >> i) & 1);
+}
+
+static uint8_t owReadByte() {
+  uint8_t v = 0;
+  for (uint8_t i = 0; i < 8; ++i) v |= owReadBit() << i;
+  return v;
+}
+
+static uint8_t owCrc8(const uint8_t *data, uint8_t len) {
+  uint8_t crc = 0;
+  while (len--) {
+    uint8_t in = *data++;
+    for (uint8_t i = 0; i < 8; ++i) {
+      const uint8_t mix = (crc ^ in) & 0x01;
+      crc >>= 1;
+      if (mix) crc ^= 0x8C;
+      in >>= 1;
+    }
+  }
+  return crc;
+}
+
+// Recherche ROM (Maxim AN187) : renvoie 1 si un identifiant valide est trouvé, 0 si fin, -1 si erreur.
+static int owSearchNext() {
+  if (owLastDevice || !owReset()) return 0;
+  owWriteByte(0xF0);
+  int lastZero = 0;
+  for (int bitNo = 1; bitNo <= 64; ++bitNo) {
+    const uint8_t a = owReadBit(), b = owReadBit();
+    if (a && b) return -1;  // plus personne ne répond
+    const uint8_t mask = static_cast<uint8_t>(1U << ((bitNo - 1) % 8));
+    uint8_t &byte = owRom[(bitNo - 1) / 8];
+    uint8_t dir;
+    if (a != b) dir = a;
+    else {
+      dir = bitNo < owLastDisc ? ((byte & mask) ? 1 : 0) : (bitNo == owLastDisc ? 1 : 0);
+      if (!dir) lastZero = bitNo;
+    }
+    if (dir) byte |= mask;
+    else byte &= static_cast<uint8_t>(~mask);
+    owWriteBit(dir);
+  }
+  owLastDisc = lastZero;
+  if (!owLastDisc) owLastDevice = true;
+  return owCrc8(owRom, 7) == owRom[7] ? 1 : -1;
+}
+
+static bool owIsThermo(const uint8_t *rom) { return rom[0] == 0x28 || rom[0] == 0x22 || rom[0] == 0x10; }
+
+// ONEWIRE_SCAN : liste les identifiants ROM du bus, puis lit la température des DS18B20/DS1822/DS18S20.
+static void serviceOnewireScan() {
+  switch (servicePhase) {
+    case 0: {
+      if (!hwOutputPinOk(WORKER_ONEWIRE_PIN)) {
+        finishServiceJob(false, "ONEWIRE=PIN_REFUSED GPIO=" + String(WORKER_ONEWIRE_PIN));
+        return;
+      }
+      owPin = WORKER_ONEWIRE_PIN;
+      pinMode(owPin, OUTPUT_OPEN_DRAIN | PULLUP);
+      owDrive(false);
+      delayMicroseconds(500);
+      owFound = owCrcErrors = 0;
+      owLastDisc = 0;
+      owLastDevice = false;
+      memset(owRom, 0, sizeof(owRom));
+      if (owSample() == 0) {
+        serviceReleasePins();
+        finishServiceJob(false, "ONEWIRE GPIO=" + String(WORKER_ONEWIRE_PIN) + " BUS=LOW (court-circuit vers GND ?)");
+        return;
+      }
+      if (!owReset()) {
+        serviceReleasePins();
+        finishServiceJob(true, "ONEWIRE GPIO=" + String(WORKER_ONEWIRE_PIN) + " FOUND=0");
+        return;
+      }
+      servicePhase = 1;
+      progress = 10;
+      return;
+    }
+    case 1: {  // un identifiant par passage de loop()
+      const int r = owSearchNext();
+      if (r > 0 && owFound < WORKER_ONEWIRE_MAX) memcpy(owRoms[owFound++], owRom, 8);
+      if (r < 0) owCrcErrors++;
+      progress = 10 + owFound * 60UL / WORKER_ONEWIRE_MAX;
+      if (r != 0 && owFound < WORKER_ONEWIRE_MAX && owCrcErrors < 3 && !owLastDevice) return;
+      bool thermo = false;
+      for (uint8_t i = 0; i < owFound; ++i) thermo = thermo || owIsThermo(owRoms[i]);
+      if (thermo && owReset()) {
+        owWriteByte(0xCC);  // Skip ROM
+        owWriteByte(0x44);  // Convert T sur tous les capteurs
+        servicePhaseAt = millis();
+        servicePhase = 2;
+        progress = 75;
+        return;
+      }
+      servicePhase = 3;
+      return;
+    }
+    case 2:
+      if (millis() - servicePhaseAt < 800UL) return;  // conversion 12 bits : 750 ms
+      servicePhase = 3;
+      return;
+    default: {
+      String result = "ONEWIRE GPIO=" + String(WORKER_ONEWIRE_PIN) + " FOUND=" + String(owFound);
+      if (owCrcErrors) result += " CRC_ERR=" + String(owCrcErrors);
+      if (owFound) result += " :";
+      for (uint8_t i = 0; i < owFound; ++i) {
+        char hex[17];
+        for (uint8_t k = 0; k < 8; ++k) snprintf(hex + 2 * k, 3, "%02X", owRoms[i][k]);
+        result += " " + String(hex);
+        if (!owIsThermo(owRoms[i]) || !owReset()) continue;
+        owWriteByte(0x55);  // Match ROM
+        for (uint8_t k = 0; k < 8; ++k) owWriteByte(owRoms[i][k]);
+        owWriteByte(0xBE);  // lecture du bloc-notes
+        uint8_t sp[9];
+        for (uint8_t k = 0; k < 9; ++k) sp[k] = owReadByte();
+        if (owCrc8(sp, 8) != sp[8]) {
+          result += "=ERR";
+          continue;
+        }
+        const int16_t raw = static_cast<int16_t>((sp[1] << 8) | sp[0]);
+        const float t = owRoms[i][0] == 0x10 ? raw / 2.0f : raw / 16.0f;
+        result += "=" + String(t, 1) + "C";
+      }
+      serviceReleasePins();
+      finishServiceJob(owCrcErrors == 0 || owFound > 0, result);
+      return;
+    }
+  }
+}
+
+// LOGIC_SAMPLE : analyseur logique, échantillonne WORKER_LOGIC_PINS à WORKER_LOGIC_RATE_HZ par tranches
+// de 100 ms (le serveur web reste réactif entre deux tranches) ; fréquence et rapport cyclique par broche.
+static void serviceLogicSample() {
+  const uint32_t total = (WORKER_LOGIC_RATE_HZ * WORKER_LOGIC_WINDOW_MS) / 1000UL;
+  const uint32_t chunk = WORKER_LOGIC_RATE_HZ / 10UL;
+  const uint32_t periodUs = 1000000UL / WORKER_LOGIC_RATE_HZ;
+  if (servicePhase == 0) {
+    logicN = 0;
+    for (size_t i = 0; i < LOGIC_MAX_PINS; ++i) {
+      const int pin = logicPinsCfg[i];
+      if (!gpioAllowed(pin) || pin == gpioPwmPin || pin == WORKER_LED_PIN) continue;
+      pinMode(pin, INPUT);
+      logicPins[logicN] = static_cast<int8_t>(pin);
+      logicLast[logicN] = static_cast<uint8_t>(gpio_get_level(static_cast<gpio_num_t>(pin)));
+      logicRises[logicN] = logicHigh[logicN] = 0;
+      logicN++;
+    }
+    if (!logicN) {
+      finishServiceJob(false, "LOGIC_SAMPLE=PIN_REFUSED");
+      return;
+    }
+    logicSamples = 0;
+    servicePhase = 1;
+    return;
+  }
+  uint32_t next = micros();
+  const uint32_t end = min(logicSamples + chunk, total);
+  for (; logicSamples < end; ++logicSamples) {
+    while (static_cast<int32_t>(micros() - next) < 0) {
+    }
+    next += periodUs;
+    for (uint8_t i = 0; i < logicN; ++i) {
+      const uint8_t v = static_cast<uint8_t>(gpio_get_level(static_cast<gpio_num_t>(logicPins[i])));
+      if (v) logicHigh[i]++;
+      if (v && !logicLast[i]) logicRises[i]++;
+      logicLast[i] = v;
+    }
+  }
+  progress = static_cast<uint32_t>((static_cast<uint64_t>(logicSamples) * 100ULL) / total);
+  if (logicSamples < total) return;
+  String result = "LOGIC RATE=" + String(WORKER_LOGIC_RATE_HZ) + "Hz MS=" + String(WORKER_LOGIC_WINDOW_MS);
+  for (uint8_t i = 0; i < logicN; ++i) {
+    result += " " + String(logicPins[i]) + ":";
+    if (!logicRises[i]) result += logicHigh[i] ? "H" : "L";
+    else
+      result += String((logicRises[i] * 1000UL) / WORKER_LOGIC_WINDOW_MS) + "Hz/" +
+                String(static_cast<uint32_t>((static_cast<uint64_t>(logicHigh[i]) * 100ULL) / total)) + "%";
+  }
+  finishServiceJob(true, result);
+}
+
 static void serviceJobs() {
   if (serviceJobKind == SERVICE_NONE) return;
   if (cancelRequested) {
@@ -704,6 +1162,13 @@ static void serviceJobs() {
     case SERVICE_WIFI_SCAN: serviceWifiScan(); break;
     case SERVICE_MEM_TEST: serviceMemTest(); break;
     case SERVICE_IDENTIFY: serviceIdentify(); break;
+    case SERVICE_ADC_READ: serviceAdcRead(); break;
+    case SERVICE_GPIO_TEST: serviceGpioTest(); break;
+    case SERVICE_PWM_GEN: servicePwmGen(); break;
+    case SERVICE_SERVO_SWEEP: serviceServoSweep(); break;
+    case SERVICE_TONE_TEST: serviceToneTest(); break;
+    case SERVICE_ONEWIRE_SCAN: serviceOnewireScan(); break;
+    case SERVICE_LOGIC_SAMPLE: serviceLogicSample(); break;
     default: break;
   }
 }
@@ -1142,21 +1607,6 @@ static void handleEmuStop() {
 // Seules les broches sûres de la puce sont accessibles (jamais la flash, la PSRAM, l'USB ou la console).
 // ---------------------------------------------------------------------------
 
-#if CONFIG_IDF_TARGET_ESP32
-static const int8_t gpioSafe[] = {2, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39};
-#elif CONFIG_IDF_TARGET_ESP32S3
-static const int8_t gpioSafe[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 38, 39, 40, 41, 42, 47, 48};
-#else
-static const int8_t gpioSafe[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-#endif
-int8_t gpioPwmPin = -1;
-
-static bool gpioAllowed(int pin) {
-  for (int8_t p : gpioSafe)
-    if (p == pin) return true;
-  return false;
-}
-
 static String gpioStateJson(int pin) {
   String j = "{\"pin\":" + String(pin) + ",\"level\":" + String(digitalRead(pin));
   if (digitalPinToAnalogChannel(pin) >= 0) j += ",\"mv\":" + String(analogReadMilliVolts(pin));
@@ -1181,6 +1631,10 @@ static void handleGpioGet() {
     server.send(400, "text/plain", "broche non autorisee");
     return;
   }
+  if (pin == serviceLedcPin || pin == owPin) {  // une lecture ADC détacherait le signal du job en cours
+    server.send(409, "text/plain", "busy");
+    return;
+  }
   server.send(200, "application/json", gpioStateJson(pin));
 }
 
@@ -1192,7 +1646,7 @@ static void handleGpioSet() {
     server.send(400, "text/plain", "broche non autorisee");
     return;
   }
-  if (emuActive || state == "FLASHING") {
+  if (emuActive || state == "FLASHING" || pin == serviceLedcPin || pin == owPin) {
     server.send(409, "text/plain", "busy");
     return;
   }
@@ -1288,7 +1742,8 @@ static void handleCapabilities() {
   const String caps = String("{\"protocol\":") + WORKER_PROTOCOL_VERSION + ",\"version\":\"" + LAB_VERSION +
                       "\",\"supports_resume\":true,\"supports_ota\":true,\"supports_cancel\":true,\"max_role_id\":10"
                       ",\"jobs\":[\"PING\",\"SYSTEM_TEST\",\"CHECKUP\",\"BENCHMARK\",\"FS_TEST\",\"I2C_SCAN\",\"WIFI_SCAN\","
-                      "\"MEM_TEST\",\"IDENTIFY\"]"
+                      "\"MEM_TEST\",\"IDENTIFY\",\"ADC_READ\",\"GPIO_TEST\",\"PWM_GEN\",\"SERVO_SWEEP\",\"TONE_TEST\","
+                      "\"ONEWIRE_SCAN\",\"LOGIC_SAMPLE\"]"
                       ",\"features\":[\"OTA\",\"HEARTBEAT\",\"MEMORY\",\"RESET_REASON\",\"MDNS\",\"CANCEL\",\"TELEMETRY\","
                       "\"WIFI_SCAN\",\"STACK_HEALTH\",\"LITTLEFS_STATS\",\"CHECKPOINTS\",\"DISCOVERY\",\"BENCH_EMULATOR\",\"GPIO\"]" + emu + "}";
   server.send(200, "application/json", caps);
@@ -1309,7 +1764,7 @@ button.p{background:var(--acc);border-color:var(--acc);color:#fff}pre{white-spac
 .net{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
 </style></head><body><div class="wrap"><header><div><h1 id="t">ESP32 LAB · Worker</h1><div class="mut" id="sub">connexion…</div></div><span class="badge" id="st">—</span></header>
 <div class="card"><div style="display:flex;justify-content:space-between"><b id="job">Aucun job</b><span id="pct" class="mut">0 %</span></div><div class="bar"><i id="bi" style="width:0"></i></div>
-<div class="btns" style="margin-top:14px"><button class="p" onclick="cmd('SYSTEM_TEST')">Check-up</button><button onclick="cmd('BENCHMARK')">Benchmark</button><button onclick="cmd('FS_TEST')">Test flash</button><button onclick="cmd('I2C_SCAN')">Scan I2C</button><button onclick="cmd('MEM_TEST')">Test mémoire</button><button onclick="cmd('IDENTIFY')">Identifier</button><button onclick="post('/api/cancel')">Annuler</button><button onclick="scan()">Radar Wi-Fi</button><button onclick="if(confirm('Redémarrer ?'))post('/api/reboot')">Redémarrer</button></div></div>
+<div class="btns" style="margin-top:14px"><button class="p" onclick="cmd('SYSTEM_TEST')">Check-up</button><button onclick="cmd('BENCHMARK')">Benchmark</button><button onclick="cmd('FS_TEST')">Test flash</button><button onclick="cmd('I2C_SCAN')">Scan I2C</button><button onclick="cmd('MEM_TEST')">Test mémoire</button><button onclick="cmd('IDENTIFY')">Identifier</button><button onclick="cmd('ADC_READ')">Voltmètre</button><button onclick="cmd('GPIO_TEST')">Test GPIO</button><button onclick="cmd('ONEWIRE_SCAN')">Scan 1-Wire</button><button onclick="cmd('LOGIC_SAMPLE')">Analyseur logique</button><button onclick="cmd('PWM_GEN')">Générateur PWM</button><button onclick="cmd('SERVO_SWEEP')">Servo</button><button onclick="cmd('TONE_TEST')">Buzzer</button><button onclick="post('/api/cancel')">Annuler</button><button onclick="scan()">Radar Wi-Fi</button><button onclick="if(confirm('Redémarrer ?'))post('/api/reboot')">Redémarrer</button></div></div>
 <div class="card grid"><div><div class="k">CPU</div><div class="v" id="cpu">—</div></div><div><div class="k">RAM libre</div><div class="v" id="heap">—</div></div><div><div class="k">Wi-Fi</div><div class="v" id="wifi">—</div></div><div><div class="k">Flash</div><div class="v" id="flash">—</div></div><div><div class="k">Uptime</div><div class="v" id="up">—</div></div><div><div class="k">Reset</div><div class="v" id="rr">—</div></div><div><div class="k">Jobs</div><div class="v" id="jd">—</div></div><div><div class="k">LittleFS</div><div class="v" id="fs">—</div></div></div>
 <div class="card"><div class="k">Dernier résultat</div><pre id="res">—</pre></div><div class="card"><div class="k">Radar Wi-Fi</div><div id="radar" class="mut">Appuyez sur « Radar Wi-Fi ».</div></div></div>
 <script>const $=i=>document.getElementById(i);const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -1327,7 +1782,8 @@ refresh();setInterval(refresh,1000)</script></body></html>)HTML";
 
 static bool knownJob(const String &type) {
   return type == "SYSTEM_TEST" || type == "CHECKUP" || type == "BENCHMARK" || type == "FS_TEST" || type == "I2C_SCAN" ||
-         type == "WIFI_SCAN" || type == "MEM_TEST" || type == "IDENTIFY";
+         type == "WIFI_SCAN" || type == "MEM_TEST" || type == "IDENTIFY" || type == "ADC_READ" || type == "GPIO_TEST" ||
+         type == "PWM_GEN" || type == "SERVO_SWEEP" || type == "TONE_TEST" || type == "ONEWIRE_SCAN" || type == "LOGIC_SAMPLE";
 }
 
 static void handleJob() {

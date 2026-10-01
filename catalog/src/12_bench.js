@@ -66,6 +66,7 @@
     const last = rules.map(() => NaN);
     return function tick(values, act) {
       rules.forEach((r, k) => {
+        if (r.if.every != null) return;   // minuterie : non vérifiable par le banc
         const x = values[r.if.m];
         if (x === undefined || isNaN(x)) return;
         if (r.if.op === 'map') {
@@ -171,6 +172,7 @@
     rulesIn.forEach((r, k) => {
       const src = byInst[r.if && r.if.m], dst = byInst[r.then && r.then.m];
       const tag = `Règle ${k + 1}`;
+      if (r.if && r.if.every != null) { reasons.push(`${tag} : minuterie, vérifiée seulement sur le vrai montage.`); return; }
       if (!src || src.dir !== 'in') { reasons.push(`${tag} : capteur source non émulable.`); return; }
       if (src.out !== r.if.out) { reasons.push(`${tag} : la mesure « ${r.if.out} » n'est pas émulée (seulement « ${src.out} »).`); return; }
       if (!dst || dst.dir !== 'out') { reasons.push(`${tag} : actionneur non observable.`); return; }
@@ -396,7 +398,7 @@
       .replace(/\bfabsf\(/g, 'Math.abs(');
     // eslint-disable-next-line no-new-func
     const fn = new Function('env', 'with (env) {\n' + body + '\n}');
-    const env = Object.assign({ constrain: (v, a, b) => Math.min(Math.max(v, a), b), NAN: NaN }, statics);
+    const env = Object.assign({ constrain: (v, a, b) => Math.min(Math.max(v, a), b), NAN: NaN, millis: () => Date.now() }, statics);
     const mods = (spec.modules || []).map((m) => LAB.module(typeof m === 'string' ? m : m.id));
     const state = {};
     mods.forEach((mod, i) => {

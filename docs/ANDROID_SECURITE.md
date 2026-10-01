@@ -68,7 +68,7 @@ nouvelle.
 
 | Point | Réglage |
 |---|---|
-| Permissions | `INTERNET`, `RECORD_AUDIO` (demandée au premier appui sur le micro, refus géré), `VIBRATE`. Pas de localisation, contacts, SMS, stockage partagé ni service en arrière-plan. |
+| Permissions | `INTERNET`, `RECORD_AUDIO` (demandée au premier appui sur le micro, refus géré), `VIBRATE`, `ACCESS_NETWORK_STATE` (permission normale, sans demande : savoir si Internet est là pour choisir la voix la plus naturelle). Pas de localisation, contacts, SMS, stockage partagé ni service en arrière-plan. |
 | Données du travail hors ligne | Fichier privé `outbox.bin`, chiffré en **AES-256-GCM**. La clé est générée dans le **Keystore Android** et ne peut pas en sortir. Un fichier modifié est rejeté (étiquette GCM). |
 | Accès à la boîte d'envoi | Le pont JavaScript ne la lit que pour la copie intégrée (`file:///android_asset/www/`) ou l'adresse exacte du box enregistrée (schéma, hôte et port). |
 | Sauvegardes | `allowBackup="false"`, `fullBackupContent` et `dataExtractionRules` : rien ne part vers le cloud ni vers un autre téléphone. |
