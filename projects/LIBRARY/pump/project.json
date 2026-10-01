@@ -1,0 +1,60 @@
+{
+  "id": "pump",
+  "title": "Mini-pompe à eau 5 V (via MOSFET)",
+  "category": "motor",
+  "kind": "module",
+  "description": "Pompe submersible pour l'arrosage automatique, avec durée maximale de sécurité.",
+  "tags": [
+    "pompe",
+    "arrosage",
+    "eau"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pump",
+      "name": "Mini-pompe à eau 5 V (via MOSFET)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pump",
+      "name": "Mini-pompe à eau 5 V (via MOSFET)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pump",
+      "name": "Mini-pompe à eau 5 V (via MOSFET)",
+      "pin": "grille MOSFET / IN relais",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 200,
+    "modules_peak_mA": 400,
+    "board_mA": 45,
+    "total_mA": 245,
+    "total_peak_mA": 480
+  },
+  "notes": [
+    "Ne faites jamais tourner la pompe à sec.",
+    "Diode 1N4007 en parallèle de la pompe (cathode côté +).",
+    "Consommation de pointe estimée 480 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Mini-pompe à eau 5 V (via MOSFET) directement en 5 V externe et reliez les masses (GND commun)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,70 @@
+{
+  "id": "lm75",
+  "title": "LM75 / LM75A",
+  "category": "temp",
+  "kind": "module",
+  "description": "Thermomètre et thermostat I2C classique (±2 °C), résolution 0,125 °C.",
+  "tags": [
+    "température",
+    "I2C",
+    "sans bibliothèque"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "lm75",
+      "name": "LM75 / LM75A",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "lm75",
+      "name": "LM75 / LM75A",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lm75",
+      "name": "LM75 / LM75A",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "lm75",
+      "name": "LM75 / LM75A",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "lm75_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "LM75 / LM75A"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

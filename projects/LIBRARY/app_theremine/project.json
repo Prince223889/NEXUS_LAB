@@ -1,0 +1,93 @@
+{
+  "id": "app_theremine",
+  "title": "Thérémine à ultrasons",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Instrument de musique sans contact : la hauteur de la note suit la distance de la main.",
+  "tags": [
+    "musique",
+    "ultrason",
+    "jeu"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "TRIG",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "ECHO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur 1 kΩ / 2 kΩ : ECHO sort du 5 V"
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "+",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "hcsr04_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "HC-SR04 (ultrasons)"
+    }
+  ],
+  "power": {
+    "modules_mA": 35,
+    "modules_peak_mA": 35,
+    "board_mA": 45,
+    "total_mA": 80,
+    "total_peak_mA": 115
+  },
+  "notes": [
+    "HC-SR04 (ultrasons) : la broche ECHO délivre 5 V : utilisez un pont diviseur (1 kΩ / 2 kΩ) ou un convertisseur de niveau."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

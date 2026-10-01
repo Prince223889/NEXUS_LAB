@@ -1,0 +1,70 @@
+{
+  "id": "tmp102",
+  "title": "TMP102",
+  "category": "temp",
+  "kind": "module",
+  "description": "Minuscule thermomètre TI ±0,5 °C, lecture directe du registre 12 bits.",
+  "tags": [
+    "température",
+    "I2C",
+    "sans bibliothèque"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "tmp102",
+      "name": "TMP102",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tmp102",
+      "name": "TMP102",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tmp102",
+      "name": "TMP102",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "tmp102",
+      "name": "TMP102",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "tmp102_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "TMP102"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

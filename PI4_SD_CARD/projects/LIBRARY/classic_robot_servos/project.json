@@ -1,0 +1,34 @@
+{
+  "id": "classic_robot_servos",
+  "title": "Robot éviteur à deux servos continus",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Robot mobile à ultrason et servos à rotation continue.",
+  "tags": [
+    "robot",
+    "ultrason",
+    "servo"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "ESP32Servo",
+      "ver": "3.2.1",
+      "repo": "madhephaestus/ESP32Servo",
+      "author": "Kevin Harrington, John K. Bennett"
+    }
+  ],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

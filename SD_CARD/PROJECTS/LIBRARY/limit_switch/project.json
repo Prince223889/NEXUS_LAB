@@ -1,0 +1,67 @@
+{
+  "id": "limit_switch",
+  "title": "Fin de course mécanique",
+  "category": "motion",
+  "kind": "module",
+  "description": "Micro-rupteur à levier : butée d'axe, détection de porte, imprimante 3D.",
+  "tags": [
+    "fin de course",
+    "micro-rupteur"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "limit_switch",
+      "name": "Fin de course mécanique",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "limit_switch",
+      "name": "Fin de course mécanique",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "limit_switch",
+      "name": "Fin de course mécanique",
+      "pin": "signal",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "l'autre borne vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "limit_switch_state",
+      "unit": "",
+      "label": "État (0/1)",
+      "module": "Fin de course mécanique"
+    },
+    {
+      "key": "limit_switch_count",
+      "unit": "",
+      "label": "Déclenchements",
+      "module": "Fin de course mécanique"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

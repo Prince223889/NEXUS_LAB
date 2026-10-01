@@ -1,0 +1,134 @@
+{
+  "id": "app_fuite_gaz",
+  "title": "Détecteur de fuite de gaz",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Alarme sonore et coupure d'une électrovanne (relais) au-delà d'un seuil de gaz (démonstration pédagogique).",
+  "tags": [
+    "gaz",
+    "MQ-2",
+    "alarme",
+    "sécurité"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "AO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur 10 kΩ / 20 kΩ : la sortie monte à 5 V"
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "DO (seuil)",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "+ (via transistor si > 20 mA)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "vanne",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "vanne",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "vanne",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "IN",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mq2_ppm",
+      "unit": "ppm",
+      "label": "GPL (estimation)",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    },
+    {
+      "key": "mq2_ratio",
+      "unit": "",
+      "label": "Rs/R0",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    },
+    {
+      "key": "mq2_rsk",
+      "unit": "kΩ",
+      "label": "Rs",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    },
+    {
+      "key": "mq2_alarm",
+      "unit": "",
+      "label": "Seuil DO",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    }
+  ],
+  "power": {
+    "modules_mA": 245,
+    "modules_peak_mA": 245,
+    "board_mA": 45,
+    "total_mA": 290,
+    "total_peak_mA": 325
+  },
+  "notes": [
+    "Pédagogique : ne remplace pas un détecteur certifié NF."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

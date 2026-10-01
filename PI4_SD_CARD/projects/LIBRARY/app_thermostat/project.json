@@ -1,0 +1,144 @@
+{
+  "id": "app_thermostat",
+  "title": "Thermostat de chauffage",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Enclenche un radiateur (via relais) sous 19 °C avec hystérésis de 0,5 °C ; affichage OLED.",
+  "tags": [
+    "chauffage",
+    "relais",
+    "OLED"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "OneWire",
+      "ver": "2.3.8",
+      "repo": "PaulStoffregen/OneWire",
+      "author": "Paul Stoffregen"
+    },
+    {
+      "name": "DallasTemperature",
+      "ver": "4.0.6",
+      "repo": "milesburton/Arduino-Temperature-Control-Library",
+      "author": "Miles Burton"
+    },
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 4,7 kΩ entre DATA et 3V3 obligatoire"
+    },
+    {
+      "mod": "chauffage",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "chauffage",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "chauffage",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "IN",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ds18b20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DS18B20"
+    }
+  ],
+  "power": {
+    "modules_mA": 91.5,
+    "modules_peak_mA": 91.5,
+    "board_mA": 110,
+    "total_mA": 201.5,
+    "total_peak_mA": 351.5
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

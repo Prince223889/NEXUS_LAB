@@ -1,0 +1,132 @@
+{
+  "id": "mpu6050",
+  "title": "MPU-6050 (GY-521)",
+  "category": "motion",
+  "kind": "module",
+  "description": "Centrale inertielle 6 axes : accéléromètre ±2-16 g et gyroscope ±250-2000 °/s.",
+  "tags": [
+    "accéléromètre",
+    "gyroscope",
+    "IMU",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit MPU6050",
+      "ver": "2.2.9",
+      "repo": "adafruit/Adafruit_MPU6050",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "mpu6050",
+      "name": "MPU-6050 (GY-521)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "mpu6050",
+      "name": "MPU-6050 (GY-521)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mpu6050",
+      "name": "MPU-6050 (GY-521)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "mpu6050",
+      "name": "MPU-6050 (GY-521)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mpu6050_ax",
+      "unit": "m/s²",
+      "label": "Accél. X",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_ay",
+      "unit": "m/s²",
+      "label": "Accél. Y",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_az",
+      "unit": "m/s²",
+      "label": "Accél. Z",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_gx",
+      "unit": "°/s",
+      "label": "Gyro X",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_gy",
+      "unit": "°/s",
+      "label": "Gyro Y",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_gz",
+      "unit": "°/s",
+      "label": "Gyro Z",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_roll",
+      "unit": "°",
+      "label": "Roulis",
+      "module": "MPU-6050 (GY-521)"
+    },
+    {
+      "key": "mpu6050_pitch",
+      "unit": "°",
+      "label": "Tangage",
+      "module": "MPU-6050 (GY-521)"
+    }
+  ],
+  "power": {
+    "modules_mA": 4,
+    "modules_peak_mA": 4,
+    "board_mA": 45,
+    "total_mA": 49,
+    "total_peak_mA": 84
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

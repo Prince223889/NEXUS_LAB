@@ -1,0 +1,175 @@
+{
+ "v": 1,
+ "title": "Variateur de LED au potentiomètre",
+ "board": "esp32",
+ "device": "variateur_de_led_au_",
+ "emulable": true,
+ "needsDac": true,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 1500,
+ "rules": 1,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "analog",
+   "emu": 25,
+   "dut": 34,
+   "module": "Potentiomètre 10 kΩ",
+   "label": "pot",
+   "inst": 0,
+   "out": "pos",
+   "feed": "pot_pos"
+  },
+  {
+   "n": 1,
+   "dir": "out",
+   "kind": "duty",
+   "emu": 18,
+   "dut": 4,
+   "module": "LED à intensité variable (PWM)",
+   "label": "dim",
+   "inst": 1,
+   "curve": "square"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO25",
+   "note": "Potentiomètre 10 kΩ → sortie DAC de l'émulateur (retirez le capteur réel)"
+  },
+  {
+   "dut": "GPIO4",
+   "emu": "GPIO18",
+   "note": "LED à intensité variable (PWM) observé par l'émulateur (rapport cyclique) ; débranchez la charge"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 150
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 4.688
+    }
+   ],
+   "wait": 3000,
+   "expect": [
+    {
+     "feed": "pot_pos",
+     "v": 4.688,
+     "tol": 2.5
+    },
+    {
+     "n": 1,
+     "duty": 0.2,
+     "tol": 5,
+     "state": 4.69
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — pot pos = 49.22 (milieu de plage)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 49.219
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pot_pos",
+     "v": 49.219,
+     "tol": 2.5
+    },
+    {
+     "n": 1,
+     "duty": 24.2,
+     "tol": 10,
+     "state": 49.22
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — pot pos = 93.75 (fin de plage)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 3000
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 93.75
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pot_pos",
+     "v": 93.75,
+     "tol": 2.5
+    },
+    {
+     "n": 1,
+     "duty": 87.9,
+     "tol": 10,
+     "state": 93.75
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — retour au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 150
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 4.688
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pot_pos",
+     "v": 4.688,
+     "tol": 2.5
+    },
+    {
+     "n": 1,
+     "duty": 0.2,
+     "tol": 5,
+     "state": 4.69
+    }
+   ]
+  }
+ ],
+ "duration_ms": 7500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__app_variateur_potentiometre__bench.ino.bin"
+}

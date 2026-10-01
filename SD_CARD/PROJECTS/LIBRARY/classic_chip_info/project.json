@@ -1,0 +1,28 @@
+{
+  "id": "classic_chip_info",
+  "title": "Carte d'identité de la puce",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Modèle, révision, flash, PSRAM, MAC, versions, table des partitions.",
+  "tags": [
+    "diagnostic",
+    "puce"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

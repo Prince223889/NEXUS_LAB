@@ -1,0 +1,26 @@
+{
+  "id": "classic_adc_oversampling",
+  "title": "Mesure analogique étalonnée",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Suréchantillonnage, min/max et bruit avec analogReadMilliVolts().",
+  "tags": [
+    "ADC",
+    "mesure"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

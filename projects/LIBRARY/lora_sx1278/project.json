@@ -1,0 +1,119 @@
+{
+  "id": "lora_sx1278",
+  "title": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+  "category": "comm",
+  "kind": "module",
+  "description": "Radio longue portée (plusieurs km) : envoie un paquet périodique et affiche les paquets reçus avec le RSSI.",
+  "tags": [
+    "LoRa",
+    "longue portée",
+    "radio",
+    "SPI"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "LoRa",
+      "ver": "0.8.0",
+      "repo": "sandeepmistry/arduino-LoRa",
+      "author": "Sandeep Mistry"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "NSS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "RST",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "DIO0",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "lora_sent",
+      "unit": "",
+      "label": "Paquets envoyés",
+      "module": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)"
+    },
+    {
+      "key": "lora_rssi",
+      "unit": "dBm",
+      "label": "RSSI dernier reçu",
+      "module": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)"
+    }
+  ],
+  "power": {
+    "modules_mA": 12,
+    "modules_peak_mA": 120,
+    "board_mA": 45,
+    "total_mA": 57,
+    "total_peak_mA": 200
+  },
+  "notes": [
+    "En Europe : 868 MHz (ou 433 MHz), rapport cyclique ≤ 1 %.",
+    "Ne jamais émettre sans antenne."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

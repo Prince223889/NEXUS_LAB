@@ -1,0 +1,29 @@
+{
+  "id": "classic_wifi_ap_web",
+  "title": "Point d'accès + serveur web",
+  "category": "classic",
+  "kind": "classic",
+  "description": "La carte crée son propre Wi-Fi et sert une page de commande (sans box).",
+  "tags": [
+    "Wi-Fi",
+    "web",
+    "AP"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

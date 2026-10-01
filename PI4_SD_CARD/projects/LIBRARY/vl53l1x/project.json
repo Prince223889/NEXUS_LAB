@@ -1,0 +1,78 @@
+{
+  "id": "vl53l1x",
+  "title": "VL53L1X (ToF longue portée)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Télémètre laser ToF jusqu'à 4 m, mesure continue 50 Hz.",
+  "tags": [
+    "distance",
+    "laser",
+    "ToF",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "VL53L1X",
+      "ver": "1.3.1",
+      "repo": "pololu/vl53l1x-arduino",
+      "author": "Pololu"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "vl53l1x",
+      "name": "VL53L1X (ToF longue portée)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "vl53l1x",
+      "name": "VL53L1X (ToF longue portée)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "vl53l1x",
+      "name": "VL53L1X (ToF longue portée)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "vl53l1x",
+      "name": "VL53L1X (ToF longue portée)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "vl53l1x_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "VL53L1X (ToF longue portée)"
+    }
+  ],
+  "power": {
+    "modules_mA": 18,
+    "modules_peak_mA": 18,
+    "board_mA": 45,
+    "total_mA": 63,
+    "total_peak_mA": 98
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,115 @@
+{
+  "id": "app_mqtt_domotique",
+  "title": "Capteur domotique MQTT (Home Assistant)",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Température/humidité et relais publiés sur un broker MQTT (Mosquitto, Home Assistant).",
+  "tags": [
+    "MQTT",
+    "Home Assistant",
+    "domotique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SHT31 Library",
+      "ver": "2.2.2",
+      "repo": "adafruit/Adafruit_SHT31",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "PubSubClient",
+      "ver": "2.8",
+      "repo": "knolleary/pubsubclient"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "sht31",
+      "name": "SHT31",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sht31",
+      "name": "SHT31",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sht31",
+      "name": "SHT31",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "sht31",
+      "name": "SHT31",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "relay",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "relay",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "relay",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "IN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sht31_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "SHT31"
+    },
+    {
+      "key": "sht31_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "SHT31"
+    }
+  ],
+  "power": {
+    "modules_mA": 71,
+    "modules_peak_mA": 71,
+    "board_mA": 110,
+    "total_mA": 181,
+    "total_peak_mA": 331
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

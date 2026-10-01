@@ -1,0 +1,136 @@
+{
+  "id": "app_capteur_master",
+  "title": "Capteur connecté au tableau de bord du MASTER",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Rejoint le Wi-Fi « ESP32-LAB » et envoie ses mesures au MASTER (onglet Capteurs).",
+  "tags": [
+    "MASTER",
+    "télémétrie",
+    "Wi-Fi"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SHT4x Library",
+      "ver": "1.0.5",
+      "repo": "adafruit/Adafruit_SHT4X",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "BH1750",
+      "ver": "1.3.0",
+      "repo": "claws/BH1750",
+      "author": "Christopher Laws"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "sht4x",
+      "name": "SHT40 / SHT41 / SHT45",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sht4x",
+      "name": "SHT40 / SHT41 / SHT45",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sht4x",
+      "name": "SHT40 / SHT41 / SHT45",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "sht4x",
+      "name": "SHT40 / SHT41 / SHT45",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sht4x_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "SHT40 / SHT41 / SHT45"
+    },
+    {
+      "key": "sht4x_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "SHT40 / SHT41 / SHT45"
+    },
+    {
+      "key": "bh1750_lux",
+      "unit": "lx",
+      "label": "Éclairement",
+      "module": "BH1750 (GY-30 / GY-302)"
+    }
+  ],
+  "power": {
+    "modules_mA": 2,
+    "modules_peak_mA": 2,
+    "board_mA": 110,
+    "total_mA": 112,
+    "total_peak_mA": 262
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

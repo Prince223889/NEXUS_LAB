@@ -1,0 +1,84 @@
+{
+  "id": "pcf8563",
+  "title": "Horloge temps réel PCF8563",
+  "category": "id",
+  "kind": "module",
+  "description": "Horloge basse consommation NXP, présente sur de nombreuses cartes ESP32.",
+  "tags": [
+    "horloge",
+    "RTC",
+    "heure",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "RTClib",
+      "ver": "2.1.4",
+      "repo": "adafruit/RTClib",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "pcf8563",
+      "name": "Horloge temps réel PCF8563",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pcf8563",
+      "name": "Horloge temps réel PCF8563",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pcf8563",
+      "name": "Horloge temps réel PCF8563",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "pcf8563",
+      "name": "Horloge temps réel PCF8563",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pcf8563_epoch",
+      "unit": "s",
+      "label": "Secondes depuis minuit",
+      "module": "Horloge temps réel PCF8563"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

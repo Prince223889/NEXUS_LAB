@@ -1,0 +1,175 @@
+{
+ "v": 1,
+ "title": "Éclairage à intensité automatique",
+ "board": "esp32",
+ "device": "eclairage_a_intensit",
+ "emulable": true,
+ "needsDac": true,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 2700,
+ "rules": 1,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "analog",
+   "emu": 25,
+   "dut": 34,
+   "module": "Photorésistance (LDR / GL5528)",
+   "label": "ldr",
+   "inst": 0,
+   "out": "light",
+   "feed": "ldr_light"
+  },
+  {
+   "n": 1,
+   "dir": "out",
+   "kind": "duty",
+   "emu": 18,
+   "dut": 4,
+   "module": "LED à intensité variable (PWM)",
+   "label": "dim",
+   "inst": 1,
+   "curve": "square"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO25",
+   "note": "Photorésistance (LDR / GL5528) → sortie DAC de l'émulateur (retirez le capteur réel)"
+  },
+  {
+   "dut": "GPIO4",
+   "emu": "GPIO18",
+   "note": "LED à intensité variable (PWM) observé par l'émulateur (rapport cyclique) ; débranchez la charge"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 2800
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 84.848
+    }
+   ],
+   "wait": 5400,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 84.848,
+     "tol": 2.424
+    },
+    {
+     "n": 1,
+     "duty": 0,
+     "tol": 5,
+     "state": 0
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — ldr light = 45 (milieu de plage)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1485
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 45
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 45,
+     "tol": 2.424
+    },
+    {
+     "n": 1,
+     "duty": 25,
+     "tol": 11.9,
+     "state": 50
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — ldr light = 5.15 (fin de plage)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 170
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 5.152
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 5.152,
+     "tol": 2.424
+    },
+    {
+     "n": 1,
+     "duty": 100,
+     "tol": 11.9,
+     "state": 100
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — retour au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 2800
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 84.848
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 84.848,
+     "tol": 2.424
+    },
+    {
+     "n": 1,
+     "duty": 0,
+     "tol": 5,
+     "state": 0
+    }
+   ]
+  }
+ ],
+ "duration_ms": 13500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__app_variateur_auto__bench.ino.bin"
+}

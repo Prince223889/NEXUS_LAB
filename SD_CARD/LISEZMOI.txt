@@ -1,0 +1,3 @@
+ESP32 LAB — carte microSD
+Copiez tout ce dossier à la racine d'une carte formatée en FAT32.
+Le MASTER recrée les dossiers manquants au démarrage.

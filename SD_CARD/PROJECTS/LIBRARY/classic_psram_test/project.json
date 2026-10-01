@@ -1,0 +1,27 @@
+{
+  "id": "classic_psram_test",
+  "title": "Test de la PSRAM",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Taille, débit et intégrité de la PSRAM externe.",
+  "tags": [
+    "PSRAM",
+    "mémoire"
+  ],
+  "difficulty": 2,
+  "board": "esp32s3",
+  "boards": [
+    "esp32s3",
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32s3",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

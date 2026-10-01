@@ -1,0 +1,82 @@
+{
+  "id": "max6675",
+  "title": "MAX6675 + thermocouple K",
+  "category": "temp",
+  "kind": "module",
+  "description": "Convertisseur thermocouple type K : 0 à 1024 °C, résolution 0,25 °C (lecture SPI logicielle).",
+  "tags": [
+    "température",
+    "thermocouple",
+    "haute température",
+    "SPI"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "max6675",
+      "name": "MAX6675 + thermocouple K",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "max6675",
+      "name": "MAX6675 + thermocouple K",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "max6675",
+      "name": "MAX6675 + thermocouple K",
+      "pin": "SCK",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "max6675",
+      "name": "MAX6675 + thermocouple K",
+      "pin": "CS",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "max6675",
+      "name": "MAX6675 + thermocouple K",
+      "pin": "SO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "max6675_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "MAX6675 + thermocouple K"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Conversion toutes les 220 ms : ne pas lire plus vite.",
+    "Respecter la polarité du thermocouple (+ jaune / - rouge en norme ANSI)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

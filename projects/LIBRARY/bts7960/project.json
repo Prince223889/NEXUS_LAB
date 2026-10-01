@@ -1,0 +1,73 @@
+{
+  "id": "bts7960",
+  "title": "Driver BTS7960 43 A (moteur puissant)",
+  "category": "motor",
+  "kind": "module",
+  "description": "Pont en H de puissance pour trottinette, portail, grosse pompe.",
+  "tags": [
+    "moteur CC",
+    "pont en H",
+    "robot"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "bts7960",
+      "name": "Driver BTS7960 43 A (moteur puissant)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "bts7960",
+      "name": "Driver BTS7960 43 A (moteur puissant)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bts7960",
+      "name": "Driver BTS7960 43 A (moteur puissant)",
+      "pin": "RPWM",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "bts7960",
+      "name": "Driver BTS7960 43 A (moteur puissant)",
+      "pin": "LPWM",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "bts7960",
+      "name": "Driver BTS7960 43 A (moteur puissant)",
+      "pin": "R_EN + L_EN",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 5,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 85
+  },
+  "notes": [
+    "Fusible et câblage de section adaptée côté puissance."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

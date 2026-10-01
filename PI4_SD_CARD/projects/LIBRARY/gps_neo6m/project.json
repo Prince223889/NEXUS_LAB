@@ -1,0 +1,102 @@
+{
+  "id": "gps_neo6m",
+  "title": "GPS u-blox NEO-6M / NEO-M8N",
+  "category": "id",
+  "kind": "module",
+  "description": "Position, altitude, vitesse, heure UTC et nombre de satellites (trames NMEA 9600 bauds).",
+  "tags": [
+    "GPS",
+    "position",
+    "heure",
+    "UART"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "TinyGPSPlus",
+      "ver": "1.0.3",
+      "repo": "mikalhart/TinyGPSPlus",
+      "author": "Mikal Hart"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "gps",
+      "name": "GPS u-blox NEO-6M / NEO-M8N",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "gps",
+      "name": "GPS u-blox NEO-6M / NEO-M8N",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "gps",
+      "name": "GPS u-blox NEO-6M / NEO-M8N",
+      "pin": "TX du GPS",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "gps",
+      "name": "GPS u-blox NEO-6M / NEO-M8N",
+      "pin": "RX du GPS",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "gps_lat",
+      "unit": "°",
+      "label": "Latitude",
+      "module": "GPS u-blox NEO-6M / NEO-M8N"
+    },
+    {
+      "key": "gps_lng",
+      "unit": "°",
+      "label": "Longitude",
+      "module": "GPS u-blox NEO-6M / NEO-M8N"
+    },
+    {
+      "key": "gps_alt",
+      "unit": "m",
+      "label": "Altitude",
+      "module": "GPS u-blox NEO-6M / NEO-M8N"
+    },
+    {
+      "key": "gps_speed",
+      "unit": "km/h",
+      "label": "Vitesse",
+      "module": "GPS u-blox NEO-6M / NEO-M8N"
+    },
+    {
+      "key": "gps_sats",
+      "unit": "",
+      "label": "Satellites",
+      "module": "GPS u-blox NEO-6M / NEO-M8N"
+    }
+  ],
+  "power": {
+    "modules_mA": 45,
+    "modules_peak_mA": 45,
+    "board_mA": 45,
+    "total_mA": 90,
+    "total_peak_mA": 125
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

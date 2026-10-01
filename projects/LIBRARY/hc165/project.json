@@ -1,0 +1,90 @@
+{
+  "id": "hc165",
+  "title": "Registre d'entrée 74HC165",
+  "category": "io",
+  "kind": "module",
+  "description": "8 entrées numériques supplémentaires avec 3 fils (chaînable) : clavier de boutons.",
+  "tags": [
+    "entrées",
+    "registre",
+    "boutons"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "PL (1)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "CP (2)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "Q7 (9)",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "CE (15)",
+      "to": "GND"
+    },
+    {
+      "mod": "sr165",
+      "name": "Registre d'entrée 74HC165",
+      "pin": "entrées D0-D7",
+      "to": "10 kΩ vers GND + bouton vers 3V3"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sr165_inputs",
+      "unit": "",
+      "label": "Entrées (masque)",
+      "module": "Registre d'entrée 74HC165"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

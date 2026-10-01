@@ -1,0 +1,62 @@
+{
+  "id": "pir_am312",
+  "title": "AM312 (mini PIR)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Mini détecteur PIR 3,3 V (3-5 m, 100°), idéal sur batterie.",
+  "tags": [
+    "présence",
+    "mouvement",
+    "alarme"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pir_am312",
+      "name": "AM312 (mini PIR)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pir_am312",
+      "name": "AM312 (mini PIR)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pir_am312",
+      "name": "AM312 (mini PIR)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pir_am312_motion",
+      "unit": "",
+      "label": "Présence (0/1)",
+      "module": "AM312 (mini PIR)"
+    }
+  ],
+  "power": {
+    "modules_mA": 0.02,
+    "modules_peak_mA": 0.02,
+    "board_mA": 45,
+    "total_mA": 45.02,
+    "total_peak_mA": 80.02
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

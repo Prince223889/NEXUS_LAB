@@ -1,0 +1,118 @@
+{
+  "id": "keypad4x4",
+  "title": "Clavier matriciel 4×4",
+  "category": "input",
+  "kind": "module",
+  "description": "Clavier matriciel 4×4 : saisie de code PIN, menu, calculatrice.",
+  "tags": [
+    "clavier",
+    "matrice",
+    "code"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Keypad",
+      "ver": "3.1.1",
+      "repo": "Chris--A/Keypad",
+      "author": "Mark Stanley, Alexander Brevig"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "ligne 1",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "ligne 2",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "ligne 3",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "ligne 4",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "colonne 1",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "colonne 2",
+      "to": "GPIO25",
+      "gpio": 25,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "colonne 3",
+      "to": "GPIO26",
+      "gpio": 26,
+      "note": ""
+    },
+    {
+      "mod": "keypad4x4",
+      "name": "Clavier matriciel 4×4",
+      "pin": "colonne 4",
+      "to": "GPIO27",
+      "gpio": 27,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

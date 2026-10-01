@@ -1,0 +1,114 @@
+{
+  "id": "as7341",
+  "title": "AS7341 (spectromètre 11 canaux)",
+  "category": "light",
+  "kind": "module",
+  "description": "Mini-spectromètre : 8 bandes visibles de 415 à 680 nm, proche IR et lumière claire.",
+  "tags": [
+    "spectre",
+    "couleur",
+    "I2C",
+    "science"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit AS7341",
+      "ver": "1.4.1",
+      "repo": "adafruit/Adafruit_AS7341",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "as7341",
+      "name": "AS7341 (spectromètre 11 canaux)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "as7341",
+      "name": "AS7341 (spectromètre 11 canaux)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "as7341",
+      "name": "AS7341 (spectromètre 11 canaux)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "as7341",
+      "name": "AS7341 (spectromètre 11 canaux)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "as7341_f415",
+      "unit": "",
+      "label": "415 nm (violet)",
+      "module": "AS7341 (spectromètre 11 canaux)"
+    },
+    {
+      "key": "as7341_f480",
+      "unit": "",
+      "label": "480 nm (bleu)",
+      "module": "AS7341 (spectromètre 11 canaux)"
+    },
+    {
+      "key": "as7341_f555",
+      "unit": "",
+      "label": "555 nm (vert)",
+      "module": "AS7341 (spectromètre 11 canaux)"
+    },
+    {
+      "key": "as7341_f630",
+      "unit": "",
+      "label": "630 nm (orange)",
+      "module": "AS7341 (spectromètre 11 canaux)"
+    },
+    {
+      "key": "as7341_f680",
+      "unit": "",
+      "label": "680 nm (rouge)",
+      "module": "AS7341 (spectromètre 11 canaux)"
+    },
+    {
+      "key": "as7341_nir",
+      "unit": "",
+      "label": "Proche IR",
+      "module": "AS7341 (spectromètre 11 canaux)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

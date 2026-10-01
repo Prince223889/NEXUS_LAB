@@ -1,0 +1,67 @@
+{
+  "id": "tilt_sw520",
+  "title": "Capteur d'inclinaison SW-520D",
+  "category": "motion",
+  "kind": "module",
+  "description": "Bille métallique qui ferme le contact au-delà d'environ 45°.",
+  "tags": [
+    "inclinaison",
+    "bille"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "tilt_sw520",
+      "name": "Capteur d'inclinaison SW-520D",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tilt_sw520",
+      "name": "Capteur d'inclinaison SW-520D",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tilt_sw520",
+      "name": "Capteur d'inclinaison SW-520D",
+      "pin": "signal",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "l'autre borne vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "tilt_sw520_state",
+      "unit": "",
+      "label": "État (0/1)",
+      "module": "Capteur d'inclinaison SW-520D"
+    },
+    {
+      "key": "tilt_sw520_count",
+      "unit": "",
+      "label": "Déclenchements",
+      "module": "Capteur d'inclinaison SW-520D"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

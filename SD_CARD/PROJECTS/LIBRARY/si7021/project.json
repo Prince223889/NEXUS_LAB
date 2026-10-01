@@ -1,0 +1,89 @@
+{
+  "id": "si7021",
+  "title": "Si7021",
+  "category": "temp",
+  "kind": "module",
+  "description": "Capteur Silicon Labs avec chauffage intégré et numéro de série.",
+  "tags": [
+    "température",
+    "humidité",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit Si7021 Library",
+      "ver": "1.5.3",
+      "repo": "adafruit/Adafruit_Si7021",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "si7021",
+      "name": "Si7021",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "si7021",
+      "name": "Si7021",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "si7021",
+      "name": "Si7021",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "si7021",
+      "name": "Si7021",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "si7021_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "Si7021"
+    },
+    {
+      "key": "si7021_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "Si7021"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

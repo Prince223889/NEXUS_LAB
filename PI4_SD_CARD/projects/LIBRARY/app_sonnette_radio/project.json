@@ -1,0 +1,90 @@
+{
+  "id": "app_sonnette_radio",
+  "title": "Sonnette sans fil 433 MHz",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Reconnaît le code d'un bouton de sonnette 433 MHz et joue une mélodie.",
+  "tags": [
+    "sonnette",
+    "433 MHz",
+    "mélodie"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "rc-switch",
+      "ver": "2.6.4",
+      "repo": "sui77/rc-switch",
+      "author": "sui77"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "rf433r",
+      "name": "Récepteur 433 MHz (RXB6 / MX-RM-5V)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "rf433r",
+      "name": "Récepteur 433 MHz (RXB6 / MX-RM-5V)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rf433r",
+      "name": "Récepteur 433 MHz (RXB6 / MX-RM-5V)",
+      "pin": "DATA",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur si le module est alimenté en 5 V"
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "+",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "rf433r_code",
+      "unit": "",
+      "label": "Dernier code (6 chiffres)",
+      "module": "Récepteur 433 MHz (RXB6 / MX-RM-5V)"
+    }
+  ],
+  "power": {
+    "modules_mA": 24,
+    "modules_peak_mA": 24,
+    "board_mA": 45,
+    "total_mA": 69,
+    "total_peak_mA": 104
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

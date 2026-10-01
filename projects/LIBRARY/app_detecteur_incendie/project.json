@@ -1,0 +1,151 @@
+{
+  "id": "app_detecteur_incendie",
+  "title": "Détecteur de flamme et fumée",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Alarme dès qu'une flamme est vue par le capteur IR ; niveau de fumée MQ-2 surveillé.",
+  "tags": [
+    "incendie",
+    "flamme",
+    "alarme"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "flame",
+      "name": "Détecteur de flamme IR (KY-026)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "flame",
+      "name": "Détecteur de flamme IR (KY-026)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "flame",
+      "name": "Détecteur de flamme IR (KY-026)",
+      "pin": "DO",
+      "to": "GPIO36",
+      "gpio": 36,
+      "note": ""
+    },
+    {
+      "mod": "flame",
+      "name": "Détecteur de flamme IR (KY-026)",
+      "pin": "AO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "AO",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": "via pont diviseur 10 kΩ / 20 kΩ : la sortie monte à 5 V"
+    },
+    {
+      "mod": "mq2",
+      "name": "MQ-2 (fumée, GPL, butane)",
+      "pin": "DO (seuil)",
+      "to": "GPIO39",
+      "gpio": 39,
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "+ (via transistor si > 20 mA)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "flame_fire",
+      "unit": "",
+      "label": "Flamme (0/1)",
+      "module": "Détecteur de flamme IR (KY-026)"
+    },
+    {
+      "key": "flame_ir",
+      "unit": "%",
+      "label": "Intensité IR",
+      "module": "Détecteur de flamme IR (KY-026)"
+    },
+    {
+      "key": "mq2_ppm",
+      "unit": "ppm",
+      "label": "GPL (estimation)",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    },
+    {
+      "key": "mq2_ratio",
+      "unit": "",
+      "label": "Rs/R0",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    },
+    {
+      "key": "mq2_rsk",
+      "unit": "kΩ",
+      "label": "Rs",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    },
+    {
+      "key": "mq2_alarm",
+      "unit": "",
+      "label": "Seuil DO",
+      "module": "MQ-2 (fumée, GPL, butane)"
+    }
+  ],
+  "power": {
+    "modules_mA": 176,
+    "modules_peak_mA": 176,
+    "board_mA": 45,
+    "total_mA": 221,
+    "total_peak_mA": 256
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

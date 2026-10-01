@@ -1,0 +1,82 @@
+{
+  "id": "ht16k33_7seg",
+  "title": "Afficheur 4 chiffres HT16K33 (I2C)",
+  "category": "display",
+  "kind": "module",
+  "description": "Afficheur 7 segments « backpack » Adafruit sur I2C.",
+  "tags": [
+    "7 segments",
+    "I2C",
+    "afficheur"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit LED Backpack Library",
+      "ver": "1.5.1",
+      "repo": "adafruit/Adafruit_LED_Backpack",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ht16k33",
+      "name": "Afficheur 4 chiffres HT16K33 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ht16k33",
+      "name": "Afficheur 4 chiffres HT16K33 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ht16k33",
+      "name": "Afficheur 4 chiffres HT16K33 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ht16k33",
+      "name": "Afficheur 4 chiffres HT16K33 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 20,
+    "modules_peak_mA": 20,
+    "board_mA": 45,
+    "total_mA": 65,
+    "total_peak_mA": 100
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

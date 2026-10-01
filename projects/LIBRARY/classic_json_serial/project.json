@@ -1,0 +1,36 @@
+{
+  "id": "classic_json_serial",
+  "title": "Échanges JSON sur le port série",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Piloter la carte depuis un PC (Python) en JSON avec ArduinoJson.",
+  "tags": [
+    "JSON",
+    "série",
+    "Python"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "ArduinoJson",
+      "ver": "7.4.3",
+      "repo": "bblanchon/ArduinoJson",
+      "author": "Benoît Blanchon"
+    }
+  ],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

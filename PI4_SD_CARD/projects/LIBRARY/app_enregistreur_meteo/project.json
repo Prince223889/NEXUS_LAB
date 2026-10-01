@@ -1,0 +1,212 @@
+{
+  "id": "app_enregistreur_meteo",
+  "title": "Enregistreur de données climatiques",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Température, humidité et pression journalisées toutes les 10 s dans un CSV lisible par Excel.",
+  "tags": [
+    "enregistreur",
+    "microSD",
+    "RTC"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BME280 Library",
+      "ver": "2.3.0",
+      "repo": "adafruit/Adafruit_BME280_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "RTClib",
+      "ver": "2.1.4",
+      "repo": "adafruit/RTClib",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "ds3231",
+      "name": "Horloge temps réel DS3231",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ds3231",
+      "name": "Horloge temps réel DS3231",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ds3231",
+      "name": "Horloge temps réel DS3231",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ds3231",
+      "name": "Horloge temps réel DS3231",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bme280_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_alt",
+      "unit": "m",
+      "label": "Altitude",
+      "module": "BME280"
+    },
+    {
+      "key": "ds3231_epoch",
+      "unit": "s",
+      "label": "Secondes depuis minuit",
+      "module": "Horloge temps réel DS3231"
+    },
+    {
+      "key": "ds3231_temp",
+      "unit": "°C",
+      "label": "Température puce",
+      "module": "Horloge temps réel DS3231"
+    },
+    {
+      "key": "sd_count",
+      "unit": "",
+      "label": "Lignes écrites",
+      "module": "Module carte microSD (SPI)"
+    },
+    {
+      "key": "sd_used",
+      "unit": "Ko",
+      "label": "Espace utilisé",
+      "module": "Module carte microSD (SPI)"
+    }
+  ],
+  "power": {
+    "modules_mA": 52,
+    "modules_peak_mA": 102,
+    "board_mA": 45,
+    "total_mA": 97,
+    "total_peak_mA": 182
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

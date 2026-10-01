@@ -1,0 +1,78 @@
+{
+  "id": "veml6070",
+  "title": "VEML6070 (UV-A)",
+  "category": "weather",
+  "kind": "module",
+  "description": "Capteur UV-A Vishay (320-410 nm).",
+  "tags": [
+    "UV",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit VEML6070 Library",
+      "ver": "1.0.8",
+      "repo": "adafruit/Adafruit_VEML6070",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "veml6070",
+      "name": "VEML6070 (UV-A)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "veml6070",
+      "name": "VEML6070 (UV-A)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "veml6070",
+      "name": "VEML6070 (UV-A)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "veml6070",
+      "name": "VEML6070 (UV-A)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "veml6070_level",
+      "unit": "",
+      "label": "Niveau UV brut",
+      "module": "VEML6070 (UV-A)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Occupe aussi les adresses 0x39 et 0x3A : incompatible avec l'AHT20 (0x38) sur le même bus."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,84 @@
+{
+  "id": "as5600",
+  "title": "AS5600 (codeur magnétique 12 bits)",
+  "category": "motion",
+  "kind": "module",
+  "description": "Mesure l'angle absolu d'un aimant diamétral (0-360°, 4096 pas) sans contact.",
+  "tags": [
+    "angle",
+    "codeur",
+    "magnétique",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "AS5600",
+      "ver": "0.6.7",
+      "repo": "RobTillaart/AS5600",
+      "author": "Rob Tillaart"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "as5600",
+      "name": "AS5600 (codeur magnétique 12 bits)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "as5600",
+      "name": "AS5600 (codeur magnétique 12 bits)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "as5600",
+      "name": "AS5600 (codeur magnétique 12 bits)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "as5600",
+      "name": "AS5600 (codeur magnétique 12 bits)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "as5600_angle",
+      "unit": "°",
+      "label": "Angle",
+      "module": "AS5600 (codeur magnétique 12 bits)"
+    },
+    {
+      "key": "as5600_magnet",
+      "unit": "",
+      "label": "Aimant détecté",
+      "module": "AS5600 (codeur magnétique 12 bits)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

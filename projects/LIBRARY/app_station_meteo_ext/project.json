@@ -1,0 +1,207 @@
+{
+  "id": "app_station_meteo_ext",
+  "title": "Station météo extérieure complète",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Kit météo : température/humidité, vitesse et direction du vent, cumul de pluie, détecteur de pluie, avec page web.",
+  "tags": [
+    "météo",
+    "vent",
+    "pluie",
+    "web"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "DHT sensor library",
+      "ver": "1.4.7",
+      "repo": "adafruit/DHT-sensor-library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "dht22",
+      "name": "DHT22 / AM2302",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "dht22",
+      "name": "DHT22 / AM2302",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "dht22",
+      "name": "DHT22 / AM2302",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 10 kΩ vers 3V3 (souvent déjà sur le module)"
+    },
+    {
+      "mod": "wind",
+      "name": "Anémomètre à impulsions",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "wind",
+      "name": "Anémomètre à impulsions",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "wind",
+      "name": "Anémomètre à impulsions",
+      "pin": "fil 1",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": "fil 2 vers GND"
+    },
+    {
+      "mod": "vane",
+      "name": "Girouette à résistances",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "vane",
+      "name": "Girouette à résistances",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "vane",
+      "name": "Girouette à résistances",
+      "pin": "fil 1",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "10 kΩ entre 3V3 et le point de mesure, fil 2 vers GND"
+    },
+    {
+      "mod": "pluvio",
+      "name": "Pluviomètre à auget",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pluvio",
+      "name": "Pluviomètre à auget",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pluvio",
+      "name": "Pluviomètre à auget",
+      "pin": "fil 1",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": "fil 2 vers GND"
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "AO",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "DO",
+      "to": "GPIO36",
+      "gpio": 36,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "dht22_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DHT22 / AM2302"
+    },
+    {
+      "key": "dht22_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "DHT22 / AM2302"
+    },
+    {
+      "key": "wind_speed",
+      "unit": "km/h",
+      "label": "Vitesse du vent",
+      "module": "Anémomètre à impulsions"
+    },
+    {
+      "key": "vane_deg",
+      "unit": "°",
+      "label": "Direction (0 = nord)",
+      "module": "Girouette à résistances"
+    },
+    {
+      "key": "pluvio_total",
+      "unit": "mm",
+      "label": "Cumul de pluie",
+      "module": "Pluviomètre à auget"
+    },
+    {
+      "key": "rain_wet",
+      "unit": "%",
+      "label": "Humidité plaque",
+      "module": "Capteur de pluie FC-37 / YL-83"
+    },
+    {
+      "key": "rain_rain",
+      "unit": "",
+      "label": "Pluie (0/1)",
+      "module": "Capteur de pluie FC-37 / YL-83"
+    }
+  ],
+  "power": {
+    "modules_mA": 5.5,
+    "modules_peak_mA": 5.5,
+    "board_mA": 110,
+    "total_mA": 115.5,
+    "total_peak_mA": 265.5
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

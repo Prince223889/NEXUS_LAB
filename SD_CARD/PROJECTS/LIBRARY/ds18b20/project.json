@@ -1,0 +1,78 @@
+{
+  "id": "ds18b20",
+  "title": "DS18B20",
+  "category": "temp",
+  "kind": "module",
+  "description": "Sonde de température numérique 1-Wire, -55 à 125 °C (±0,5 °C), version étanche disponible.",
+  "tags": [
+    "température",
+    "1-Wire",
+    "étanche"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "OneWire",
+      "ver": "2.3.8",
+      "repo": "PaulStoffregen/OneWire",
+      "author": "Paul Stoffregen"
+    },
+    {
+      "name": "DallasTemperature",
+      "ver": "4.0.6",
+      "repo": "milesburton/Arduino-Temperature-Control-Library",
+      "author": "Miles Burton"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 4,7 kΩ entre DATA et 3V3 obligatoire"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ds18b20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DS18B20"
+    }
+  ],
+  "power": {
+    "modules_mA": 1.5,
+    "modules_peak_mA": 1.5,
+    "board_mA": 45,
+    "total_mA": 46.5,
+    "total_peak_mA": 81.5
+  },
+  "notes": [
+    "Plusieurs sondes peuvent partager la même broche (adresses uniques).",
+    "Période minimale 1000 ms en résolution 12 bits."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,85 @@
+{
+  "id": "hmc5883l",
+  "title": "HMC5883L (boussole GY-273)",
+  "category": "motion",
+  "kind": "module",
+  "description": "Magnétomètre 3 axes : cap magnétique en degrés (module d'origine Honeywell).",
+  "tags": [
+    "boussole",
+    "magnétomètre",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit HMC5883 Unified",
+      "ver": "1.2.4",
+      "repo": "adafruit/Adafruit_HMC5883_Unified",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "hmc5883",
+      "name": "HMC5883L (boussole GY-273)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "hmc5883",
+      "name": "HMC5883L (boussole GY-273)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hmc5883",
+      "name": "HMC5883L (boussole GY-273)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "hmc5883",
+      "name": "HMC5883L (boussole GY-273)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "hmc5883_heading",
+      "unit": "°",
+      "label": "Cap magnétique",
+      "module": "HMC5883L (boussole GY-273)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "La plupart des modules GY-273 récents contiennent un QMC5883L (adresse 0x0D) : utilisez alors le module QMC5883L."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

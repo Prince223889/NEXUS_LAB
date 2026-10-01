@@ -1,0 +1,85 @@
+{
+  "id": "scd40",
+  "title": "SCD40 / SCD41 (CO₂ photoacoustique)",
+  "category": "air",
+  "kind": "module",
+  "description": "Capteur CO₂ miniature Sensirion (400-5000 ppm), piloté directement par commandes I2C.",
+  "tags": [
+    "CO2",
+    "qualité de l'air",
+    "I2C",
+    "sans bibliothèque"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "scd40_co2",
+      "unit": "ppm",
+      "label": "CO₂",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "scd40_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "scd40_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    }
+  ],
+  "power": {
+    "modules_mA": 15,
+    "modules_peak_mA": 205,
+    "board_mA": 45,
+    "total_mA": 60,
+    "total_peak_mA": 285
+  },
+  "notes": [
+    "Auto-étalonnage : exposez le capteur à l'air extérieur au moins 1 h par semaine."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

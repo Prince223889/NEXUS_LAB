@@ -1,0 +1,104 @@
+{
+  "id": "app_compteur_passages",
+  "title": "Compteur de passages / visiteurs",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Chaque coupure de la barrière IR incrémente le compteur affiché sur LCD et sur le web.",
+  "tags": [
+    "comptage",
+    "infrarouge",
+    "LCD"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "LiquidCrystal I2C",
+      "ver": "1.1.2",
+      "repo": "johnrickman/LiquidCrystal_I2C",
+      "author": "Frank de Brabander"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "beam",
+      "name": "Barrière infrarouge (émetteur + récepteur)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "beam",
+      "name": "Barrière infrarouge (émetteur + récepteur)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "beam",
+      "name": "Barrière infrarouge (émetteur + récepteur)",
+      "pin": "récepteur (collecteur ouvert)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "beam_cut",
+      "unit": "",
+      "label": "Faisceau coupé",
+      "module": "Barrière infrarouge (émetteur + récepteur)"
+    },
+    {
+      "key": "beam_passes",
+      "unit": "",
+      "label": "Passages",
+      "module": "Barrière infrarouge (émetteur + récepteur)"
+    }
+  ],
+  "power": {
+    "modules_mA": 31,
+    "modules_peak_mA": 31,
+    "board_mA": 110,
+    "total_mA": 141,
+    "total_peak_mA": 291
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

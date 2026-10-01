@@ -1,0 +1,188 @@
+{
+  "id": "app_qualite_eau",
+  "title": "Analyseur de qualité de l'eau",
+  "category": "app",
+  "kind": "recipe",
+  "description": "pH, solides dissous et turbidité mesurés ensemble, journalisés sur microSD.",
+  "tags": [
+    "eau",
+    "pH",
+    "TDS",
+    "turbidité"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "Po",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur si la sortie dépasse 3,3 V"
+    },
+    {
+      "mod": "tds",
+      "name": "Sonde TDS (conductivité)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tds",
+      "name": "Sonde TDS (conductivité)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tds",
+      "name": "Sonde TDS (conductivité)",
+      "pin": "A",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "turb",
+      "name": "Capteur de turbidité",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "turb",
+      "name": "Capteur de turbidité",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "turb",
+      "name": "Capteur de turbidité",
+      "pin": "OUT (A)",
+      "to": "GPIO32",
+      "gpio": 32,
+      "note": "via pont diviseur 10 kΩ / 20 kΩ (sortie 0-4,5 V)"
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ph_ph",
+      "unit": "pH",
+      "label": "pH",
+      "module": "Sonde pH (module PH-4502C / SEN0161)"
+    },
+    {
+      "key": "ph_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "Sonde pH (module PH-4502C / SEN0161)"
+    },
+    {
+      "key": "tds_tds",
+      "unit": "ppm",
+      "label": "TDS",
+      "module": "Sonde TDS (conductivité)"
+    },
+    {
+      "key": "turb_ntu",
+      "unit": "NTU",
+      "label": "Turbidité",
+      "module": "Capteur de turbidité"
+    },
+    {
+      "key": "turb_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "Capteur de turbidité"
+    },
+    {
+      "key": "sd_count",
+      "unit": "",
+      "label": "Lignes écrites",
+      "module": "Module carte microSD (SPI)"
+    },
+    {
+      "key": "sd_used",
+      "unit": "Ko",
+      "label": "Espace utilisé",
+      "module": "Module carte microSD (SPI)"
+    }
+  ],
+  "power": {
+    "modules_mA": 101,
+    "modules_peak_mA": 151,
+    "board_mA": 45,
+    "total_mA": 146,
+    "total_peak_mA": 231
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

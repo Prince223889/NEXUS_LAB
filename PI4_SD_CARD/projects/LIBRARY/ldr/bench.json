@@ -1,0 +1,135 @@
+{
+ "v": 1,
+ "title": "Photorésistance (LDR / GL5528) — mesure et affichage série",
+ "board": "esp32",
+ "device": "photoresistance_ldr_",
+ "emulable": true,
+ "needsDac": true,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 2700,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "analog",
+   "emu": 25,
+   "dut": 34,
+   "module": "Photorésistance (LDR / GL5528)",
+   "label": "ldr",
+   "inst": 0,
+   "out": "light",
+   "feed": "ldr_light"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO25",
+   "note": "Photorésistance (LDR / GL5528) → sortie DAC de l'émulateur (retirez le capteur réel)"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 47.727
+    }
+   ],
+   "wait": 5400,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 47.727,
+     "tol": 2.424
+    }
+   ]
+  },
+  {
+   "label": "Mesure ldr.light = 21.82",
+   "set": [
+    {
+     "n": 0,
+     "raw": 720
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 21.818
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 21.818,
+     "tol": 2.424
+    }
+   ]
+  },
+  {
+   "label": "Mesure ldr.light = 47.73",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 47.727
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 47.727,
+     "tol": 2.424
+    }
+   ]
+  },
+  {
+   "label": "Mesure ldr.light = 73.64",
+   "set": [
+    {
+     "n": 0,
+     "raw": 2430
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 73.636
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "ldr_light",
+     "v": 73.636,
+     "tol": 2.424
+    }
+   ]
+  }
+ ],
+ "duration_ms": 13500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__ldr__bench.ino.bin"
+}

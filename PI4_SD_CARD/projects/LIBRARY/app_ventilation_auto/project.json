@@ -1,0 +1,129 @@
+{
+  "id": "app_ventilation_auto",
+  "title": "Ventilateur proportionnel à la température",
+  "category": "app",
+  "kind": "recipe",
+  "description": "La vitesse du ventilateur 4 fils suit la température : 20 % à 22 °C, 100 % à 32 °C.",
+  "tags": [
+    "ventilateur",
+    "PWM",
+    "proportionnel"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "DHT sensor library",
+      "ver": "1.4.7",
+      "repo": "adafruit/DHT-sensor-library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "dht22",
+      "name": "DHT22 / AM2302",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "dht22",
+      "name": "DHT22 / AM2302",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "dht22",
+      "name": "DHT22 / AM2302",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 10 kΩ vers 3V3 (souvent déjà sur le module)"
+    },
+    {
+      "mod": "fan",
+      "name": "Ventilateur PC 4 fils (PWM 25 kHz)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "fan",
+      "name": "Ventilateur PC 4 fils (PWM 25 kHz)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "fan",
+      "name": "Ventilateur PC 4 fils (PWM 25 kHz)",
+      "pin": "PWM (bleu)",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "fan",
+      "name": "Ventilateur PC 4 fils (PWM 25 kHz)",
+      "pin": "TACH (vert)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "fan",
+      "name": "Ventilateur PC 4 fils (PWM 25 kHz)",
+      "pin": "+12 V (jaune)",
+      "to": "alimentation 12 V externe",
+      "note": "GND commun avec l'ESP32"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "dht22_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DHT22 / AM2302"
+    },
+    {
+      "key": "dht22_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "DHT22 / AM2302"
+    },
+    {
+      "key": "fan_rpm",
+      "unit": "tr/min",
+      "label": "Vitesse",
+      "module": "Ventilateur PC 4 fils (PWM 25 kHz)"
+    },
+    {
+      "key": "fan_duty",
+      "unit": "%",
+      "label": "Consigne",
+      "module": "Ventilateur PC 4 fils (PWM 25 kHz)"
+    }
+  ],
+  "power": {
+    "modules_mA": 6.5,
+    "modules_peak_mA": 6.5,
+    "board_mA": 45,
+    "total_mA": 51.5,
+    "total_peak_mA": 86.5
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,55 @@
+{
+  "id": "buzzer_active",
+  "title": "Buzzer actif 5 V",
+  "category": "act",
+  "kind": "module",
+  "description": "Buzzer à oscillateur intégré : émet un bip dès qu'il est alimenté.",
+  "tags": [
+    "son",
+    "alarme",
+    "buzzer"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "+ (via transistor si > 20 mA)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 25,
+    "modules_peak_mA": 25,
+    "board_mA": 45,
+    "total_mA": 70,
+    "total_peak_mA": 105
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

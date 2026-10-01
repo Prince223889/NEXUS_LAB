@@ -1,0 +1,86 @@
+{
+  "id": "max30102",
+  "title": "MAX30102 (pouls & SpO₂)",
+  "category": "bio",
+  "kind": "module",
+  "description": "Capteur optique rouge + infrarouge : fréquence cardiaque et présence du doigt.",
+  "tags": [
+    "pouls",
+    "oxymètre",
+    "santé",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "SparkFun MAX3010x Pulse and Proximity Sensor Library",
+      "ver": "1.1.2",
+      "repo": "sparkfun/SparkFun_MAX3010x_Sensor_Library",
+      "author": "SparkFun"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "max30102",
+      "name": "MAX30102 (pouls & SpO₂)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "max30102",
+      "name": "MAX30102 (pouls & SpO₂)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "max30102",
+      "name": "MAX30102 (pouls & SpO₂)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "max30102",
+      "name": "MAX30102 (pouls & SpO₂)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "max30102_bpm",
+      "unit": "BPM",
+      "label": "Fréquence cardiaque",
+      "module": "MAX30102 (pouls & SpO₂)"
+    },
+    {
+      "key": "max30102_finger",
+      "unit": "",
+      "label": "Doigt posé",
+      "module": "MAX30102 (pouls & SpO₂)"
+    }
+  ],
+  "power": {
+    "modules_mA": 5,
+    "modules_peak_mA": 5,
+    "board_mA": 45,
+    "total_mA": 50,
+    "total_peak_mA": 85
+  },
+  "notes": [
+    "Beaucoup de modules violets ont une erreur de régulateur 1,8 V : vérifiez la tension sur SDA/SCL (doit être 3,3 V)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

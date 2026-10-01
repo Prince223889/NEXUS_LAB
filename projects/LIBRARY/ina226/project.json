@@ -1,0 +1,90 @@
+{
+  "id": "ina226",
+  "title": "INA226 (wattmètre 36 V)",
+  "category": "power",
+  "kind": "module",
+  "description": "Wattmètre haute précision jusqu'à 36 V ; shunt de 0,1 Ω sur les modules courants.",
+  "tags": [
+    "courant",
+    "tension",
+    "puissance",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "INA226",
+      "ver": "0.6.6",
+      "repo": "RobTillaart/INA226",
+      "author": "Rob Tillaart"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ina226",
+      "name": "INA226 (wattmètre 36 V)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ina226",
+      "name": "INA226 (wattmètre 36 V)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ina226",
+      "name": "INA226 (wattmètre 36 V)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ina226",
+      "name": "INA226 (wattmètre 36 V)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ina226_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "INA226 (wattmètre 36 V)"
+    },
+    {
+      "key": "ina226_curr",
+      "unit": "mA",
+      "label": "Courant",
+      "module": "INA226 (wattmètre 36 V)"
+    },
+    {
+      "key": "ina226_power",
+      "unit": "mW",
+      "label": "Puissance",
+      "module": "INA226 (wattmètre 36 V)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

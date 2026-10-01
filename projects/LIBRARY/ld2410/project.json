@@ -1,0 +1,64 @@
+{
+  "id": "ld2410",
+  "title": "HLK-LD2410 (radar mmWave présence humaine)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Radar 24 GHz qui détecte une personne immobile (respiration) jusqu'à 6 m.",
+  "tags": [
+    "présence",
+    "mouvement",
+    "alarme"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ld2410",
+      "name": "HLK-LD2410 (radar mmWave présence humaine)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "ld2410",
+      "name": "HLK-LD2410 (radar mmWave présence humaine)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ld2410",
+      "name": "HLK-LD2410 (radar mmWave présence humaine)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ld2410_motion",
+      "unit": "",
+      "label": "Présence (0/1)",
+      "module": "HLK-LD2410 (radar mmWave présence humaine)"
+    }
+  ],
+  "power": {
+    "modules_mA": 80,
+    "modules_peak_mA": 80,
+    "board_mA": 45,
+    "total_mA": 125,
+    "total_peak_mA": 160
+  },
+  "notes": [
+    "Sortie OUT = présence ; la liaison série (256000 bauds) donne distance et énergie."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

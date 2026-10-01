@@ -1,0 +1,84 @@
+{
+  "id": "vl6180x",
+  "title": "VL6180X (ToF courte portée + lux)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Mesure de 5 à 200 mm au millimètre près, plus un capteur de lumière ambiante.",
+  "tags": [
+    "distance",
+    "ToF",
+    "lumière",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit_VL6180X",
+      "ver": "1.4.4",
+      "repo": "adafruit/Adafruit_VL6180X",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "vl6180x",
+      "name": "VL6180X (ToF courte portée + lux)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "vl6180x",
+      "name": "VL6180X (ToF courte portée + lux)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "vl6180x",
+      "name": "VL6180X (ToF courte portée + lux)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "vl6180x",
+      "name": "VL6180X (ToF courte portée + lux)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "vl6180x_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "VL6180X (ToF courte portée + lux)"
+    },
+    {
+      "key": "vl6180x_lux",
+      "unit": "lx",
+      "label": "Lumière",
+      "module": "VL6180X (ToF courte portée + lux)"
+    }
+  ],
+  "power": {
+    "modules_mA": 2,
+    "modules_peak_mA": 2,
+    "board_mA": 45,
+    "total_mA": 47,
+    "total_peak_mA": 82
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

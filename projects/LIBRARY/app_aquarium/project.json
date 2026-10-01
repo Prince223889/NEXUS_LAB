@@ -1,0 +1,159 @@
+{
+  "id": "app_aquarium",
+  "title": "Contrôleur d'aquarium",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Température (chauffage sous 24,5 °C), pH et TDS de l'eau, page web de suivi.",
+  "tags": [
+    "aquarium",
+    "pH",
+    "TDS",
+    "chauffage"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "OneWire",
+      "ver": "2.3.8",
+      "repo": "PaulStoffregen/OneWire",
+      "author": "Paul Stoffregen"
+    },
+    {
+      "name": "DallasTemperature",
+      "ver": "4.0.6",
+      "repo": "milesburton/Arduino-Temperature-Control-Library",
+      "author": "Miles Burton"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 4,7 kΩ entre DATA et 3V3 obligatoire"
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "Po",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur si la sortie dépasse 3,3 V"
+    },
+    {
+      "mod": "tds",
+      "name": "Sonde TDS (conductivité)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tds",
+      "name": "Sonde TDS (conductivité)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tds",
+      "name": "Sonde TDS (conductivité)",
+      "pin": "A",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "chauffage",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "chauffage",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "chauffage",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "IN",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ds18b20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DS18B20"
+    },
+    {
+      "key": "ph_ph",
+      "unit": "pH",
+      "label": "pH",
+      "module": "Sonde pH (module PH-4502C / SEN0161)"
+    },
+    {
+      "key": "ph_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "Sonde pH (module PH-4502C / SEN0161)"
+    },
+    {
+      "key": "tds_tds",
+      "unit": "ppm",
+      "label": "TDS",
+      "module": "Sonde TDS (conductivité)"
+    }
+  ],
+  "power": {
+    "modules_mA": 82.5,
+    "modules_peak_mA": 82.5,
+    "board_mA": 110,
+    "total_mA": 192.5,
+    "total_peak_mA": 342.5
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

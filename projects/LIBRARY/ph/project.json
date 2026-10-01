@@ -1,0 +1,72 @@
+{
+  "id": "ph",
+  "title": "Sonde pH (module PH-4502C / SEN0161)",
+  "category": "water",
+  "kind": "module",
+  "description": "Mesure du pH de 0 à 14 avec étalonnage deux points (tampons pH 4 et pH 7).",
+  "tags": [
+    "pH",
+    "eau",
+    "aquarium",
+    "analogique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ph",
+      "name": "Sonde pH (module PH-4502C / SEN0161)",
+      "pin": "Po",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur si la sortie dépasse 3,3 V"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ph_ph",
+      "unit": "pH",
+      "label": "pH",
+      "module": "Sonde pH (module PH-4502C / SEN0161)"
+    },
+    {
+      "key": "ph_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "Sonde pH (module PH-4502C / SEN0161)"
+    }
+  ],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 10,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 90
+  },
+  "notes": [
+    "Rincez la sonde à l'eau distillée entre deux solutions.",
+    "Ne laissez jamais l'électrode sécher : conservez-la dans sa solution KCl."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

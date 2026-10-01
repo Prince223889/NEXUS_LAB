@@ -1,0 +1,191 @@
+{
+  "id": "app_station_meteo",
+  "title": "Station météo intérieure connectée",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Température, humidité, pression et luminosité sur écran OLED, page web locale et tableau de bord du MASTER.",
+  "tags": [
+    "météo",
+    "OLED",
+    "web",
+    "MASTER"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BME280 Library",
+      "ver": "2.3.0",
+      "repo": "adafruit/Adafruit_BME280_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "BH1750",
+      "ver": "1.3.0",
+      "repo": "claws/BH1750",
+      "author": "Christopher Laws"
+    },
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bh1750",
+      "name": "BH1750 (GY-30 / GY-302)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bme280_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_alt",
+      "unit": "m",
+      "label": "Altitude",
+      "module": "BME280"
+    },
+    {
+      "key": "bh1750_lux",
+      "unit": "lx",
+      "label": "Éclairement",
+      "module": "BH1750 (GY-30 / GY-302)"
+    }
+  ],
+  "power": {
+    "modules_mA": 22,
+    "modules_peak_mA": 22,
+    "board_mA": 110,
+    "total_mA": 132,
+    "total_peak_mA": 282
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

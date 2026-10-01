@@ -1,0 +1,90 @@
+{
+  "id": "tsl2591",
+  "title": "TSL2591",
+  "category": "light",
+  "kind": "module",
+  "description": "Luxmètre à très haute dynamique (188 µlx à 88 000 lx), mesure de nuit comme en plein soleil.",
+  "tags": [
+    "lumière",
+    "lux",
+    "haute dynamique",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit TSL2591 Library",
+      "ver": "1.4.5",
+      "repo": "adafruit/Adafruit_TSL2591_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "tsl2591",
+      "name": "TSL2591",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tsl2591",
+      "name": "TSL2591",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tsl2591",
+      "name": "TSL2591",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "tsl2591",
+      "name": "TSL2591",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "tsl2591_lux",
+      "unit": "lx",
+      "label": "Éclairement",
+      "module": "TSL2591"
+    },
+    {
+      "key": "tsl2591_ir",
+      "unit": "",
+      "label": "Infrarouge brut",
+      "module": "TSL2591"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

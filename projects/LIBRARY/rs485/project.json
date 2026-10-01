@@ -1,0 +1,82 @@
+{
+  "id": "rs485",
+  "title": "Bus RS485 MAX485 (Modbus RTU)",
+  "category": "comm",
+  "kind": "module",
+  "description": "Interroge un appareil Modbus RTU (compteur, variateur, sonde) : lecture de registres.",
+  "tags": [
+    "RS485",
+    "Modbus",
+    "industriel",
+    "UART"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "rs485",
+      "name": "Bus RS485 MAX485 (Modbus RTU)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "rs485",
+      "name": "Bus RS485 MAX485 (Modbus RTU)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rs485",
+      "name": "Bus RS485 MAX485 (Modbus RTU)",
+      "pin": "RO",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "rs485",
+      "name": "Bus RS485 MAX485 (Modbus RTU)",
+      "pin": "DI",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    },
+    {
+      "mod": "rs485",
+      "name": "Bus RS485 MAX485 (Modbus RTU)",
+      "pin": "DE + RE (reliées)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "rs485_value",
+      "unit": "",
+      "label": "Registre",
+      "module": "Bus RS485 MAX485 (Modbus RTU)"
+    }
+  ],
+  "power": {
+    "modules_mA": 5,
+    "modules_peak_mA": 5,
+    "board_mA": 45,
+    "total_mA": 50,
+    "total_peak_mA": 85
+  },
+  "notes": [
+    "Résistance de terminaison 120 Ω aux deux extrémités du bus.",
+    "Modules MAX485 5 V : RO sort du 5 V → pont diviseur ou version MAX3485 3,3 V."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

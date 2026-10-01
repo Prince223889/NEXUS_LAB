@@ -1,0 +1,65 @@
+{
+  "id": "acs712",
+  "title": "ACS712 (courant à effet Hall 5/20/30 A)",
+  "category": "power",
+  "kind": "module",
+  "description": "Capteur de courant isolé AC/DC : 185 mV/A (5 A), 100 mV/A (20 A), 66 mV/A (30 A).",
+  "tags": [
+    "courant",
+    "Hall",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "acs712",
+      "name": "ACS712 (courant à effet Hall 5/20/30 A)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "acs712",
+      "name": "ACS712 (courant à effet Hall 5/20/30 A)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "acs712",
+      "name": "ACS712 (courant à effet Hall 5/20/30 A)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur 10 kΩ / 20 kΩ : sortie 0-5 V centrée sur 2,5 V"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "acs712_amp",
+      "unit": "A",
+      "label": "Courant",
+      "module": "ACS712 (courant à effet Hall 5/20/30 A)"
+    }
+  ],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 10,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 90
+  },
+  "notes": [
+    "Démarrez sans charge pour que le zéro soit mesuré correctement.",
+    "Pour le secteur 230 V, faites câbler l'installation par une personne qualifiée."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

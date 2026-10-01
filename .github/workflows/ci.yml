@@ -1,0 +1,86 @@
+name: ESP32 LAB CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Cohérence du dépôt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Régénérer le catalogue et vérifier qu'il est à jour
+        run: |
+          node catalog/build.js
+          git diff --stat --exit-code -- catalog/catalog.json firmware/master/www/catalog.js || (echo "Lancez node catalog/build.js et committez le résultat" && exit 1)
+      - name: Contrôles
+        run: python scripts/verify.py
+
+  master:
+    name: MASTER (ESP-IDF 6.1)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compiler avec l'image officielle ESP-IDF
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v6.1
+          target: esp32s3
+          path: firmware/master
+      - uses: actions/upload-artifact@v4
+        with:
+          name: master-esp32s3
+          path: |
+            firmware/master/build/esp32_lab_master.bin
+            firmware/master/build/bootloader/bootloader.bin
+            firmware/master/build/partition_table/partition-table.bin
+
+  worker:
+    name: Worker (Arduino-ESP32 3.3)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fqbn: ['esp32:esp32:esp32:PartitionScheme=min_spiffs', 'esp32:esp32:esp32s3:PartitionScheme=min_spiffs']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Installer le cœur esp32 3.3.x
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@3.3.12
+      - name: Compiler
+        run: arduino-cli compile -b '${{ matrix.fqbn }}' --warnings all firmware/worker
+
+  projects:
+    name: Échantillon de projets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Cœur et bibliothèques
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@3.3.12
+          arduino-cli lib update-index
+      - name: Compiler un échantillon représentatif
+        run: python scripts/compile_projects.py --install-libs --jobs 2 --only dht22,bme280,ds18b20,oled_ssd1306,relay,servo_sg90,app_thermostat,app_station_meteo,app_serre,classic_wifi_scan
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rapport-compilation
+          path: build/compile_report.md

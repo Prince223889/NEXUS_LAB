@@ -1,0 +1,68 @@
+{
+  "id": "guva_s12sd",
+  "title": "GUVA-S12SD (UV)",
+  "category": "weather",
+  "kind": "module",
+  "description": "Photodiode UV 240-370 nm : indice UV approximatif (tension / 0,1 V).",
+  "tags": [
+    "UV",
+    "soleil",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "uvg",
+      "name": "GUVA-S12SD (UV)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "uvg",
+      "name": "GUVA-S12SD (UV)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "uvg",
+      "name": "GUVA-S12SD (UV)",
+      "pin": "SIG",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "uvg_uvi",
+      "unit": "",
+      "label": "Indice UV",
+      "module": "GUVA-S12SD (UV)"
+    },
+    {
+      "key": "uvg_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "GUVA-S12SD (UV)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

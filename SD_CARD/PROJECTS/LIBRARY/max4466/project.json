@@ -1,0 +1,69 @@
+{
+  "id": "max4466",
+  "title": "Microphone MAX4466 / MAX9814",
+  "category": "bio",
+  "kind": "module",
+  "description": "Micro électret amplifié : niveau sonore crête-à-crête et estimation en dB relatifs.",
+  "tags": [
+    "son",
+    "micro",
+    "niveau sonore",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "mic",
+      "name": "Microphone MAX4466 / MAX9814",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "mic",
+      "name": "Microphone MAX4466 / MAX9814",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mic",
+      "name": "Microphone MAX4466 / MAX9814",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mic_pp",
+      "unit": "mV",
+      "label": "Crête-à-crête",
+      "module": "Microphone MAX4466 / MAX9814"
+    },
+    {
+      "key": "mic_db",
+      "unit": "dB",
+      "label": "Niveau relatif",
+      "module": "Microphone MAX4466 / MAX9814"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

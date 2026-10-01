@@ -1,0 +1,10 @@
+NEXUS · paquet de déploiement Raspberry Pi 4
+
+Déploie PI4_SD_CARD et SD_CARD côte à côte sur le Pi (scripts\deploy_pi_ssh.bat automatise le transfert), puis lance le script de préparation sécurisé
+Ce n'est pas une image système bootable. Le Pi démarre sur la clé USB 8 Go et garde sa microSD 64 Go FAT32 pour les données; la microSD 2 Go du S3 reste dans le S3.
+Depuis le Pi démarré sur USB, vérifie que /dev/mmcblk0 correspond à la microSD Pi de 64 Go, puis lance sudo bash pi/prepare_shared_sd.sh --format /dev/mmcblk0 uniquement si elle doit être formatée (commande destructive avec confirmation exacte). Ensuite sudo bash pi/install.sh monte /srv/nexus/shared.
+Formate séparément la carte S3 de 2 Go en FAT32 et copie le contenu de SD_CARD/ à sa racine. Les deux appareils échangent par Wi-Fi et gardent chacun leur carte.
+Les sources Arduino sont incluses; la copie de secours des firmwares provient de SD_CARD/ et n'est installée que si l'espace FAT suffit.
+Compileur ESP32: sudo bash pi/setup_arduino.sh (Pi ARM64 compatible).
+APK projet sur Windows: extrais le ZIP Studio puis lance scripts\build_project_apk.bat "C:\chemin\vers\projet". Pour obtenir un QR LAN, lance scripts\publish_project_apk.bat et saisis l’adresse Wi-Fi et le jeton Pi. Le build APK Gradle sur Pi 4 ARM64 reste indisponible.
+Le Pi rejoint le point d’accès ESP32-LAB via pi/connect_to_master_ap.sh. Le S3 partage son Internet amont au Pi; Ethernet reste prioritaire si branché.

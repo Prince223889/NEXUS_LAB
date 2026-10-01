@@ -1,0 +1,4 @@
+Copies de catalog/src/00_boards.js, 10_generator.js et du paquet catalog.js trouvées dans www/src/.
+Elles étaient concaténées dans app.js par le build CMake (glob www/src/*.js) et écrasaient le
+catalogue chargé par www/catalog.js (modules en double, générateur périmé).
+Leur contenu a été reporté dans catalog/src/ ; ce dossier peut être supprimé.

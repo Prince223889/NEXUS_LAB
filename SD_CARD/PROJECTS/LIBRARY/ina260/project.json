@@ -1,0 +1,96 @@
+{
+  "id": "ina260",
+  "title": "INA260 (shunt intégré 15 A)",
+  "category": "power",
+  "kind": "module",
+  "description": "Wattmètre avec shunt de précision intégré : 36 V et ±15 A sans calcul d'étalonnage.",
+  "tags": [
+    "courant",
+    "tension",
+    "puissance",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit INA260 Library",
+      "ver": "1.5.3",
+      "repo": "adafruit/Adafruit_INA260",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ina260",
+      "name": "INA260 (shunt intégré 15 A)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ina260",
+      "name": "INA260 (shunt intégré 15 A)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ina260",
+      "name": "INA260 (shunt intégré 15 A)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ina260",
+      "name": "INA260 (shunt intégré 15 A)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ina260_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "INA260 (shunt intégré 15 A)"
+    },
+    {
+      "key": "ina260_curr",
+      "unit": "mA",
+      "label": "Courant",
+      "module": "INA260 (shunt intégré 15 A)"
+    },
+    {
+      "key": "ina260_power",
+      "unit": "mW",
+      "label": "Puissance",
+      "module": "INA260 (shunt intégré 15 A)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,105 @@
+{
+  "id": "mcp2515",
+  "title": "Bus CAN MCP2515 + TJA1050",
+  "category": "comm",
+  "kind": "module",
+  "description": "Contrôleur CAN 500 kbit/s : envoie une trame de test et affiche le trafic du bus.",
+  "tags": [
+    "CAN",
+    "automobile",
+    "OBD",
+    "SPI"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "mcp_can",
+      "ver": "1.5.1",
+      "repo": "coryjfowler/MCP_CAN_lib",
+      "author": "coryjfowler"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "can",
+      "name": "Bus CAN MCP2515 + TJA1050",
+      "pin": "INT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "can_sendok",
+      "unit": "",
+      "label": "Envoi OK",
+      "module": "Bus CAN MCP2515 + TJA1050"
+    }
+  ],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 10,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 90
+  },
+  "notes": [
+    "Le TJA1050 exige 5 V ; le MCP2515 fonctionne en 3,3 ou 5 V (vérifiez votre module).",
+    "Terminaison 120 Ω (cavalier J1) aux extrémités du bus."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

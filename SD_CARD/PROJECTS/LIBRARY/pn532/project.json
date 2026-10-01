@@ -1,0 +1,107 @@
+{
+  "id": "pn532",
+  "title": "Lecteur NFC PN532 (I2C)",
+  "category": "id",
+  "kind": "module",
+  "description": "Lecteur NFC polyvalent : badges MIFARE, NTAG, et même certains smartphones.",
+  "tags": [
+    "NFC",
+    "RFID",
+    "smartphone",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit PN532",
+      "ver": "1.3.4",
+      "repo": "adafruit/Adafruit-PN532",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "IRQ",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "RSTO",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "nfc",
+      "name": "Lecteur NFC PN532 (I2C)",
+      "pin": "interrupteurs",
+      "to": "I2C : SW1 = ON, SW2 = OFF",
+      "note": "mode I2C du module rouge"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "nfc_reads",
+      "unit": "",
+      "label": "Lectures",
+      "module": "Lecteur NFC PN532 (I2C)"
+    }
+  ],
+  "power": {
+    "modules_mA": 100,
+    "modules_peak_mA": 100,
+    "board_mA": 45,
+    "total_mA": 145,
+    "total_peak_mA": 180
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

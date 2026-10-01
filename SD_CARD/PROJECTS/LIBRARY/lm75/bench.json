@@ -1,0 +1,187 @@
+{
+ "v": 1,
+ "title": "LM75 / LM75A — mesure et affichage série",
+ "board": "esp32",
+ "device": "lm75_lm75a_mesure_et",
+ "emulable": true,
+ "needsDac": false,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 2700,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "i2c",
+   "emu": 21,
+   "dut": 21,
+   "module": "LM75 / LM75A",
+   "label": "lm75",
+   "inst": 0,
+   "addr": 72,
+   "pointer": true,
+   "out": "temp",
+   "feed": "lm75_temp"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO21 (SDA)",
+   "emu": "GPIO21 (SDA)",
+   "note": "LM75 / LM75A émulé à l'adresse 0x48 ; tirage 4,7 kΩ vers 3V3"
+  },
+  {
+   "dut": "GPIO22 (SCL)",
+   "emu": "GPIO22 (SCL)",
+   "note": "tirage 4,7 kΩ vers 3V3"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": "0000"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": -0.062
+    }
+   ],
+   "wait": 5400,
+   "expect": [
+    {
+     "feed": "lm75_temp",
+     "v": -0.062,
+     "tol": 0.188
+    }
+   ]
+  },
+  {
+   "label": "Mesure lm75.temp = -76.82",
+   "set": [
+    {
+     "n": 0,
+     "raw": "b320"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": -76.825
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "lm75_temp",
+     "v": -76.825,
+     "tol": 0.188
+    }
+   ]
+  },
+  {
+   "label": "Mesure lm75.temp = -0.06",
+   "set": [
+    {
+     "n": 0,
+     "raw": "0000"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": -0.062
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "lm75_temp",
+     "v": -0.062,
+     "tol": 0.188
+    }
+   ]
+  },
+  {
+   "label": "Mesure lm75.temp = 76.7",
+   "set": [
+    {
+     "n": 0,
+     "raw": "4cc0"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 76.7
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "lm75_temp",
+     "v": 76.7,
+     "tol": 0.188
+    }
+   ]
+  },
+  {
+   "label": "Débranchement de lm75 (plus d'acquittement I2C)",
+   "set": [
+    {
+     "n": 0,
+     "online": 0
+    }
+   ],
+   "values": [],
+   "wait": 4000,
+   "expect": [
+    {
+     "feed": "lm75_temp",
+     "absent": true
+    }
+   ],
+   "note": "La mesure doit s'interrompre et les actionneurs garder leur état."
+  },
+  {
+   "label": "Rebranchement de lm75",
+   "set": [
+    {
+     "n": 0,
+     "online": 1
+    },
+    {
+     "n": 0,
+     "raw": "4cc0"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 76.7
+    }
+   ],
+   "wait": 4000,
+   "expect": [
+    {
+     "feed": "lm75_temp",
+     "v": 76.7,
+     "tol": 0.188
+    }
+   ]
+  }
+ ],
+ "duration_ms": 21500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__lm75__bench.ino.bin"
+}

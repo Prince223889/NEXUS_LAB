@@ -1,0 +1,55 @@
+{
+  "id": "vibration_motor",
+  "title": "Moteur vibreur (via transistor)",
+  "category": "motor",
+  "kind": "module",
+  "description": "Petit moteur à masselotte : retour haptique, alerte silencieuse.",
+  "tags": [
+    "MOSFET",
+    "PWM",
+    "puissance"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "vibration_motor",
+      "name": "Moteur vibreur (via transistor)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "vibration_motor",
+      "name": "Moteur vibreur (via transistor)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "vibration_motor",
+      "name": "Moteur vibreur (via transistor)",
+      "pin": "SIG / Gate",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 80,
+    "modules_peak_mA": 80,
+    "board_mA": 45,
+    "total_mA": 125,
+    "total_peak_mA": 160
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

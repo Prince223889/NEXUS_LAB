@@ -1,0 +1,62 @@
+{
+  "id": "flex",
+  "title": "Capteur de flexion (flex sensor 2,2\")",
+  "category": "motion",
+  "kind": "module",
+  "description": "Résistance variable 25-100 kΩ selon la courbure : gant de commande, robotique.",
+  "tags": [
+    "flexion",
+    "gant",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "flex",
+      "name": "Capteur de flexion (flex sensor 2,2\")",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "flex",
+      "name": "Capteur de flexion (flex sensor 2,2\")",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "flex",
+      "name": "Capteur de flexion (flex sensor 2,2\")",
+      "pin": "point milieu",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "flex entre 3V3 et le point milieu, 47 kΩ vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "flex_bend",
+      "unit": "°",
+      "label": "Flexion",
+      "module": "Capteur de flexion (flex sensor 2,2\")"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

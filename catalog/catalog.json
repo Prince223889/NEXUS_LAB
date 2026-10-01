@@ -1,0 +1,6316 @@
+{
+ "version": "6.1.0",
+ "generated": "2026-09-30",
+ "modules": 219,
+ "recipes": 52,
+ "classics": 49,
+ "categories": {
+  "temp": {
+   "name": "Température, humidité & pression",
+   "icon": "thermo"
+  },
+  "air": {
+   "name": "Qualité de l'air & CO₂",
+   "icon": "wind"
+  },
+  "gas": {
+   "name": "Gaz (série MQ)",
+   "icon": "flame"
+  },
+  "weather": {
+   "name": "Météo, sol & UV",
+   "icon": "cloud"
+  },
+  "water": {
+   "name": "Eau & aquariophilie",
+   "icon": "drop"
+  },
+  "light": {
+   "name": "Lumière, couleur & infrarouge",
+   "icon": "sun"
+  },
+  "distance": {
+   "name": "Distance & présence",
+   "icon": "radar"
+  },
+  "motion": {
+   "name": "Mouvement, orientation & vibrations",
+   "icon": "compass"
+  },
+  "input": {
+   "name": "Boutons, claviers & commandes",
+   "icon": "pointer"
+  },
+  "bio": {
+   "name": "Santé, son & biométrie",
+   "icon": "heart"
+  },
+  "power": {
+   "name": "Courant, tension & énergie",
+   "icon": "bolt"
+  },
+  "id": {
+   "name": "Identification, temps & position",
+   "icon": "id"
+  },
+  "act": {
+   "name": "Actionneurs : LED, relais, son",
+   "icon": "toggle"
+  },
+  "motor": {
+   "name": "Moteurs & servos",
+   "icon": "cog"
+  },
+  "io": {
+   "name": "Extensions d'E/S & convertisseurs",
+   "icon": "chip"
+  },
+  "display": {
+   "name": "Afficheurs",
+   "icon": "screen"
+  },
+  "comm": {
+   "name": "Communication & radio",
+   "icon": "antenna"
+  },
+  "app": {
+   "name": "Projets complets",
+   "icon": "star"
+  },
+  "classic": {
+   "name": "Classiques ESP32 (système & réseau)",
+   "icon": "book"
+  }
+ },
+ "projects": [
+  {
+   "id": "dht11",
+   "title": "DHT11",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "numérique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "DHT sensor library",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "dht22",
+   "title": "DHT22 / AM2302",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "numérique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "DHT sensor library",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "dht21",
+   "title": "DHT21 / AM2301",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "numérique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "DHT sensor library",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "ds18b20",
+   "title": "DS18B20",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "1-Wire",
+    "étanche"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "OneWire",
+    "DallasTemperature"
+   ]
+  },
+  {
+   "id": "bme280",
+   "title": "BME280",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "pression",
+    "altitude",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit BME280 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "bmp280",
+   "title": "BMP280",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "pression",
+    "altitude",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit BMP280 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "bmp180",
+   "title": "BMP180 / BMP085",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "pression",
+    "température",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit BMP085 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "bme680",
+   "title": "BME680",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "pression",
+    "gaz",
+    "COV",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit BME680 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "bmp388",
+   "title": "BMP388 / BMP390",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "pression",
+    "altitude",
+    "précision",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit BMP3XX Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "sht31",
+   "title": "SHT31",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "précision",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SHT31 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "sht4x",
+   "title": "SHT40 / SHT41 / SHT45",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "précision",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SHT4x Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "aht20",
+   "title": "AHT10 / AHT20 / AHT21",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "I2C",
+    "économique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit AHTX0",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "htu21d",
+   "title": "HTU21D / SHT21 / Si7021 (GY-21)",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit HTU21DF Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "si7021",
+   "title": "Si7021",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit Si7021 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "hdc1080",
+   "title": "HDC1080",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "humidité",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mcp9808",
+   "title": "MCP9808",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "précision",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MCP9808 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "tmp102",
+   "title": "TMP102",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "lm75",
+   "title": "LM75 / LM75A",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tmp117",
+   "title": "TMP117",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "haute précision",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit TMP117",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "lm35",
+   "title": "LM35",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tmp36",
+   "title": "TMP36",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ntc",
+   "title": "Thermistance CTN 10 kΩ",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "analogique",
+    "thermistance"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "max6675",
+   "title": "MAX6675 + thermocouple K",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "thermocouple",
+    "haute température",
+    "SPI"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "max31855",
+   "title": "MAX31855 + thermocouple K",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "thermocouple",
+    "SPI"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MAX31855 library"
+   ]
+  },
+  {
+   "id": "max31865",
+   "title": "MAX31865 + sonde PT100",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "PT100",
+    "RTD",
+    "SPI",
+    "industriel"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MAX31865 library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "mlx90614",
+   "title": "MLX90614 (thermomètre infrarouge)",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "température",
+    "infrarouge",
+    "sans contact",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MLX90614 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "amg8833",
+   "title": "AMG8833 (caméra thermique 8×8)",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "thermique",
+    "caméra",
+    "infrarouge",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit AMG88xx Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "dps310",
+   "title": "DPS310",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "pression",
+    "altitude",
+    "précision",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit DPS310",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "lps22",
+   "title": "LPS22HB",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "pression",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit LPS2X",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "ms5611",
+   "title": "MS5611 (GY-63)",
+   "cat": "temp",
+   "kind": "module",
+   "tags": [
+    "pression",
+    "altitude",
+    "variomètre",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "MS5611"
+   ]
+  },
+  {
+   "id": "scd30",
+   "title": "SCD30 (CO₂ NDIR)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "CO2",
+    "qualité de l'air",
+    "NDIR",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SCD30",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "scd40",
+   "title": "SCD40 / SCD41 (CO₂ photoacoustique)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "CO2",
+    "qualité de l'air",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ccs811",
+   "title": "CCS811 (eCO₂ / COVT)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "COV",
+    "eCO2",
+    "qualité de l'air",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit CCS811 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "sgp30",
+   "title": "SGP30 (eCO₂ / COVT)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "COV",
+    "eCO2",
+    "qualité de l'air",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SGP30 Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "sgp40",
+   "title": "SGP40 (indice COV)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "COV",
+    "qualité de l'air",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SGP40 Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "ens160",
+   "title": "ENS160 (AQI / eCO₂ / COVT)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "COV",
+    "eCO2",
+    "AQI",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mhz19",
+   "title": "MH-Z19B / MH-Z19C (CO₂ NDIR)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "CO2",
+    "NDIR",
+    "UART",
+    "sans bibliothèque"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "senseair_s8",
+   "title": "SenseAir S8 (CO₂ NDIR)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "CO2",
+    "NDIR",
+    "Modbus",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "pms5003",
+   "title": "PMS5003 / PMS7003 (particules fines)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "PM2.5",
+    "PM10",
+    "particules",
+    "pollution",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "sds011",
+   "title": "SDS011 (particules fines)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "PM2.5",
+    "PM10",
+    "particules",
+    "UART"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "gp2y1010",
+   "title": "Sharp GP2Y1010AU0F (poussière)",
+   "cat": "air",
+   "kind": "module",
+   "tags": [
+    "poussière",
+    "particules",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq2",
+   "title": "MQ-2 (fumée, GPL, butane)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "GPL",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq3",
+   "title": "MQ-3 (alcool)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "alcool",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq4",
+   "title": "MQ-4 (méthane, gaz naturel)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "CH4",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq5",
+   "title": "MQ-5 (GPL, gaz de ville)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "GPL",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq6",
+   "title": "MQ-6 (GPL, butane)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "GPL",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq7",
+   "title": "MQ-7 (monoxyde de carbone)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "CO",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq8",
+   "title": "MQ-8 (hydrogène)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "H2",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq9",
+   "title": "MQ-9 (CO, gaz inflammables)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "CO",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mq135",
+   "title": "MQ-135 (qualité de l'air)",
+   "cat": "gas",
+   "kind": "module",
+   "tags": [
+    "gaz",
+    "CO2",
+    "MQ",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rain",
+   "title": "Capteur de pluie FC-37 / YL-83",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "pluie",
+    "météo",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "soil_cap",
+   "title": "Humidité du sol capacitive v1.2",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "sol",
+    "jardin",
+    "arrosage",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "soil_res",
+   "title": "Humidité du sol résistive YL-69 / FC-28",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "sol",
+    "jardin",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "water_level",
+   "title": "Capteur de niveau d'eau (pistes)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "eau",
+    "niveau",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "float_switch",
+   "title": "Interrupteur à flotteur",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "eau",
+    "niveau",
+    "cuve",
+    "numérique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "guva_s12sd",
+   "title": "GUVA-S12SD (UV)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "UV",
+    "soleil",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ml8511",
+   "title": "ML8511 (UV)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "UV",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "veml6070",
+   "title": "VEML6070 (UV-A)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "UV",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit VEML6070 Library"
+   ]
+  },
+  {
+   "id": "ltr390",
+   "title": "LTR390 (UV + lumière)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "UV",
+    "lumière",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit LTR390 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "si1145",
+   "title": "SI1145 / SI1151 (UV, visible, IR)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "UV",
+    "lumière",
+    "infrarouge",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SI1145 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "anemometer",
+   "title": "Anémomètre à impulsions",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "vent",
+    "météo",
+    "interruption"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "wind_vane",
+   "title": "Girouette à résistances",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "vent",
+    "direction",
+    "météo",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rain_gauge",
+   "title": "Pluviomètre à auget",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "pluie",
+    "météo",
+    "interruption"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ph",
+   "title": "Sonde pH (module PH-4502C / SEN0161)",
+   "cat": "water",
+   "kind": "module",
+   "tags": [
+    "pH",
+    "eau",
+    "aquarium",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tds",
+   "title": "Sonde TDS (conductivité)",
+   "cat": "water",
+   "kind": "module",
+   "tags": [
+    "TDS",
+    "eau",
+    "conductivité",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "turbidity",
+   "title": "Capteur de turbidité",
+   "cat": "water",
+   "kind": "module",
+   "tags": [
+    "turbidité",
+    "eau",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "flow_yfs201",
+   "title": "Débitmètre YF-S201",
+   "cat": "water",
+   "kind": "module",
+   "tags": [
+    "débit",
+    "eau",
+    "interruption"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ldr",
+   "title": "Photorésistance (LDR / GL5528)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "analogique",
+    "débutant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ldr_module",
+   "title": "Module photorésistance KY-018 / LM393",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "seuil",
+    "numérique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "temt6000",
+   "title": "TEMT6000 (phototransistor)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "bh1750",
+   "title": "BH1750 (GY-30 / GY-302)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "lux",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "BH1750"
+   ]
+  },
+  {
+   "id": "tsl2561",
+   "title": "TSL2561",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "lux",
+    "infrarouge",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit TSL2561",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "tsl2591",
+   "title": "TSL2591",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "lux",
+    "haute dynamique",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit TSL2591 Library",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "veml7700",
+   "title": "VEML7700",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "lux",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit VEML7700 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "max44009",
+   "title": "MAX44009 (GY-49)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "lumière",
+    "lux",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tcs34725",
+   "title": "TCS34725 (couleur RVB)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "couleur",
+    "RVB",
+    "I2C",
+    "tri"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit TCS34725"
+   ]
+  },
+  {
+   "id": "tcs3200",
+   "title": "TCS3200 / TCS230 (couleur)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "couleur",
+    "fréquence",
+    "tri"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "apds9960",
+   "title": "APDS9960 (gestes, proximité, couleur)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "geste",
+    "proximité",
+    "couleur",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit APDS9960 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "as7341",
+   "title": "AS7341 (spectromètre 11 canaux)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "spectre",
+    "couleur",
+    "I2C",
+    "science"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit AS7341",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "flame",
+   "title": "Détecteur de flamme IR (KY-026)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "flamme",
+    "feu",
+    "infrarouge",
+    "sécurité"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ir_receiver",
+   "title": "Récepteur infrarouge VS1838B / TSOP38238",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "infrarouge",
+    "télécommande",
+    "IR"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "IRremote"
+   ]
+  },
+  {
+   "id": "ir_transmitter",
+   "title": "Émetteur infrarouge (LED IR 940 nm)",
+   "cat": "light",
+   "kind": "module",
+   "tags": [
+    "infrarouge",
+    "télécommande",
+    "IR",
+    "émission"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "IRremote"
+   ]
+  },
+  {
+   "id": "ir_obstacle",
+   "title": "Détecteur d'obstacle IR (FC-51)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "obstacle",
+    "infrarouge",
+    "robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tcrt5000",
+   "title": "Suiveur de ligne TCRT5000",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "ligne",
+    "robot",
+    "infrarouge"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ir_beam",
+   "title": "Barrière infrarouge (émetteur + récepteur)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "barrière",
+    "comptage",
+    "infrarouge"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "laser_module",
+   "title": "Module laser KY-008 (650 nm)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "laser",
+    "lumière",
+    "sortie"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "laser_receiver",
+   "title": "Récepteur laser (module ISO203)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "laser",
+    "barrière",
+    "sécurité"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hcsr04",
+   "title": "HC-SR04 (ultrasons)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "ultrason",
+    "robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "jsn_sr04t",
+   "title": "JSN-SR04T (ultrasons étanche)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "ultrason",
+    "robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hcsr04p",
+   "title": "HC-SR04P / RCWL-1601 (3,3 V)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "ultrason",
+    "robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "us100",
+   "title": "US-100 (ultrasons, mode série)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "ultrason",
+    "UART",
+    "température"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "vl53l0x",
+   "title": "VL53L0X (temps de vol laser)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "laser",
+    "ToF",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit_VL53L0X"
+   ]
+  },
+  {
+   "id": "vl53l1x",
+   "title": "VL53L1X (ToF longue portée)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "laser",
+    "ToF",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "VL53L1X"
+   ]
+  },
+  {
+   "id": "vl6180x",
+   "title": "VL6180X (ToF courte portée + lux)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "ToF",
+    "lumière",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit_VL6180X"
+   ]
+  },
+  {
+   "id": "sharp_ir",
+   "title": "Sharp GP2Y0A21YK0F (IR 10-80 cm)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "infrarouge",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tfmini",
+   "title": "Benewake TFmini / TF-Luna (LiDAR)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "distance",
+    "LiDAR",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "pir_hcsr501",
+   "title": "HC-SR501 (PIR infrarouge passif)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "présence",
+    "mouvement",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "pir_am312",
+   "title": "AM312 (mini PIR)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "présence",
+    "mouvement",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rcwl0516",
+   "title": "RCWL-0516 (radar micro-ondes)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "présence",
+    "mouvement",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ld2410",
+   "title": "HLK-LD2410 (radar mmWave présence humaine)",
+   "cat": "distance",
+   "kind": "module",
+   "tags": [
+    "présence",
+    "mouvement",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mpu6050",
+   "title": "MPU-6050 (GY-521)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "accéléromètre",
+    "gyroscope",
+    "IMU",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MPU6050",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "mpu9250",
+   "title": "MPU-9250 / MPU-6500",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "IMU",
+    "accéléromètre",
+    "gyroscope",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "adxl345",
+   "title": "ADXL345 (GY-291)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "accéléromètre",
+    "chute",
+    "vibration",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit ADXL345",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "lis3dh",
+   "title": "LIS3DH",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "accéléromètre",
+    "I2C",
+    "basse consommation"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit LIS3DH",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "lsm6ds3",
+   "title": "LSM6DS3TR-C",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "IMU",
+    "accéléromètre",
+    "gyroscope",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit LSM6DS",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "bno055",
+   "title": "BNO055 (orientation absolue 9 axes)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "IMU",
+    "orientation",
+    "fusion",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit BNO055",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "hmc5883l",
+   "title": "HMC5883L (boussole GY-273)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "boussole",
+    "magnétomètre",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit HMC5883 Unified",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "qmc5883l",
+   "title": "QMC5883L (boussole GY-273 récente)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "boussole",
+    "magnétomètre",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "adxl335",
+   "title": "ADXL335 (accéléromètre analogique)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "accéléromètre",
+    "analogique",
+    "inclinaison"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "as5600",
+   "title": "AS5600 (codeur magnétique 12 bits)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "angle",
+    "codeur",
+    "magnétique",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "AS5600"
+   ]
+  },
+  {
+   "id": "hall_a3144",
+   "title": "Capteur à effet Hall A3144 (KY-003)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "magnétique",
+    "Hall",
+    "vitesse",
+    "numérique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hall_49e",
+   "title": "Capteur Hall linéaire SS49E (KY-035)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "magnétique",
+    "Hall",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "reed",
+   "title": "Contact reed (ILS)",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "magnétique",
+    "porte",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tilt_sw520",
+   "title": "Capteur d'inclinaison SW-520D",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "inclinaison",
+    "bille"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "vibration_sw420",
+   "title": "Capteur de vibration SW-420",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "vibration",
+    "choc",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "limit_switch",
+   "title": "Fin de course mécanique",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "fin de course",
+    "micro-rupteur"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "piezo_knock",
+   "title": "Capteur de choc piézo",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "piézo",
+    "choc",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "button",
+   "title": "Bouton-poussoir (anti-rebond)",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "bouton",
+    "débutant",
+    "entrée"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ttp223",
+   "title": "Bouton tactile capacitif TTP223",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "tactile",
+    "bouton",
+    "capacitif"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "esp_touch",
+   "title": "Touche capacitive intégrée ESP32",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "tactile",
+    "capacitif",
+    "sans composant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "potentiometer",
+   "title": "Potentiomètre 10 kΩ",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "potentiomètre",
+    "analogique",
+    "débutant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "joystick",
+   "title": "Joystick analogique KY-023",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "joystick",
+    "analogique",
+    "manette"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rotary_encoder",
+   "title": "Codeur rotatif KY-040",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "codeur",
+    "bouton rotatif",
+    "interruption"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "keypad4x4",
+   "title": "Clavier matriciel 4×4",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "clavier",
+    "matrice",
+    "code"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Keypad"
+   ]
+  },
+  {
+   "id": "keypad3x4",
+   "title": "Clavier matriciel 3×4 (téléphone)",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "clavier",
+    "matrice",
+    "code"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Keypad"
+   ]
+  },
+  {
+   "id": "mpr121",
+   "title": "MPR121 (12 touches capacitives)",
+   "cat": "input",
+   "kind": "module",
+   "tags": [
+    "tactile",
+    "capacitif",
+    "piano",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MPR121",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "flex",
+   "title": "Capteur de flexion (flex sensor 2,2\")",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "flexion",
+    "gant",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "fsr402",
+   "title": "Capteur de force FSR402",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "force",
+    "pression",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hx711",
+   "title": "Balance HX711 + cellule de charge",
+   "cat": "motion",
+   "kind": "module",
+   "tags": [
+    "poids",
+    "balance",
+    "jauge de contrainte"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "HX711 Arduino Library"
+   ]
+  },
+  {
+   "id": "pulse_sensor",
+   "title": "Capteur de pouls (Pulse Sensor)",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "pouls",
+    "cœur",
+    "santé",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "max30102",
+   "title": "MAX30102 (pouls & SpO₂)",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "pouls",
+    "oxymètre",
+    "santé",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "SparkFun MAX3010x Pulse and Proximity Sensor Library"
+   ]
+  },
+  {
+   "id": "ad8232",
+   "title": "AD8232 (électrocardiogramme)",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "ECG",
+    "cœur",
+    "santé",
+    "analogique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "gsr",
+   "title": "Capteur GSR (conductance cutanée)",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "stress",
+    "peau",
+    "santé",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "sound_ky038",
+   "title": "Capteur de son KY-038 / LM393",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "son",
+    "micro",
+    "claquement"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "max4466",
+   "title": "Microphone MAX4466 / MAX9814",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "son",
+    "micro",
+    "niveau sonore",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "inmp441",
+   "title": "INMP441 (micro numérique I2S)",
+   "cat": "bio",
+   "kind": "module",
+   "tags": [
+    "son",
+    "micro",
+    "I2S",
+    "audio"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ina219",
+   "title": "INA219 (tension/courant/puissance)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "courant",
+    "tension",
+    "puissance",
+    "batterie",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit INA219",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "ina226",
+   "title": "INA226 (wattmètre 36 V)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "courant",
+    "tension",
+    "puissance",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "INA226"
+   ]
+  },
+  {
+   "id": "ina260",
+   "title": "INA260 (shunt intégré 15 A)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "courant",
+    "tension",
+    "puissance",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit INA260 Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "acs712",
+   "title": "ACS712 (courant à effet Hall 5/20/30 A)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "courant",
+    "Hall",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "voltage_divider",
+   "title": "Module mesure de tension 0-25 V",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "tension",
+    "batterie",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "battery_monitor",
+   "title": "Niveau de batterie Li-ion (pont 100k/100k)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "batterie",
+    "Li-ion",
+    "autonomie",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "zmpt101b",
+   "title": "ZMPT101B (tension secteur AC)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "tension",
+    "secteur",
+    "AC",
+    "analogique",
+    "énergie"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "sct013",
+   "title": "Pince ampèremétrique SCT-013-030",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "courant",
+    "secteur",
+    "AC",
+    "énergie",
+    "non invasif"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "pzem004t",
+   "title": "PZEM-004T v3 (compteur d'énergie)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "énergie",
+    "secteur",
+    "kWh",
+    "Modbus",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "PZEM004Tv30"
+   ]
+  },
+  {
+   "id": "solar_panel",
+   "title": "Petit panneau solaire (tension/puissance)",
+   "cat": "power",
+   "kind": "module",
+   "tags": [
+    "solaire",
+    "énergie",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rc522",
+   "title": "Lecteur RFID RC522 (13,56 MHz)",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "RFID",
+    "badge",
+    "MIFARE",
+    "SPI",
+    "contrôle d'accès"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "MFRC522"
+   ]
+  },
+  {
+   "id": "pn532",
+   "title": "Lecteur NFC PN532 (I2C)",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "NFC",
+    "RFID",
+    "smartphone",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit PN532",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "fingerprint",
+   "title": "Lecteur d'empreintes R307 / AS608",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "empreinte",
+    "biométrie",
+    "serrure",
+    "UART"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit Fingerprint Sensor Library"
+   ]
+  },
+  {
+   "id": "rdm6300",
+   "title": "Lecteur RFID 125 kHz RDM6300",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "RFID",
+    "EM4100",
+    "125 kHz",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "gm65",
+   "title": "Lecteur de codes-barres / QR GM65",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "code-barres",
+    "QR code",
+    "scanner",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "gps_neo6m",
+   "title": "GPS u-blox NEO-6M / NEO-M8N",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "GPS",
+    "position",
+    "heure",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "TinyGPSPlus"
+   ]
+  },
+  {
+   "id": "ds3231",
+   "title": "Horloge temps réel DS3231",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "horloge",
+    "RTC",
+    "heure",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "RTClib",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "ds1307",
+   "title": "Horloge temps réel DS1307 (Tiny RTC)",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "horloge",
+    "RTC",
+    "heure",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "RTClib",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "pcf8563",
+   "title": "Horloge temps réel PCF8563",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "horloge",
+    "RTC",
+    "heure",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "RTClib",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "at24c32",
+   "title": "EEPROM I2C AT24C32 / AT24C256",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "mémoire",
+    "EEPROM",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "sd_card",
+   "title": "Module carte microSD (SPI)",
+   "cat": "id",
+   "kind": "module",
+   "tags": [
+    "stockage",
+    "SD",
+    "journal",
+    "SPI",
+    "enregistreur"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "led",
+   "title": "LED + résistance 220 Ω",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "LED",
+    "débutant",
+    "sortie"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "led_pwm",
+   "title": "LED à intensité variable (PWM)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "LED",
+    "PWM",
+    "variateur"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rgb_led",
+   "title": "LED RVB (cathode commune)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "LED",
+    "RVB",
+    "couleur",
+    "PWM"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ws2812",
+   "title": "Ruban / anneau LED WS2812B (NeoPixel)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "LED",
+    "WS2812",
+    "NeoPixel",
+    "adressable"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit NeoPixel"
+   ]
+  },
+  {
+   "id": "buzzer_active",
+   "title": "Buzzer actif 5 V",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "son",
+    "alarme",
+    "buzzer"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "buzzer_passive",
+   "title": "Buzzer passif / haut-parleur piézo",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "son",
+    "mélodie",
+    "tone",
+    "buzzer"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "relay",
+   "title": "Module relais 5 V (1 canal)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "relais",
+    "commutation",
+    "230 V",
+    "domotique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ssr",
+   "title": "Relais statique SSR G3MB-202P",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "relais",
+    "commutation",
+    "230 V",
+    "domotique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mosfet_irf520",
+   "title": "Module MOSFET IRF520 / IRLZ44N",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "MOSFET",
+    "PWM",
+    "puissance"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "vibration_motor",
+   "title": "Moteur vibreur (via transistor)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "MOSFET",
+    "PWM",
+    "puissance"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "pump",
+   "title": "Mini-pompe à eau 5 V (via MOSFET)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "pompe",
+    "arrosage",
+    "eau"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "solenoid_lock",
+   "title": "Gâche / serrure électrique 12 V",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "serrure",
+    "gâche",
+    "accès"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "fan_pwm",
+   "title": "Ventilateur PC 4 fils (PWM 25 kHz)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "ventilateur",
+    "PWM",
+    "refroidissement",
+    "tachymètre"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "servo_sg90",
+   "title": "Servomoteur SG90 / MG90S",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "servo",
+    "angle",
+    "robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "servo_mg996r",
+   "title": "Servomoteur MG996R (couple 10 kg·cm)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "servo",
+    "couple",
+    "bras robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "servo_360",
+   "title": "Servo à rotation continue FS90R",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "servo",
+    "rotation continue",
+    "robot"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "stepper_28byj48",
+   "title": "Moteur pas-à-pas 28BYJ-48 + ULN2003",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "pas-à-pas",
+    "stepper",
+    "ULN2003"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "AccelStepper"
+   ]
+  },
+  {
+   "id": "stepper_a4988",
+   "title": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "pas-à-pas",
+    "NEMA17",
+    "A4988",
+    "CNC"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "AccelStepper"
+   ]
+  },
+  {
+   "id": "l298n",
+   "title": "Pont en H L298N (moteur CC)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "moteur CC",
+    "pont en H",
+    "robot"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "tb6612",
+   "title": "Driver TB6612FNG (moteur CC)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "moteur CC",
+    "pont en H",
+    "robot"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "drv8833",
+   "title": "Driver DRV8833 (moteur CC)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "moteur CC",
+    "pont en H",
+    "robot"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "l9110s",
+   "title": "Driver L9110S (moteur CC)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "moteur CC",
+    "pont en H",
+    "robot"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "bts7960",
+   "title": "Driver BTS7960 43 A (moteur puissant)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "moteur CC",
+    "pont en H",
+    "robot"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "pca9685",
+   "title": "PCA9685 (16 servos I2C)",
+   "cat": "motor",
+   "kind": "module",
+   "tags": [
+    "servo",
+    "PWM",
+    "16 canaux",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit PWM Servo Driver Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "dfplayer",
+   "title": "Lecteur MP3 DFPlayer Mini",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "MP3",
+    "son",
+    "audio",
+    "UART"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "DFRobotDFPlayerMini"
+   ]
+  },
+  {
+   "id": "max98357",
+   "title": "Ampli I2S MAX98357A + haut-parleur",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "audio",
+    "I2S",
+    "haut-parleur",
+    "son"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "dac_internal",
+   "title": "Convertisseur N/A interne (DAC 8 bits)",
+   "cat": "act",
+   "kind": "module",
+   "tags": [
+    "DAC",
+    "tension",
+    "signal",
+    "analogique"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mcp23017",
+   "title": "MCP23017 (16 E/S I2C)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "extension",
+    "GPIO",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MCP23017 Arduino Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "pcf8574",
+   "title": "PCF8574 (8 E/S I2C)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "extension",
+    "GPIO",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hc595",
+   "title": "Registre à décalage 74HC595",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "sorties",
+    "registre",
+    "LED"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hc165",
+   "title": "Registre d'entrée 74HC165",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "entrées",
+    "registre",
+    "boutons"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "cd74hc4067",
+   "title": "Multiplexeur analogique CD74HC4067 (16 voies)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "multiplexeur",
+    "analogique",
+    "16 voies"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ads1115",
+   "title": "ADS1115 (CAN 16 bits, 4 voies)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "ADC",
+    "précision",
+    "analogique",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit ADS1X15",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "pcf8591",
+   "title": "PCF8591 (CAN/CNA 8 bits)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "ADC",
+    "DAC",
+    "I2C",
+    "sans bibliothèque"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mcp4725",
+   "title": "MCP4725 (CNA 12 bits I2C)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "DAC",
+    "tension",
+    "I2C"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit MCP4725",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "tca9548a",
+   "title": "Multiplexeur I2C TCA9548A (8 bus)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "I2C",
+    "multiplexeur",
+    "conflit d'adresse"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "i2c_scanner",
+   "title": "Scanner I2C (diagnostic)",
+   "cat": "io",
+   "kind": "module",
+   "tags": [
+    "I2C",
+    "diagnostic",
+    "débutant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "stemma_soil",
+   "title": "Adafruit STEMMA Soil Sensor (seesaw)",
+   "cat": "weather",
+   "kind": "module",
+   "tags": [
+    "sol",
+    "capacitif",
+    "I2C",
+    "jardin"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit seesaw Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "oled_ssd1306",
+   "title": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "OLED",
+    "écran",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "oled_128x32",
+   "title": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "OLED",
+    "écran",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "oled_sh1106",
+   "title": "Écran OLED 1,3\" SH1106 128×64 (I2C)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "OLED",
+    "écran",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit SH110X",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "tft_st7735",
+   "title": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "TFT",
+    "couleur",
+    "écran",
+    "SPI"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit ST7735 and ST7789 Library",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "tft_st7789",
+   "title": "Écran couleur IPS 1,3\"/1,54\" ST7789 240×240 (SPI)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "TFT",
+    "IPS",
+    "couleur",
+    "écran",
+    "SPI"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit ST7735 and ST7789 Library",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "tft_ili9341",
+   "title": "Écran couleur TFT 2,4\"/2,8\" ILI9341 320×240 (SPI)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "TFT",
+    "couleur",
+    "écran",
+    "SPI"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit ILI9341",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "nokia5110",
+   "title": "Écran Nokia 5110 PCD8544 84×48 (SPI)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "LCD",
+    "écran",
+    "rétro",
+    "SPI"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit PCD8544 Nokia 5110 LCD library",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "lcd1602",
+   "title": "Écran LCD 16×2 + module I2C",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "LCD",
+    "HD44780",
+    "écran",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "LiquidCrystal I2C"
+   ]
+  },
+  {
+   "id": "lcd2004",
+   "title": "Écran LCD 20×4 + module I2C",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "LCD",
+    "HD44780",
+    "écran",
+    "I2C"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "LiquidCrystal I2C"
+   ]
+  },
+  {
+   "id": "tm1637",
+   "title": "Afficheur 4 chiffres TM1637",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "7 segments",
+    "horloge",
+    "afficheur"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "TM1637"
+   ]
+  },
+  {
+   "id": "max7219_matrix",
+   "title": "Matrice LED 8×8 MAX7219",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "matrice",
+    "LED",
+    "MAX7219"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "max7219_7seg",
+   "title": "Afficheur 8 chiffres MAX7219",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "7 segments",
+    "MAX7219",
+    "afficheur"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ht16k33_7seg",
+   "title": "Afficheur 4 chiffres HT16K33 (I2C)",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "7 segments",
+    "I2C",
+    "afficheur"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "Adafruit LED Backpack Library",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "seg7_single",
+   "title": "Afficheur 7 segments 1 chiffre",
+   "cat": "display",
+   "kind": "module",
+   "tags": [
+    "7 segments",
+    "débutant",
+    "afficheur"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "nrf24l01",
+   "title": "Radio nRF24L01+ (2,4 GHz)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "radio",
+    "2,4 GHz",
+    "nRF24",
+    "SPI"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "RF24"
+   ]
+  },
+  {
+   "id": "lora_sx1278",
+   "title": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "LoRa",
+    "longue portée",
+    "radio",
+    "SPI"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "LoRa"
+   ]
+  },
+  {
+   "id": "hc05",
+   "title": "Bluetooth HC-05 / HC-06 (série)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "Bluetooth",
+    "série",
+    "smartphone",
+    "UART"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "hc12",
+   "title": "Radio série HC-12 (433 MHz, 1 km)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "radio",
+    "433 MHz",
+    "série",
+    "UART"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "rf433_rx",
+   "title": "Récepteur 433 MHz (RXB6 / MX-RM-5V)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "radio",
+    "433 MHz",
+    "télécommande",
+    "prise radio"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "rc-switch"
+   ]
+  },
+  {
+   "id": "rf433_tx",
+   "title": "Émetteur 433 MHz (FS1000A)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "radio",
+    "433 MHz",
+    "prise radio",
+    "domotique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "rc-switch"
+   ]
+  },
+  {
+   "id": "rs485",
+   "title": "Bus RS485 MAX485 (Modbus RTU)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "RS485",
+    "Modbus",
+    "industriel",
+    "UART"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "mcp2515",
+   "title": "Bus CAN MCP2515 + TJA1050",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "CAN",
+    "automobile",
+    "OBD",
+    "SPI"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "mcp_can"
+   ]
+  },
+  {
+   "id": "sim800l",
+   "title": "Modem GSM SIM800L (SMS, appels)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "GSM",
+    "SMS",
+    "2G",
+    "UART"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "ble_scanner",
+   "title": "Scanner Bluetooth Low Energy (intégré)",
+   "cat": "comm",
+   "kind": "module",
+   "tags": [
+    "BLE",
+    "Bluetooth",
+    "présence",
+    "intégré"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_station_meteo",
+   "title": "Station météo intérieure connectée",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "météo",
+    "OLED",
+    "web",
+    "MASTER"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit BME280 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "BH1750",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library"
+   ]
+  },
+  {
+   "id": "app_station_meteo_ext",
+   "title": "Station météo extérieure complète",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "météo",
+    "vent",
+    "pluie",
+    "web"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "DHT sensor library",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "app_thermostat",
+   "title": "Thermostat de chauffage",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "chauffage",
+    "relais",
+    "OLED"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "OneWire",
+    "DallasTemperature",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_ventilation_auto",
+   "title": "Ventilateur proportionnel à la température",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "ventilateur",
+    "PWM",
+    "proportionnel"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "DHT sensor library",
+    "Adafruit Unified Sensor"
+   ]
+  },
+  {
+   "id": "app_lampe_crepusculaire",
+   "title": "Lampe crépusculaire",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "éclairage",
+    "lux",
+    "relais"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "BH1750"
+   ]
+  },
+  {
+   "id": "app_variateur_auto",
+   "title": "Éclairage à intensité automatique",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "éclairage",
+    "PWM",
+    "proportionnel"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_volet_roulant",
+   "title": "Volet roulant automatique",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "volet",
+    "pas-à-pas",
+    "lux"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "BH1750",
+    "AccelStepper"
+   ]
+  },
+  {
+   "id": "app_telecommande_ir",
+   "title": "Prise commandée par télécommande IR",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "infrarouge",
+    "relais",
+    "télécommande"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "IRremote"
+   ]
+  },
+  {
+   "id": "app_prise_radio",
+   "title": "Passerelle prises radio 433 MHz",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "433 MHz",
+    "domotique",
+    "MQTT"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit AHTX0",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "rc-switch",
+    "PubSubClient"
+   ]
+  },
+  {
+   "id": "app_mqtt_domotique",
+   "title": "Capteur domotique MQTT (Home Assistant)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "MQTT",
+    "Home Assistant",
+    "domotique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SHT31 Library",
+    "Adafruit BusIO",
+    "PubSubClient"
+   ]
+  },
+  {
+   "id": "app_lcd_interieur",
+   "title": "Afficheur de confort intérieur (LCD)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "LCD",
+    "confort"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit AHTX0",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "LiquidCrystal I2C"
+   ]
+  },
+  {
+   "id": "app_horloge_rtc",
+   "title": "Horloge précise DS3231 + OLED",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "horloge",
+    "RTC",
+    "OLED"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "RTClib",
+    "Adafruit BusIO",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library"
+   ]
+  },
+  {
+   "id": "app_horloge_led",
+   "title": "Horloge / thermomètre à LED 8 chiffres",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "horloge",
+    "7 segments",
+    "MAX7219"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "OneWire",
+    "DallasTemperature"
+   ]
+  },
+  {
+   "id": "app_arrosage_auto",
+   "title": "Arrosage automatique de plante",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "arrosage",
+    "pompe",
+    "sol"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_serre",
+   "title": "Serre intelligente",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "serre",
+    "jardin",
+    "ventilation",
+    "arrosage",
+    "web"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SHT31 Library",
+    "Adafruit BusIO",
+    "BH1750"
+   ]
+  },
+  {
+   "id": "app_aquarium",
+   "title": "Contrôleur d'aquarium",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "aquarium",
+    "pH",
+    "TDS",
+    "chauffage"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "OneWire",
+    "DallasTemperature"
+   ]
+  },
+  {
+   "id": "app_qualite_eau",
+   "title": "Analyseur de qualité de l'eau",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "eau",
+    "pH",
+    "TDS",
+    "turbidité"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_niveau_cuve",
+   "title": "Jauge de cuve d'eau de pluie",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "cuve",
+    "niveau",
+    "ultrason",
+    "web"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_balance",
+   "title": "Balance connectée (ruche, réservoir)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "balance",
+    "HX711",
+    "web"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "HX711 Arduino Library",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_frigo",
+   "title": "Alarme de réfrigérateur / congélateur",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "froid",
+    "alarme",
+    "DS18B20"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "OneWire",
+    "DallasTemperature"
+   ]
+  },
+  {
+   "id": "app_co2_feu",
+   "title": "Indicateur CO₂ « feu tricolore » (salle de classe)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "CO2",
+    "école",
+    "NeoPixel",
+    "aération"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit NeoPixel",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_alarme_co2",
+   "title": "Alarme CO₂ avec buzzer",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "CO2",
+    "alarme",
+    "LCD"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SCD30",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "LiquidCrystal I2C"
+   ]
+  },
+  {
+   "id": "app_particules",
+   "title": "Moniteur de particules fines PM2.5",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "PM2.5",
+    "pollution",
+    "OLED",
+    "web"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_qualite_air_complet",
+   "title": "Station qualité de l'air complète",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "COV",
+    "CO2",
+    "particules",
+    "enregistreur"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SGP40 Sensor",
+    "Adafruit BusIO",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library"
+   ]
+  },
+  {
+   "id": "app_fuite_gaz",
+   "title": "Détecteur de fuite de gaz",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "gaz",
+    "MQ-2",
+    "alarme",
+    "sécurité"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_detecteur_incendie",
+   "title": "Détecteur de flamme et fumée",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "incendie",
+    "flamme",
+    "alarme"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_cardio",
+   "title": "Cardiofréquencemètre à écran",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "pouls",
+    "santé",
+    "OLED"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "SparkFun MAX3010x Pulse and Proximity Sensor Library",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_sonometre",
+   "title": "Sonomètre lumineux",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "son",
+    "bruit",
+    "NeoPixel"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit NeoPixel"
+   ]
+  },
+  {
+   "id": "app_uv_plage",
+   "title": "Alerte UV plage",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "UV",
+    "soleil",
+    "alerte"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit LTR390 Library",
+    "Adafruit BusIO",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library"
+   ]
+  },
+  {
+   "id": "app_alarme_intrusion",
+   "title": "Alarme anti-intrusion",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "alarme",
+    "PIR",
+    "porte",
+    "buzzer"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_acces_rfid",
+   "title": "Contrôle d'accès par badge RFID",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "RFID",
+    "serrure",
+    "accès"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "MFRC522"
+   ]
+  },
+  {
+   "id": "app_acces_empreinte",
+   "title": "Serrure à empreinte digitale",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "empreinte",
+    "serrure",
+    "biométrie"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit Fingerprint Sensor Library"
+   ]
+  },
+  {
+   "id": "app_antivol",
+   "title": "Antivol à vibration (vélo, sac)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "antivol",
+    "vibration",
+    "buzzer"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_barriere_laser",
+   "title": "Barrière laser d'alarme",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "laser",
+    "alarme"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_compteur_passages",
+   "title": "Compteur de passages / visiteurs",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "comptage",
+    "infrarouge",
+    "LCD"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "LiquidCrystal I2C"
+   ]
+  },
+  {
+   "id": "app_sonnette_radio",
+   "title": "Sonnette sans fil 433 MHz",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "sonnette",
+    "433 MHz",
+    "mélodie"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "rc-switch"
+   ]
+  },
+  {
+   "id": "app_robot_evitement",
+   "title": "Robot éviteur d'obstacles",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "robot",
+    "ultrason",
+    "moteur"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_radar_recul",
+   "title": "Radar de recul sonore",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "parking",
+    "ultrason",
+    "buzzer"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "TM1637"
+   ]
+  },
+  {
+   "id": "app_parking_led",
+   "title": "Aide au stationnement lumineuse (garage)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "parking",
+    "ToF",
+    "NeoPixel"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit_VL53L0X",
+    "Adafruit NeoPixel"
+   ]
+  },
+  {
+   "id": "app_theremine",
+   "title": "Thérémine à ultrasons",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "musique",
+    "ultrason",
+    "jeu"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_servo_potentiometre",
+   "title": "Servomoteur piloté par potentiomètre",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "servo",
+    "potentiomètre",
+    "débutant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "app_joystick_servo",
+   "title": "Tourelle pan-tilt au joystick",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "servo",
+    "joystick",
+    "caméra"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "app_variateur_potentiometre",
+   "title": "Variateur de LED au potentiomètre",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "PWM",
+    "LED",
+    "débutant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "app_niveau_bulle",
+   "title": "Niveau à bulle numérique",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "inclinaison",
+    "IMU",
+    "OLED"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit MPU6050",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library"
+   ]
+  },
+  {
+   "id": "app_boussole",
+   "title": "Boussole numérique",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "boussole",
+    "magnétomètre",
+    "OLED"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_traceur_gps",
+   "title": "Traceur GPS avec enregistrement",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "GPS",
+    "microSD",
+    "randonnée"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "TinyGPSPlus",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "app_compteur_energie",
+   "title": "Compteur d'énergie domestique",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "énergie",
+    "kWh",
+    "PZEM",
+    "MQTT"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "PZEM004Tv30",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "Adafruit BusIO",
+    "PubSubClient"
+   ]
+  },
+  {
+   "id": "app_suivi_batterie",
+   "title": "Suivi d'une batterie / panneau solaire",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "batterie",
+    "solaire",
+    "INA219"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit INA219",
+    "Adafruit BusIO",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library"
+   ]
+  },
+  {
+   "id": "app_enregistreur_meteo",
+   "title": "Enregistreur de données climatiques",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "enregistreur",
+    "microSD",
+    "RTC"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit BME280 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "RTClib"
+   ]
+  },
+  {
+   "id": "app_capteur_lora",
+   "title": "Capteur distant LoRa (plusieurs km)",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "LoRa",
+    "longue portée",
+    "météo"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit BME280 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "LoRa"
+   ]
+  },
+  {
+   "id": "app_capteur_master",
+   "title": "Capteur connecté au tableau de bord du MASTER",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "MASTER",
+    "télémétrie",
+    "Wi-Fi"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": [
+    "Adafruit SHT4x Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "BH1750"
+   ]
+  },
+  {
+   "id": "app_scanner_ble",
+   "title": "Détecteur de présence Bluetooth",
+   "cat": "app",
+   "kind": "recipe",
+   "tags": [
+    "BLE",
+    "présence",
+    "LED"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_blink",
+   "title": "Clignotement de la LED intégrée",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "débutant",
+    "LED"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_wifi_scan",
+   "title": "Scanner de réseaux Wi-Fi",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "Wi-Fi",
+    "diagnostic"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_wifi_ap_web",
+   "title": "Point d'accès + serveur web",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "Wi-Fi",
+    "web",
+    "AP"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_wifi_reconnect",
+   "title": "Connexion Wi-Fi robuste",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "Wi-Fi",
+    "fiabilité"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_web_gpio",
+   "title": "Tableau de bord web des GPIO",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "web",
+    "GPIO"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_http_json",
+   "title": "Client HTTPS + JSON (météo Open-Meteo)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "HTTPS",
+    "JSON",
+    "API"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "ArduinoJson"
+   ]
+  },
+  {
+   "id": "classic_ntp_clock",
+   "title": "Horloge Internet NTP",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "NTP",
+    "heure"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_mdns",
+   "title": "Nom réseau mDNS (.local)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "mDNS",
+    "réseau"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_udp_echo",
+   "title": "Serveur UDP écho",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "UDP",
+    "réseau"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_tcp_server",
+   "title": "Console Telnet (serveur TCP)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "TCP",
+    "Telnet"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_espnow_sender",
+   "title": "ESP-NOW émetteur",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "ESP-NOW",
+    "radio"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_espnow_receiver",
+   "title": "ESP-NOW récepteur",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "ESP-NOW",
+    "radio"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_espnow_broadcast",
+   "title": "ESP-NOW en diffusion (maillage simple)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "ESP-NOW",
+    "diffusion"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_deep_sleep_timer",
+   "title": "Sommeil profond minuté",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "basse consommation",
+    "batterie"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_deep_sleep_button",
+   "title": "Sommeil profond réveillé par bouton",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "basse consommation",
+    "bouton"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_preferences",
+   "title": "Réglages en mémoire non volatile (NVS)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "NVS",
+    "stockage"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_littlefs",
+   "title": "Fichiers dans la flash (LittleFS)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "LittleFS",
+    "fichiers"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_heap_monitor",
+   "title": "Moniteur de mémoire",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "mémoire",
+    "diagnostic"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_chip_info",
+   "title": "Carte d'identité de la puce",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "diagnostic",
+    "puce"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_freertos_tasks",
+   "title": "Multitâche FreeRTOS",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "FreeRTOS",
+    "multitâche"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_hw_timer",
+   "title": "Minuterie matérielle",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "timer",
+    "interruption"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_task_watchdog",
+   "title": "Chien de garde (watchdog)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "watchdog",
+    "fiabilité"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_ledc_fade",
+   "title": "Fondu LED matériel (LEDC)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "PWM",
+    "LED"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_ledc_tone",
+   "title": "Mélodie sur buzzer passif",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "son",
+    "mélodie"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_adc_oversampling",
+   "title": "Mesure analogique étalonnée",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "ADC",
+    "mesure"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_pcnt_counter",
+   "title": "Compteur d'impulsions matériel (PCNT)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "PCNT",
+    "compteur"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_interrupt_counter",
+   "title": "Interruption et anti-rebond",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "interruption",
+    "bouton"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_serial_cli",
+   "title": "Console de commandes série",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "série",
+    "console"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_json_serial",
+   "title": "Échanges JSON sur le port série",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "JSON",
+    "série",
+    "Python"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "ArduinoJson"
+   ]
+  },
+  {
+   "id": "classic_serial_binary",
+   "title": "Protocole série binaire avec CRC",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "série",
+    "protocole"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_uuid",
+   "title": "Identifiants uniques (UUID v4)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "aléatoire",
+    "identifiant"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_uart_loopback",
+   "title": "Test de boucle UART",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "UART",
+    "test"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_spi_loopback",
+   "title": "Test de boucle SPI",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "SPI",
+    "test"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_arduino_ota",
+   "title": "Mise à jour sans fil (ArduinoOTA)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "OTA",
+    "Wi-Fi"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_web_ota",
+   "title": "Page web de mise à jour firmware",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "OTA",
+    "web"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_wifi_portal",
+   "title": "Portail captif de configuration Wi-Fi",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "Wi-Fi",
+    "portail captif",
+    "configuration"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_webhook_ntfy",
+   "title": "Notification smartphone (ntfy.sh)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "notification",
+    "HTTPS"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_mqtt",
+   "title": "Client MQTT (Home Assistant)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "MQTT",
+    "domotique"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": [
+    "PubSubClient"
+   ]
+  },
+  {
+   "id": "classic_bluetooth_serial",
+   "title": "Terminal Bluetooth classique (SPP)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "Bluetooth",
+    "série"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_ble_uart",
+   "title": "Liaison série BLE (UART Nordic)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "BLE",
+    "Bluetooth"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_ble_beacon",
+   "title": "Balise iBeacon",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "BLE",
+    "balise"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_internal_temp",
+   "title": "Température interne de la puce",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "température",
+    "diagnostic"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_sensor_to_master",
+   "title": "Envoyer des mesures au MASTER ESP32 LAB",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "MASTER",
+    "UDP",
+    "télémétrie"
+   ],
+   "difficulty": 1,
+   "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_psram_test",
+   "title": "Test de la PSRAM",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "PSRAM",
+    "mémoire"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32s3",
+    "esp32"
+   ],
+   "libs": []
+  },
+  {
+   "id": "classic_station_meteo_rtc",
+   "title": "Station météo BME280 + OLED + DS3231 (manuscrite)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "météo",
+    "OLED",
+    "RTC"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32"
+   ],
+   "libs": [
+    "Adafruit BME280 Library",
+    "Adafruit Unified Sensor",
+    "Adafruit BusIO",
+    "Adafruit SSD1306",
+    "Adafruit GFX Library",
+    "RTClib"
+   ]
+  },
+  {
+   "id": "classic_acces_rfid_web",
+   "title": "Contrôle d'accès RFID + servo + dashboard Wi-Fi",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "RFID",
+    "servo",
+    "web"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32"
+   ],
+   "libs": [
+    "MFRC522",
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "classic_robot_servos",
+   "title": "Robot éviteur à deux servos continus",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "robot",
+    "ultrason",
+    "servo"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32"
+   ],
+   "libs": [
+    "ESP32Servo"
+   ]
+  },
+  {
+   "id": "classic_datalogger_csv",
+   "title": "Enregistreur DHT22 + BH1750 + DS3231 (CSV série)",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "enregistreur",
+    "CSV"
+   ],
+   "difficulty": 2,
+   "boards": [
+    "esp32"
+   ],
+   "libs": [
+    "DHT sensor library",
+    "Adafruit Unified Sensor",
+    "BH1750",
+    "RTClib",
+    "Adafruit BusIO"
+   ]
+  },
+  {
+   "id": "classic_alarme_web",
+   "title": "Alarme ultrason + NeoPixel + buzzer + dashboard",
+   "cat": "classic",
+   "kind": "classic",
+   "tags": [
+    "alarme",
+    "web",
+    "NeoPixel"
+   ],
+   "difficulty": 3,
+   "boards": [
+    "esp32"
+   ],
+   "libs": [
+    "Adafruit NeoPixel"
+   ]
+  }
+ ]
+}

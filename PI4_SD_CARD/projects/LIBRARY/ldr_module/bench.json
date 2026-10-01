@@ -1,0 +1,112 @@
+{
+ "v": 1,
+ "title": "Module photorésistance KY-018 / LM393 — mesure et affichage série",
+ "board": "esp32",
+ "device": "module_photoresistan",
+ "emulable": true,
+ "needsDac": false,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 1700,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "digital",
+   "emu": 16,
+   "dut": 35,
+   "module": "Module photorésistance KY-018 / LM393",
+   "label": "ldrm",
+   "inst": 0,
+   "out": "dark",
+   "feed": "ldrm_dark"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO35",
+   "emu": "GPIO16",
+   "note": "Module photorésistance KY-018 / LM393 → sortie numérique de l'émulateur (retirez le capteur réel)"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 3400,
+   "expect": [
+    {
+     "feed": "ldrm_dark",
+     "v": 0,
+     "tol": 0.01
+    }
+   ]
+  },
+  {
+   "label": "Mesure ldrm.dark = 1",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 1
+    }
+   ],
+   "wait": 1700,
+   "expect": [
+    {
+     "feed": "ldrm_dark",
+     "v": 1,
+     "tol": 0.01
+    }
+   ]
+  },
+  {
+   "label": "Mesure ldrm.dark = 0",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 1700,
+   "expect": [
+    {
+     "feed": "ldrm_dark",
+     "v": 0,
+     "tol": 0.01
+    }
+   ]
+  }
+ ],
+ "duration_ms": 6800,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__ldr_module__bench.ino.bin"
+}

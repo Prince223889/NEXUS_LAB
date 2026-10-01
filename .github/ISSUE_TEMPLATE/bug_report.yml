@@ -1,0 +1,25 @@
+name: Bug report
+description: Signaler un problème reproductible
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Résumé
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environnement
+      description: ESP-IDF, Arduino, OS, carte, versions
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      render: text
+    validations:
+      required: true

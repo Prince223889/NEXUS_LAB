@@ -1,0 +1,54 @@
+{
+  "id": "dac_internal",
+  "title": "Convertisseur N/A interne (DAC 8 bits)",
+  "category": "act",
+  "kind": "module",
+  "description": "Sortie de tension analogique vraie (0-3,3 V, 8 bits) sur GPIO25/26 : générateur de signal.",
+  "tags": [
+    "DAC",
+    "tension",
+    "signal",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "dac",
+      "name": "Convertisseur N/A interne (DAC 8 bits)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "dac",
+      "name": "Convertisseur N/A interne (DAC 8 bits)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "dac",
+      "name": "Convertisseur N/A interne (DAC 8 bits)",
+      "pin": "sortie DAC",
+      "to": "GPIO25",
+      "gpio": 25,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,140 @@
+{
+  "id": "app_alarme_intrusion",
+  "title": "Alarme anti-intrusion",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Détecteur de mouvement PIR + contact de porte : sirène et voyant.",
+  "tags": [
+    "alarme",
+    "PIR",
+    "porte",
+    "buzzer"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pir_hcsr501",
+      "name": "HC-SR501 (PIR infrarouge passif)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pir_hcsr501",
+      "name": "HC-SR501 (PIR infrarouge passif)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pir_hcsr501",
+      "name": "HC-SR501 (PIR infrarouge passif)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "porte",
+      "name": "Contact reed (ILS)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "porte",
+      "name": "Contact reed (ILS)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "porte",
+      "name": "Contact reed (ILS)",
+      "pin": "signal",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "l'autre borne vers GND"
+    },
+    {
+      "mod": "sirene",
+      "name": "Buzzer actif 5 V",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sirene",
+      "name": "Buzzer actif 5 V",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sirene",
+      "name": "Buzzer actif 5 V",
+      "pin": "+ (via transistor si > 20 mA)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "voyant",
+      "name": "LED + résistance 220 Ω",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "voyant",
+      "name": "LED + résistance 220 Ω",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "voyant",
+      "name": "LED + résistance 220 Ω",
+      "pin": "anode (+) via 220 Ω",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": "cathode (patte courte) vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pir_hcsr501_motion",
+      "unit": "",
+      "label": "Présence (0/1)",
+      "module": "HC-SR501 (PIR infrarouge passif)"
+    },
+    {
+      "key": "porte_state",
+      "unit": "",
+      "label": "État (0/1)",
+      "module": "Contact reed (ILS)"
+    },
+    {
+      "key": "porte_count",
+      "unit": "",
+      "label": "Déclenchements",
+      "module": "Contact reed (ILS)"
+    }
+  ],
+  "power": {
+    "modules_mA": 36.1,
+    "modules_peak_mA": 36.1,
+    "board_mA": 110,
+    "total_mA": 146.1,
+    "total_peak_mA": 296.1
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

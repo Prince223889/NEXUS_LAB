@@ -1,0 +1,112 @@
+{
+ "v": 1,
+ "title": "HLK-LD2410 (radar mmWave présence humaine) — mesure et affichage série",
+ "board": "esp32",
+ "device": "hlk_ld2410_radar_mmw",
+ "emulable": true,
+ "needsDac": false,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 1500,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "digital",
+   "emu": 16,
+   "dut": 34,
+   "module": "HLK-LD2410 (radar mmWave présence humaine)",
+   "label": "ld2410",
+   "inst": 0,
+   "out": "motion",
+   "feed": "ld2410_motion"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO16",
+   "note": "HLK-LD2410 (radar mmWave présence humaine) → sortie numérique de l'émulateur (retirez le capteur réel)"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 3000,
+   "expect": [
+    {
+     "feed": "ld2410_motion",
+     "v": 0,
+     "tol": 0.01
+    }
+   ]
+  },
+  {
+   "label": "Mesure ld2410.motion = 1",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 1
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "ld2410_motion",
+     "v": 1,
+     "tol": 0.01
+    }
+   ]
+  },
+  {
+   "label": "Mesure ld2410.motion = 0",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "ld2410_motion",
+     "v": 0,
+     "tol": 0.01
+    }
+   ]
+  }
+ ],
+ "duration_ms": 6000,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__ld2410__bench.ino.bin"
+}

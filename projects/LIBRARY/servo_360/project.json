@@ -1,0 +1,65 @@
+{
+  "id": "servo_360",
+  "title": "Servo à rotation continue FS90R",
+  "category": "motor",
+  "kind": "module",
+  "description": "Servo modifié en motoréducteur : vitesse et sens de rotation (90 = arrêt).",
+  "tags": [
+    "servo",
+    "rotation continue",
+    "robot"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "ESP32Servo",
+      "ver": "3.2.1",
+      "repo": "madhephaestus/ESP32Servo",
+      "author": "Kevin Harrington, John K. Bennett"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "servoc",
+      "name": "Servo à rotation continue FS90R",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "servoc",
+      "name": "Servo à rotation continue FS90R",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "servoc",
+      "name": "Servo à rotation continue FS90R",
+      "pin": "signal",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 700,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 780
+  },
+  "notes": [
+    "Consommation de pointe estimée 780 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Servo à rotation continue FS90R directement en 5 V externe et reliez les masses (GND commun)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

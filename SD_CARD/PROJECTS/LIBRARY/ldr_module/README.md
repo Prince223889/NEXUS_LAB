@@ -1,0 +1,39 @@
+# Module photorésistance KY-018 / LM393
+
+Module LDR avec comparateur réglable : sortie numérique jour/nuit et sortie analogique.
+
+- **Catégorie** : Lumière, couleur & infrarouge
+- **Carte de référence** : ESP32 DevKit V1 (WROOM-32) (Arduino IDE : cœur esp32 3.3.x)
+- **Difficulté** : ★☆☆
+- **Consommation estimée** : 1 mA (pointe 1 mA) + carte ESP32
+
+## Câblage
+
+| Module | Broche | Vers l'ESP32 | Remarque |
+|---|---|---|---|
+| Module photorésistance KY-018 / LM393 | VCC | 3V3 |  |
+| Module photorésistance KY-018 / LM393 | GND | GND |  |
+| Module photorésistance KY-018 / LM393 | DO | GPIO35 |  |
+| Module photorésistance KY-018 / LM393 | AO | GPIO34 |  |
+
+## Bibliothèques
+
+Aucune : tout est inclus dans le cœur Arduino-ESP32.
+
+## Mesures publiées (moniteur et traceur série, 115200 bauds)
+
+- `ldrm_dark` : Obscurité (0/1)
+- `ldrm_level` : Luminosité (%)
+
+## Points d'attention
+
+- Réglez le seuil avec le potentiomètre bleu du module.
+
+## Utilisation
+
+1. Ouvrez `ldr_module.ino` dans l'IDE Arduino, carte **ESP32 Dev Module**.
+2. Installez les bibliothèques listées ci-dessus (Outils > Gérer les bibliothèques).
+3. Câblez selon le tableau, téléversez, puis ouvrez le moniteur série à 115200 bauds.
+4. Outils > Traceur série affiche les courbes en direct.
+
+_Généré par ESP32 LAB Studio 6.1.0 — modifiable librement._

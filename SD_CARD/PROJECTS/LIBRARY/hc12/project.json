@@ -1,0 +1,64 @@
+{
+  "id": "hc12",
+  "title": "Radio série HC-12 (433 MHz, 1 km)",
+  "category": "comm",
+  "kind": "module",
+  "description": "Module radio transparent : tout ce qui est écrit sur la liaison série est reçu par l'autre HC-12.",
+  "tags": [
+    "radio",
+    "433 MHz",
+    "série",
+    "UART"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "hc12",
+      "name": "Radio série HC-12 (433 MHz, 1 km)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "hc12",
+      "name": "Radio série HC-12 (433 MHz, 1 km)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hc12",
+      "name": "Radio série HC-12 (433 MHz, 1 km)",
+      "pin": "TXD du HC-12",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "hc12",
+      "name": "Radio série HC-12 (433 MHz, 1 km)",
+      "pin": "RXD du HC-12",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 16,
+    "modules_peak_mA": 100,
+    "board_mA": 45,
+    "total_mA": 61,
+    "total_peak_mA": 180
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

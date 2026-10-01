@@ -1,0 +1,104 @@
+{
+  "id": "app_barriere_laser",
+  "title": "Barrière laser d'alarme",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Un faisceau laser traverse la pièce ; s'il est coupé, la sirène retentit.",
+  "tags": [
+    "laser",
+    "alarme"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "laser",
+      "name": "Module laser KY-008 (650 nm)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "laser",
+      "name": "Module laser KY-008 (650 nm)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "laser",
+      "name": "Module laser KY-008 (650 nm)",
+      "pin": "S",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "laserrx",
+      "name": "Récepteur laser (module ISO203)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "laserrx",
+      "name": "Récepteur laser (module ISO203)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "laserrx",
+      "name": "Récepteur laser (module ISO203)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "+ (via transistor si > 20 mA)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "laserrx_beam",
+      "unit": "",
+      "label": "Faisceau reçu (0/1)",
+      "module": "Récepteur laser (module ISO203)"
+    }
+  ],
+  "power": {
+    "modules_mA": 56,
+    "modules_peak_mA": 56,
+    "board_mA": 45,
+    "total_mA": 101,
+    "total_peak_mA": 136
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

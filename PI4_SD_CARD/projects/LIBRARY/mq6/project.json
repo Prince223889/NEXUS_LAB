@@ -1,0 +1,93 @@
+{
+  "id": "mq6",
+  "title": "MQ-6 (GPL, butane)",
+  "category": "gas",
+  "kind": "module",
+  "description": "Très sensible au GPL, isobutane et propane.",
+  "tags": [
+    "gaz",
+    "GPL",
+    "MQ",
+    "analogique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "mq6",
+      "name": "MQ-6 (GPL, butane)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "mq6",
+      "name": "MQ-6 (GPL, butane)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mq6",
+      "name": "MQ-6 (GPL, butane)",
+      "pin": "AO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur 10 kΩ / 20 kΩ : la sortie monte à 5 V"
+    },
+    {
+      "mod": "mq6",
+      "name": "MQ-6 (GPL, butane)",
+      "pin": "DO (seuil)",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mq6_ppm",
+      "unit": "ppm",
+      "label": "GPL (estimation)",
+      "module": "MQ-6 (GPL, butane)"
+    },
+    {
+      "key": "mq6_ratio",
+      "unit": "",
+      "label": "Rs/R0",
+      "module": "MQ-6 (GPL, butane)"
+    },
+    {
+      "key": "mq6_rsk",
+      "unit": "kΩ",
+      "label": "Rs",
+      "module": "MQ-6 (GPL, butane)"
+    },
+    {
+      "key": "mq6_alarm",
+      "unit": "",
+      "label": "Seuil DO",
+      "module": "MQ-6 (GPL, butane)"
+    }
+  ],
+  "power": {
+    "modules_mA": 150,
+    "modules_peak_mA": 150,
+    "board_mA": 45,
+    "total_mA": 195,
+    "total_peak_mA": 230
+  },
+  "notes": [
+    "Valeurs indicatives : un étalonnage avec un gaz de référence est nécessaire pour des mesures fiables.",
+    "La résistance chauffante consomme ~150 mA : alimentation 5 V externe conseillée pour plusieurs capteurs.",
+    "Ne jamais utiliser comme détecteur de sécurité certifié."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

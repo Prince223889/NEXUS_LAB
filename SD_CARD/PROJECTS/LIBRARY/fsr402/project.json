@@ -1,0 +1,68 @@
+{
+  "id": "fsr402",
+  "title": "Capteur de force FSR402",
+  "category": "motion",
+  "kind": "module",
+  "description": "Résistance sensible à la force (0,2-20 N) : détection d'appui, pèse-lettre approximatif.",
+  "tags": [
+    "force",
+    "pression",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "fsr",
+      "name": "Capteur de force FSR402",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "fsr",
+      "name": "Capteur de force FSR402",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "fsr",
+      "name": "Capteur de force FSR402",
+      "pin": "point milieu",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "FSR entre 3V3 et le point milieu, 10 kΩ vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "fsr_press",
+      "unit": "%",
+      "label": "Appui",
+      "module": "Capteur de force FSR402"
+    },
+    {
+      "key": "fsr_force",
+      "unit": "N",
+      "label": "Force (approx.)",
+      "module": "Capteur de force FSR402"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

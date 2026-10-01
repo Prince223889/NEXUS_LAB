@@ -1,0 +1,94 @@
+{
+  "id": "lps22",
+  "title": "LPS22HB",
+  "category": "temp",
+  "kind": "module",
+  "description": "Baromètre STMicroelectronics 260-1260 hPa, très faible consommation.",
+  "tags": [
+    "pression",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit LPS2X",
+      "ver": "2.0.6",
+      "repo": "adafruit/Adafruit_LPS2X",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "lps22",
+      "name": "LPS22HB",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "lps22",
+      "name": "LPS22HB",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lps22",
+      "name": "LPS22HB",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "lps22",
+      "name": "LPS22HB",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "lps22_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "LPS22HB"
+    },
+    {
+      "key": "lps22_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "LPS22HB"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

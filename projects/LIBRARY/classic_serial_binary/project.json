@@ -1,0 +1,28 @@
+{
+  "id": "classic_serial_binary",
+  "title": "Protocole série binaire avec CRC",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Trames binaires robustes (en-tête, longueur, CRC-16).",
+  "tags": [
+    "série",
+    "protocole"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

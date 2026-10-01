@@ -1,0 +1,23 @@
+[Unit]
+Description=NEXUS Pi companion agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nexus
+Group=nexus
+EnvironmentFile=/etc/nexus/nexus.env
+ExecStart=/usr/bin/python3 /opt/nexus/pi/nexus_agent.py
+WorkingDirectory=/opt/nexus
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/srv/nexus /mnt/nexus-cache @NEXUS_SHARED_ROOT@
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

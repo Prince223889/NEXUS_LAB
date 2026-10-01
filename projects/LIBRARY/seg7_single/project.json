@@ -1,0 +1,109 @@
+{
+  "id": "seg7_single",
+  "title": "Afficheur 7 segments 1 chiffre",
+  "category": "display",
+  "kind": "module",
+  "description": "Afficheur à cathode commune piloté directement par 7 GPIO : compteur 0-9.",
+  "tags": [
+    "7 segments",
+    "débutant",
+    "afficheur"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment A (via 220 Ω)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment B (via 220 Ω)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment C (via 220 Ω)",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment D (via 220 Ω)",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment E (via 220 Ω)",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment F (via 220 Ω)",
+      "to": "GPIO25",
+      "gpio": 25,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "segment G (via 220 Ω)",
+      "to": "GPIO26",
+      "gpio": 26,
+      "note": ""
+    },
+    {
+      "mod": "seg1",
+      "name": "Afficheur 7 segments 1 chiffre",
+      "pin": "COM",
+      "to": "GND (cathode commune)"
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 20,
+    "modules_peak_mA": 20,
+    "board_mA": 45,
+    "total_mA": 65,
+    "total_peak_mA": 100
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

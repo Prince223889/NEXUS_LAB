@@ -1,0 +1,28 @@
+{
+  "id": "classic_freertos_tasks",
+  "title": "Multitâche FreeRTOS",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Deux tâches, une file de messages et un mutex répartis sur les deux cœurs.",
+  "tags": [
+    "FreeRTOS",
+    "multitâche"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

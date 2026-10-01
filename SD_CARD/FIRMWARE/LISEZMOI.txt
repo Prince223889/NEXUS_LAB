@@ -1,0 +1,3 @@
+MASTER : ESP32-S3, `MASTER/esp32_lab_master.bin` (compilé avec ESP-IDF 6.1; installation par Réglages › Mises à jour).
+WORKER : .bin pour les workers ESP32 (mise à jour OTA depuis la page Workers).
+Les programmes `.hex` Arduino sont dans `PROJECTS/ARDUINO/` (page USB & Arduino).

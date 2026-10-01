@@ -1,0 +1,40 @@
+{
+  "id": "classic_acces_rfid_web",
+  "title": "Contrôle d'accès RFID + servo + dashboard Wi-Fi",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Badge RFID, verrou à servomoteur et page web de suivi.",
+  "tags": [
+    "RFID",
+    "servo",
+    "web"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "MFRC522",
+      "ver": "1.4.12",
+      "repo": "miguelbalboa/rfid",
+      "author": "GithubCommunity"
+    },
+    {
+      "name": "ESP32Servo",
+      "ver": "3.2.1",
+      "repo": "madhephaestus/ESP32Servo",
+      "author": "Kevin Harrington, John K. Bennett"
+    }
+  ],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

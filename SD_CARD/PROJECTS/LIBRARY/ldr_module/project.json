@@ -1,0 +1,78 @@
+{
+  "id": "ldr_module",
+  "title": "Module photorésistance KY-018 / LM393",
+  "category": "light",
+  "kind": "module",
+  "description": "Module LDR avec comparateur réglable : sortie numérique jour/nuit et sortie analogique.",
+  "tags": [
+    "lumière",
+    "seuil",
+    "numérique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ldrm",
+      "name": "Module photorésistance KY-018 / LM393",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ldrm",
+      "name": "Module photorésistance KY-018 / LM393",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ldrm",
+      "name": "Module photorésistance KY-018 / LM393",
+      "pin": "DO",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "ldrm",
+      "name": "Module photorésistance KY-018 / LM393",
+      "pin": "AO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ldrm_dark",
+      "unit": "",
+      "label": "Obscurité (0/1)",
+      "module": "Module photorésistance KY-018 / LM393"
+    },
+    {
+      "key": "ldrm_level",
+      "unit": "%",
+      "label": "Luminosité",
+      "module": "Module photorésistance KY-018 / LM393"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Réglez le seuil avec le potentiomètre bleu du module."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

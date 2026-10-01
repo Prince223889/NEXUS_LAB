@@ -1,0 +1,290 @@
+{
+ "v": 1,
+ "title": "Alarme anti-intrusion",
+ "board": "esp32",
+ "device": "alarme_anti_intrusio",
+ "emulable": true,
+ "needsDac": false,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 1500,
+ "rules": 2,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "digital",
+   "emu": 16,
+   "dut": 34,
+   "module": "HC-SR501 (PIR infrarouge passif)",
+   "label": "pir_hcsr501",
+   "inst": 0,
+   "out": "motion",
+   "feed": "pir_hcsr501_motion"
+  },
+  {
+   "n": 1,
+   "dir": "in",
+   "kind": "digital",
+   "emu": 17,
+   "dut": 4,
+   "module": "Contact reed (ILS)",
+   "label": "porte",
+   "inst": 1,
+   "out": "state",
+   "feed": "porte_state"
+  },
+  {
+   "n": 2,
+   "dir": "out",
+   "kind": "level",
+   "emu": 18,
+   "dut": 13,
+   "module": "Buzzer actif 5 V",
+   "label": "sirene",
+   "inst": 2,
+   "invert": false
+  },
+  {
+   "n": 3,
+   "dir": "out",
+   "kind": "level",
+   "emu": 19,
+   "dut": 14,
+   "module": "LED + résistance 220 Ω",
+   "label": "voyant",
+   "inst": 3,
+   "invert": false
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO16",
+   "note": "HC-SR501 (PIR infrarouge passif) → sortie numérique de l'émulateur (retirez le capteur réel)"
+  },
+  {
+   "dut": "GPIO4",
+   "emu": "GPIO17",
+   "note": "Contact reed (ILS) → sortie numérique de l'émulateur (retirez le capteur réel)"
+  },
+  {
+   "dut": "GPIO13",
+   "emu": "GPIO18",
+   "note": "Buzzer actif 5 V observé par l'émulateur (niveau) ; débranchez la charge"
+  },
+  {
+   "dut": "GPIO14",
+   "emu": "GPIO19",
+   "note": "LED + résistance 220 Ω observé par l'émulateur (niveau) ; débranchez la charge"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    },
+    {
+     "n": 1,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    },
+    {
+     "n": 1,
+     "v": 1
+    }
+   ],
+   "wait": 3000,
+   "expect": [
+    {
+     "feed": "pir_hcsr501_motion",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "feed": "porte_state",
+     "v": 1,
+     "tol": 0.01
+    },
+    {
+     "n": 2,
+     "level": 0,
+     "state": 0
+    },
+    {
+     "n": 3,
+     "level": 0,
+     "state": 0
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — pir_hcsr501 motion = 1 (condition vraie)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 1
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pir_hcsr501_motion",
+     "v": 1,
+     "tol": 0.01
+    },
+    {
+     "feed": "porte_state",
+     "v": 1,
+     "tol": 0.01
+    },
+    {
+     "n": 2,
+     "level": 1,
+     "state": 1
+    },
+    {
+     "n": 3,
+     "level": 0,
+     "state": 0
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — pir_hcsr501 motion = 0 (retour)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pir_hcsr501_motion",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "feed": "porte_state",
+     "v": 1,
+     "tol": 0.01
+    },
+    {
+     "n": 2,
+     "level": 0,
+     "state": 0
+    },
+    {
+     "n": 3,
+     "level": 0,
+     "state": 0
+    }
+   ]
+  },
+  {
+   "label": "Règle 2 — porte state = 0 (condition vraie)",
+   "set": [
+    {
+     "n": 1,
+     "raw": 1
+    }
+   ],
+   "values": [
+    {
+     "n": 1,
+     "v": 0
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pir_hcsr501_motion",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "feed": "porte_state",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "n": 2,
+     "level": 0,
+     "state": 0
+    },
+    {
+     "n": 3,
+     "level": 1,
+     "state": 1
+    }
+   ]
+  },
+  {
+   "label": "Règle 2 — porte state = 1 (retour)",
+   "set": [
+    {
+     "n": 1,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 1,
+     "v": 1
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "pir_hcsr501_motion",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "feed": "porte_state",
+     "v": 1,
+     "tol": 0.01
+    },
+    {
+     "n": 2,
+     "level": 0,
+     "state": 0
+    },
+    {
+     "n": 3,
+     "level": 0,
+     "state": 0
+    }
+   ]
+  }
+ ],
+ "duration_ms": 9000,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__app_alarme_intrusion__bench.ino.bin"
+}

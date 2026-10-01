@@ -1,0 +1,113 @@
+{
+  "id": "tft_st7735",
+  "title": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+  "category": "display",
+  "kind": "module",
+  "description": "Écran couleur SPI 1,8 pouce : mesures en grands caractères colorés.",
+  "tags": [
+    "TFT",
+    "couleur",
+    "écran",
+    "SPI"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit ST7735 and ST7789 Library",
+      "ver": "1.11.0",
+      "repo": "adafruit/Adafruit-ST7735-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "SDA/MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "A0/DC",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "RESET",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "st7735",
+      "name": "Écran couleur TFT 1,8\" ST7735 128×160 (SPI)",
+      "pin": "LED",
+      "to": "3V3 (rétroéclairage)"
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 50,
+    "modules_peak_mA": 50,
+    "board_mA": 45,
+    "total_mA": 95,
+    "total_peak_mA": 130
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

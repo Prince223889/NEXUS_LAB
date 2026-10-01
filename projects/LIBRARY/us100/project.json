@@ -1,0 +1,77 @@
+{
+  "id": "us100",
+  "title": "US-100 (ultrasons, mode série)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Télémètre à ultrasons avec compensation de température, lu en mode UART (cavalier en place).",
+  "tags": [
+    "distance",
+    "ultrason",
+    "UART",
+    "température"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "us100",
+      "name": "US-100 (ultrasons, mode série)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "us100",
+      "name": "US-100 (ultrasons, mode série)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "us100",
+      "name": "US-100 (ultrasons, mode série)",
+      "pin": "Echo/RX",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "us100",
+      "name": "US-100 (ultrasons, mode série)",
+      "pin": "Trig/TX",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "us100_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "US-100 (ultrasons, mode série)"
+    },
+    {
+      "key": "us100_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "US-100 (ultrasons, mode série)"
+    }
+  ],
+  "power": {
+    "modules_mA": 3,
+    "modules_peak_mA": 3,
+    "board_mA": 45,
+    "total_mA": 48,
+    "total_peak_mA": 83
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

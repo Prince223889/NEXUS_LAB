@@ -1,0 +1,82 @@
+{
+  "id": "ad8232",
+  "title": "AD8232 (électrocardiogramme)",
+  "category": "bio",
+  "kind": "module",
+  "description": "Frontal ECG une dérivation : visualisez le tracé cardiaque dans le traceur série.",
+  "tags": [
+    "ECG",
+    "cœur",
+    "santé",
+    "analogique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ecg",
+      "name": "AD8232 (électrocardiogramme)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ecg",
+      "name": "AD8232 (électrocardiogramme)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ecg",
+      "name": "AD8232 (électrocardiogramme)",
+      "pin": "OUTPUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "ecg",
+      "name": "AD8232 (électrocardiogramme)",
+      "pin": "LO+",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "ecg",
+      "name": "AD8232 (électrocardiogramme)",
+      "pin": "LO-",
+      "to": "GPIO36",
+      "gpio": 36,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ecg_ecg",
+      "unit": "mV",
+      "label": "ECG",
+      "module": "AD8232 (électrocardiogramme)"
+    }
+  ],
+  "power": {
+    "modules_mA": 0.2,
+    "modules_peak_mA": 0.2,
+    "board_mA": 45,
+    "total_mA": 45.2,
+    "total_peak_mA": 80.2
+  },
+  "notes": [
+    "Jamais relié au secteur pendant la mesure (PC sur batterie ou isolation USB).",
+    "Usage pédagogique uniquement."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

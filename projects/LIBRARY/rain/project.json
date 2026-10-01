@@ -1,0 +1,78 @@
+{
+  "id": "rain",
+  "title": "Capteur de pluie FC-37 / YL-83",
+  "category": "weather",
+  "kind": "module",
+  "description": "Plaque de détection de gouttes avec comparateur LM393 : intensité (AO) et seuil (DO).",
+  "tags": [
+    "pluie",
+    "météo",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "AO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "rain",
+      "name": "Capteur de pluie FC-37 / YL-83",
+      "pin": "DO",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "rain_wet",
+      "unit": "%",
+      "label": "Humidité plaque",
+      "module": "Capteur de pluie FC-37 / YL-83"
+    },
+    {
+      "key": "rain_rain",
+      "unit": "",
+      "label": "Pluie (0/1)",
+      "module": "Capteur de pluie FC-37 / YL-83"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Pour éviter l'électrolyse, alimentez la plaque via une broche GPIO uniquement pendant la mesure."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

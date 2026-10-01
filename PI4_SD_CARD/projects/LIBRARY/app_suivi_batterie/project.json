@@ -1,0 +1,194 @@
+{
+  "id": "app_suivi_batterie",
+  "title": "Suivi d'une batterie / panneau solaire",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Tension, courant et puissance mesurés par INA219, enregistrés sur carte SD.",
+  "tags": [
+    "batterie",
+    "solaire",
+    "INA219"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit INA219",
+      "ver": "1.1.0",
+      "repo": "adafruit/Adafruit_INA219",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ina219",
+      "name": "INA219 (tension/courant/puissance)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ina219",
+      "name": "INA219 (tension/courant/puissance)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ina219",
+      "name": "INA219 (tension/courant/puissance)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ina219",
+      "name": "INA219 (tension/courant/puissance)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ina219_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "INA219 (tension/courant/puissance)"
+    },
+    {
+      "key": "ina219_curr",
+      "unit": "mA",
+      "label": "Courant",
+      "module": "INA219 (tension/courant/puissance)"
+    },
+    {
+      "key": "ina219_power",
+      "unit": "mW",
+      "label": "Puissance",
+      "module": "INA219 (tension/courant/puissance)"
+    },
+    {
+      "key": "sd_count",
+      "unit": "",
+      "label": "Lignes écrites",
+      "module": "Module carte microSD (SPI)"
+    },
+    {
+      "key": "sd_used",
+      "unit": "Ko",
+      "label": "Espace utilisé",
+      "module": "Module carte microSD (SPI)"
+    }
+  ],
+  "power": {
+    "modules_mA": 63,
+    "modules_peak_mA": 113,
+    "board_mA": 110,
+    "total_mA": 173,
+    "total_peak_mA": 373
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "classic_ledc_fade",
+  "title": "Fondu LED matériel (LEDC)",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Variation de luminosité réalisée par le périphérique, sans charger le CPU.",
+  "tags": [
+    "PWM",
+    "LED"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

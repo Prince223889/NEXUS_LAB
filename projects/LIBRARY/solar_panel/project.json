@@ -1,0 +1,68 @@
+{
+  "id": "solar_panel",
+  "title": "Petit panneau solaire (tension/puissance)",
+  "category": "power",
+  "kind": "module",
+  "description": "Mesure la tension d'un panneau 6 V sur charge résistive pour estimer l'ensoleillement.",
+  "tags": [
+    "solaire",
+    "énergie",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "solar",
+      "name": "Petit panneau solaire (tension/puissance)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "solar",
+      "name": "Petit panneau solaire (tension/puissance)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "solar",
+      "name": "Petit panneau solaire (tension/puissance)",
+      "pin": "point milieu",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont 10 kΩ / 10 kΩ, charge 47 Ω en parallèle du panneau"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "solar_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "Petit panneau solaire (tension/puissance)"
+    },
+    {
+      "key": "solar_power",
+      "unit": "mW",
+      "label": "Puissance",
+      "module": "Petit panneau solaire (tension/puissance)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

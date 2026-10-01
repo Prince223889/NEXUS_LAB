@@ -1,0 +1,382 @@
+[
+  {
+    "path": "projects/IMPORTED_35/01_blink",
+    "name": "01_blink",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/02_button",
+    "name": "02_button",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/03_potentiometer",
+    "name": "03_potentiometer",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/04_wifi_scan",
+    "name": "04_wifi_scan",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/05_i2c_scanner",
+    "name": "05_i2c_scanner",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/06_dht22",
+    "name": "06_dht22",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/07_bme280",
+    "name": "07_bme280",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/08_mpu6050",
+    "name": "08_mpu6050",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/09_ssd1306",
+    "name": "09_ssd1306",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/10_hcsr04",
+    "name": "10_hcsr04",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/11_ds18b20",
+    "name": "11_ds18b20",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/12_sg90",
+    "name": "12_sg90",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/13_ldr",
+    "name": "13_ldr",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/14_bh1750",
+    "name": "14_bh1750",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/15_vl53l0x",
+    "name": "15_vl53l0x",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/16_rtc_ds3231",
+    "name": "16_rtc_ds3231",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/17_rc522",
+    "name": "17_rc522",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/18_ws2812",
+    "name": "18_ws2812",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/19_encoder",
+    "name": "19_encoder",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/20_serial_loopback",
+    "name": "20_serial_loopback",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/21_spi_loopback",
+    "name": "21_spi_loopback",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/22_wifi_ap",
+    "name": "22_wifi_ap",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/23_espnow",
+    "name": "23_espnow",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/24_worker_diagnostic",
+    "name": "24_worker_diagnostic",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/25_servo_pca9685",
+    "name": "25_servo_pca9685",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/26_gps_neo6m",
+    "name": "26_gps_neo6m",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/27_max6675",
+    "name": "27_max6675",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/28_ili9341",
+    "name": "28_ili9341",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/29_mcp23017",
+    "name": "29_mcp23017",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/30_ads1115",
+    "name": "30_ads1115",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/31_station_meteo_complete",
+    "name": "31_station_meteo_complete",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/32_domotique_rfid_wifi",
+    "name": "32_domotique_rfid_wifi",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/33_robot_evitement_obstacles",
+    "name": "33_robot_evitement_obstacles",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/34_data_logger_environnemental",
+    "name": "34_data_logger_environnemental",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/35_alarme_securite_capteurs",
+    "name": "35_alarme_securite_capteurs",
+    "board": null
+  },
+  {
+    "path": "projects/IMPORTED_35/36_wifi_reconnect",
+    "name": "36_wifi_reconnect",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/37_http_json",
+    "name": "37_http_json",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/38_deep_sleep_wakeup",
+    "name": "38_deep_sleep_wakeup",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/39_pwm_fade",
+    "name": "39_pwm_fade",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/40_touch_buttons",
+    "name": "40_touch_buttons",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/41_rtc_alarm",
+    "name": "41_rtc_alarm",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/42_spi_device_template",
+    "name": "42_spi_device_template",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/43_i2s_tone",
+    "name": "43_i2s_tone",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/44_i2c_eeprom",
+    "name": "44_i2c_eeprom",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/45_espnow_broadcast",
+    "name": "45_espnow_broadcast",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/46_button_debounce",
+    "name": "46_button_debounce",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/47_adc_average",
+    "name": "47_adc_average",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/48_pwm_fade",
+    "name": "48_pwm_fade",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/49_pulse_counter",
+    "name": "49_pulse_counter",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/50_interrupt_counter",
+    "name": "50_interrupt_counter",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/51_serial_cli",
+    "name": "51_serial_cli",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/52_json_serial",
+    "name": "52_json_serial",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/53_deep_sleep_timer",
+    "name": "53_deep_sleep_timer",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/54_ntp_clock",
+    "name": "54_ntp_clock",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/55_udp_echo",
+    "name": "55_udp_echo",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/56_tcp_echo",
+    "name": "56_tcp_echo",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/57_web_gpio",
+    "name": "57_web_gpio",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/58_mdns_host",
+    "name": "58_mdns_host",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/59_littlefs_file",
+    "name": "59_littlefs_file",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/60_i2c_eeprom",
+    "name": "60_i2c_eeprom",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/61_i2s_tone_simple",
+    "name": "61_i2s_tone_simple",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/62_spi_device_probe",
+    "name": "62_spi_device_probe",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/63_espnow_broadcast",
+    "name": "63_espnow_broadcast",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/64_wifi_rssi_scan",
+    "name": "64_wifi_rssi_scan",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/65_touch_sensor",
+    "name": "65_touch_sensor",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/66_ledc_tone",
+    "name": "66_ledc_tone",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/67_preferences_config",
+    "name": "67_preferences_config",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/68_heap_monitor",
+    "name": "68_heap_monitor",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/69_random_uuid",
+    "name": "69_random_uuid",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/IMPORTED_35/70_serial_binary",
+    "name": "70_serial_binary",
+    "board": "ESP32"
+  },
+  {
+    "path": "projects/PREPARED/01_Blink_ESP32",
+    "name": "01_Blink_ESP32",
+    "board": "ESP32 Dev Module"
+  },
+  {
+    "path": "projects/PREPARED/02_DHT11_MASTER",
+    "name": "02_DHT11_MASTER",
+    "board": "ESP32-S3"
+  },
+  {
+    "path": "projects/PREPARED/03_I2C_Scanner_ESP32",
+    "name": "03_I2C_Scanner_ESP32",
+    "board": "ESP32 Dev Module"
+  },
+  {
+    "path": "projects/PREPARED/04_OLED_SSD1306",
+    "name": "04_OLED_SSD1306",
+    "board": "ESP32 Dev Module"
+  },
+  {
+    "path": "projects/PREPARED/05_MPU6050",
+    "name": "05_MPU6050",
+    "board": "ESP32 Dev Module"
+  },
+  {
+    "path": "projects/PREPARED/06_WS2812",
+    "name": "06_WS2812",
+    "board": "ESP32 Dev Module"
+  }
+]

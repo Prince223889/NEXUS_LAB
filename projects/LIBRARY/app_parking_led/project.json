@@ -1,0 +1,116 @@
+{
+  "id": "app_parking_led",
+  "title": "Aide au stationnement lumineuse (garage)",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Capteur laser au fond du garage : l'anneau passe du vert au rouge en approchant du mur.",
+  "tags": [
+    "parking",
+    "ToF",
+    "NeoPixel"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit_VL53L0X",
+      "ver": "1.2.5",
+      "repo": "adafruit/Adafruit_VL53L0X",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit NeoPixel",
+      "ver": "1.15.5",
+      "repo": "adafruit/Adafruit_NeoPixel",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "vl53l0x",
+      "name": "VL53L0X (temps de vol laser)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "vl53l0x",
+      "name": "VL53L0X (temps de vol laser)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "vl53l0x",
+      "name": "VL53L0X (temps de vol laser)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "vl53l0x",
+      "name": "VL53L0X (temps de vol laser)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "vl53l0x",
+      "name": "VL53L0X (temps de vol laser)",
+      "pin": "XSHUT",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "pour changer d'adresse avec plusieurs capteurs"
+    },
+    {
+      "mod": "strip",
+      "name": "Ruban / anneau LED WS2812B (NeoPixel)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "strip",
+      "name": "Ruban / anneau LED WS2812B (NeoPixel)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "strip",
+      "name": "Ruban / anneau LED WS2812B (NeoPixel)",
+      "pin": "DIN",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": "résistance 330 Ω en série, condensateur 1000 µF sur l'alimentation"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "vl53l0x_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "VL53L0X (temps de vol laser)"
+    }
+  ],
+  "power": {
+    "modules_mA": 79,
+    "modules_peak_mA": 499,
+    "board_mA": 45,
+    "total_mA": 124,
+    "total_peak_mA": 579
+  },
+  "notes": [
+    "Consommation de pointe estimée 579 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Ruban / anneau LED WS2812B (NeoPixel) directement en 5 V externe et reliez les masses (GND commun).",
+    "Ruban / anneau LED WS2812B (NeoPixel) : la donnée 3,3 V fonctionne en général ; pour les longs rubans, un 74AHCT125 améliore la fiabilité."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

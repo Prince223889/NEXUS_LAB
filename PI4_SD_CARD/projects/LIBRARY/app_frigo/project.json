@@ -1,0 +1,96 @@
+{
+  "id": "app_frigo",
+  "title": "Alarme de réfrigérateur / congélateur",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Bip si la température dépasse 8 °C (porte mal fermée, panne) ; valeur envoyée au MASTER.",
+  "tags": [
+    "froid",
+    "alarme",
+    "DS18B20"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "OneWire",
+      "ver": "2.3.8",
+      "repo": "PaulStoffregen/OneWire",
+      "author": "Paul Stoffregen"
+    },
+    {
+      "name": "DallasTemperature",
+      "ver": "4.0.6",
+      "repo": "milesburton/Arduino-Temperature-Control-Library",
+      "author": "Miles Burton"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 4,7 kΩ entre DATA et 3V3 obligatoire"
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "buzz",
+      "name": "Buzzer actif 5 V",
+      "pin": "+ (via transistor si > 20 mA)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ds18b20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DS18B20"
+    }
+  ],
+  "power": {
+    "modules_mA": 26.5,
+    "modules_peak_mA": 26.5,
+    "board_mA": 110,
+    "total_mA": 136.5,
+    "total_peak_mA": 286.5
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

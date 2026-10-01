@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 298" width="980" height="298" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<rect width="980" height="298" fill="#ffffff"/>
+<text x="490" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111">limit_switch — Fin de course mécanique</text>
+<text x="151" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#111">ESP32 DevKit V1 (WROOM-32)</text>
+<rect x="36" y="96" width="230" height="126" rx="8" fill="#0d6ea8" stroke="#0a3d5c" stroke-width="2"/>
+<text x="248" y="127" text-anchor="end" font-size="14" font-weight="700" fill="#fff">3V3</text>
+<text x="248" y="159" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GND</text>
+<text x="248" y="191" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO4</text>
+<path d="M266 122 H306 V126 H600" fill="none" stroke="#e53935" stroke-width="3" stroke-linejoin="round"><title>3V3 → Fin de course mécanique VCC</title></path>
+<path d="M266 154 H326 V158 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → Fin de course mécanique GND</title></path>
+<path d="M266 186 H346 V190 H600" fill="none" stroke="#1e88e5" stroke-width="3" stroke-linejoin="round"><title>GPIO4 → Fin de course mécanique signal — l&apos;autre borne vers GND</title></path>
+<circle cx="266" cy="122" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="154" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="186" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="772" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="#111">Fin de course mécanique (limit_switch)</text>
+<rect x="600" y="96" width="344" height="118" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="120" width="12" height="12" fill="#e53935"/>
+<text x="616" y="131" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="152" width="12" height="12" fill="#212121"/>
+<text x="616" y="163" font-size="13" fill="#111">GND</text>
+<rect x="594" y="184" width="12" height="12" fill="#1e88e5"/>
+<text x="616" y="195" font-size="13" fill="#111">signal</text>
+<text x="934" y="195" text-anchor="end" font-size="10.5" fill="#666">l&apos;autre borne vers GND</text>
+<text x="36" y="276" font-size="12" fill="#777">ESP32 LAB 6.1.0 — fils : rouge = 3V3, orange = 5V, noir = GND, couleurs = signaux. Toujours câbler carte débranchée.</text>
+</svg>

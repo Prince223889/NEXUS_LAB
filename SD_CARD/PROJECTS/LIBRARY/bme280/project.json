@@ -1,0 +1,111 @@
+{
+  "id": "bme280",
+  "title": "BME280",
+  "category": "temp",
+  "kind": "module",
+  "description": "Station météo miniature Bosch : température, humidité, pression et altitude estimée.",
+  "tags": [
+    "température",
+    "humidité",
+    "pression",
+    "altitude",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BME280 Library",
+      "ver": "2.3.0",
+      "repo": "adafruit/Adafruit_BME280_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bme280_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_alt",
+      "unit": "m",
+      "label": "Altitude",
+      "module": "BME280"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Beaucoup de modules « BME280 » bon marché sont en réalité des BMP280 (sans humidité) : ID 0x58 au lieu de 0x60."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

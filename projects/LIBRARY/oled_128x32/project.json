@@ -1,0 +1,82 @@
+{
+  "id": "oled_128x32",
+  "title": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+  "category": "display",
+  "kind": "module",
+  "description": "Écran OLED bandeau 128×32 : trois lignes de mesures par page.",
+  "tags": [
+    "OLED",
+    "écran",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled32",
+      "name": "Écran OLED 0,91\" SSD1306 128×32 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 12,
+    "modules_peak_mA": 12,
+    "board_mA": 45,
+    "total_mA": 57,
+    "total_peak_mA": 92
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

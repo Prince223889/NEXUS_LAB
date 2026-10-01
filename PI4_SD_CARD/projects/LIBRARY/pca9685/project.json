@@ -1,0 +1,83 @@
+{
+  "id": "pca9685",
+  "title": "PCA9685 (16 servos I2C)",
+  "category": "motor",
+  "kind": "module",
+  "description": "Contrôleur 16 voies PWM 12 bits : bras robot, hexapode, jeux de lumière.",
+  "tags": [
+    "servo",
+    "PWM",
+    "16 canaux",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit PWM Servo Driver Library",
+      "ver": "3.0.3",
+      "repo": "adafruit/Adafruit-PWM-Servo-Driver-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "pca",
+      "name": "PCA9685 (16 servos I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pca",
+      "name": "PCA9685 (16 servos I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pca",
+      "name": "PCA9685 (16 servos I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "pca",
+      "name": "PCA9685 (16 servos I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "pca",
+      "name": "PCA9685 (16 servos I2C)",
+      "pin": "V+ (bornier)",
+      "to": "alimentation 5-6 V des servos"
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 10,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 90
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

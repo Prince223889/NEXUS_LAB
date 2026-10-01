@@ -1,0 +1,72 @@
+{
+  "id": "soil_cap",
+  "title": "Humidité du sol capacitive v1.2",
+  "category": "weather",
+  "kind": "module",
+  "description": "Sonde capacitive sans électrode exposée : ne se corrode pas, idéale pour l'arrosage automatique.",
+  "tags": [
+    "sol",
+    "jardin",
+    "arrosage",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "soil",
+      "name": "Humidité du sol capacitive v1.2",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "soil",
+      "name": "Humidité du sol capacitive v1.2",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "soil",
+      "name": "Humidité du sol capacitive v1.2",
+      "pin": "AOUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "soil_moist",
+      "unit": "%",
+      "label": "Humidité du sol",
+      "module": "Humidité du sol capacitive v1.2"
+    },
+    {
+      "key": "soil_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "Humidité du sol capacitive v1.2"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Étalonnez « sec » (à l'air) et « mouillé » (dans un verre d'eau) pour votre sonde.",
+    "Certaines copies n'ont pas le régulateur 3,3 V : alimentez-les en 3V3."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,77 @@
+{
+  "id": "sds011",
+  "title": "SDS011 (particules fines)",
+  "category": "air",
+  "kind": "module",
+  "description": "Capteur laser Nova Fitness : PM2.5 et PM10, utilisé par le réseau citoyen Sensor.Community.",
+  "tags": [
+    "PM2.5",
+    "PM10",
+    "particules",
+    "UART"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "sds011",
+      "name": "SDS011 (particules fines)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "sds011",
+      "name": "SDS011 (particules fines)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sds011",
+      "name": "SDS011 (particules fines)",
+      "pin": "TXD du capteur",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "sds011",
+      "name": "SDS011 (particules fines)",
+      "pin": "RXD du capteur",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sds011_pm25",
+      "unit": "µg/m³",
+      "label": "PM2.5",
+      "module": "SDS011 (particules fines)"
+    },
+    {
+      "key": "sds011_pm10",
+      "unit": "µg/m³",
+      "label": "PM10",
+      "module": "SDS011 (particules fines)"
+    }
+  ],
+  "power": {
+    "modules_mA": 70,
+    "modules_peak_mA": 70,
+    "board_mA": 45,
+    "total_mA": 115,
+    "total_peak_mA": 150
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

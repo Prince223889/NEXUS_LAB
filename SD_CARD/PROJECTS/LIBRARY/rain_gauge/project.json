@@ -1,0 +1,62 @@
+{
+  "id": "rain_gauge",
+  "title": "Pluviomètre à auget",
+  "category": "weather",
+  "kind": "module",
+  "description": "Pluviomètre basculant : 0,2794 mm de pluie par basculement.",
+  "tags": [
+    "pluie",
+    "météo",
+    "interruption"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pluvio",
+      "name": "Pluviomètre à auget",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pluvio",
+      "name": "Pluviomètre à auget",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pluvio",
+      "name": "Pluviomètre à auget",
+      "pin": "fil 1",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "fil 2 vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pluvio_total",
+      "unit": "mm",
+      "label": "Cumul de pluie",
+      "module": "Pluviomètre à auget"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,62 @@
+{
+  "id": "laser_receiver",
+  "title": "Récepteur laser (module ISO203)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Détecte la présence du faisceau laser : barrière laser d'alarme.",
+  "tags": [
+    "laser",
+    "barrière",
+    "sécurité"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "laserrx",
+      "name": "Récepteur laser (module ISO203)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "laserrx",
+      "name": "Récepteur laser (module ISO203)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "laserrx",
+      "name": "Récepteur laser (module ISO203)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "laserrx_beam",
+      "unit": "",
+      "label": "Faisceau reçu (0/1)",
+      "module": "Récepteur laser (module ISO203)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

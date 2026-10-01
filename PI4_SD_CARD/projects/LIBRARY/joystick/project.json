@@ -1,0 +1,92 @@
+{
+  "id": "joystick",
+  "title": "Joystick analogique KY-023",
+  "category": "input",
+  "kind": "module",
+  "description": "Deux axes analogiques et un bouton poussoir (clic central).",
+  "tags": [
+    "joystick",
+    "analogique",
+    "manette"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "VRx",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "VRy",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "SW",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "joy_x",
+      "unit": "%",
+      "label": "Axe X",
+      "module": "Joystick analogique KY-023"
+    },
+    {
+      "key": "joy_y",
+      "unit": "%",
+      "label": "Axe Y",
+      "module": "Joystick analogique KY-023"
+    },
+    {
+      "key": "joy_click",
+      "unit": "",
+      "label": "Clic",
+      "module": "Joystick analogique KY-023"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Alimentez le joystick en 3V3 (pas en 5 V) pour rester dans la plage de l'ADC."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

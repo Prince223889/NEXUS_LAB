@@ -1,0 +1,62 @@
+{
+  "id": "ntc",
+  "title": "Thermistance CTN 10 kΩ",
+  "category": "temp",
+  "kind": "module",
+  "description": "Thermistance NTC 10 kΩ (B = 3950) en pont diviseur avec une résistance fixe de 10 kΩ.",
+  "tags": [
+    "température",
+    "analogique",
+    "thermistance"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ntc",
+      "name": "Thermistance CTN 10 kΩ",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ntc",
+      "name": "Thermistance CTN 10 kΩ",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ntc",
+      "name": "Thermistance CTN 10 kΩ",
+      "pin": "point milieu",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "CTN entre 3V3 et le point milieu, 10 kΩ entre le point milieu et GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ntc_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "Thermistance CTN 10 kΩ"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

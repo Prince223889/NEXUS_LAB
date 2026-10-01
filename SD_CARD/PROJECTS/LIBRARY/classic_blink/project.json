@@ -1,0 +1,28 @@
+{
+  "id": "classic_blink",
+  "title": "Clignotement de la LED intégrée",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Le « Hello world » : faire clignoter une LED sans bloquer le programme (millis()).",
+  "tags": [
+    "débutant",
+    "LED"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

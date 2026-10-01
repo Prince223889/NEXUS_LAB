@@ -1,0 +1,127 @@
+{
+  "id": "app_prise_radio",
+  "title": "Passerelle prises radio 433 MHz",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Pilote une prise radiocommandée 433 MHz selon la température, et publie les mesures en MQTT.",
+  "tags": [
+    "433 MHz",
+    "domotique",
+    "MQTT"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit AHTX0",
+      "ver": "2.0.6",
+      "repo": "adafruit/Adafruit_AHTX0",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "rc-switch",
+      "ver": "2.6.4",
+      "repo": "sui77/rc-switch",
+      "author": "sui77"
+    },
+    {
+      "name": "PubSubClient",
+      "ver": "2.8",
+      "repo": "knolleary/pubsubclient"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "rf433t",
+      "name": "Émetteur 433 MHz (FS1000A)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "rf433t",
+      "name": "Émetteur 433 MHz (FS1000A)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rf433t",
+      "name": "Émetteur 433 MHz (FS1000A)",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "aht20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "AHT10 / AHT20 / AHT21"
+    },
+    {
+      "key": "aht20_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "AHT10 / AHT20 / AHT21"
+    }
+  ],
+  "power": {
+    "modules_mA": 21,
+    "modules_peak_mA": 21,
+    "board_mA": 110,
+    "total_mA": 131,
+    "total_peak_mA": 281
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

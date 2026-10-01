@@ -1,0 +1,93 @@
+{
+  "id": "mlx90614",
+  "title": "MLX90614 (thermomètre infrarouge)",
+  "category": "temp",
+  "kind": "module",
+  "description": "Mesure sans contact la température d'un objet (-70 à 380 °C) et la température ambiante.",
+  "tags": [
+    "température",
+    "infrarouge",
+    "sans contact",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit MLX90614 Library",
+      "ver": "2.1.6",
+      "repo": "adafruit/Adafruit-MLX90614-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "mlx90614",
+      "name": "MLX90614 (thermomètre infrarouge)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "mlx90614",
+      "name": "MLX90614 (thermomètre infrarouge)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mlx90614",
+      "name": "MLX90614 (thermomètre infrarouge)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "mlx90614",
+      "name": "MLX90614 (thermomètre infrarouge)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mlx90614_obj",
+      "unit": "°C",
+      "label": "Objet",
+      "module": "MLX90614 (thermomètre infrarouge)"
+    },
+    {
+      "key": "mlx90614_amb",
+      "unit": "°C",
+      "label": "Ambiante",
+      "module": "MLX90614 (thermomètre infrarouge)"
+    }
+  ],
+  "power": {
+    "modules_mA": 2,
+    "modules_peak_mA": 2,
+    "board_mA": 45,
+    "total_mA": 47,
+    "total_peak_mA": 82
+  },
+  "notes": [
+    "Champ de vision de 90° : l'objet doit remplir le cône de mesure.",
+    "Le MLX90614 ne supporte pas bien un bus I2C à 400 kHz."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

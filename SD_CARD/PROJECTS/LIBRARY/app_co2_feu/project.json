@@ -1,0 +1,163 @@
+{
+  "id": "app_co2_feu",
+  "title": "Indicateur CO₂ « feu tricolore » (salle de classe)",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Un anneau LED passe du vert (400 ppm) au rouge (1500 ppm) : signal clair pour aérer.",
+  "tags": [
+    "CO2",
+    "école",
+    "NeoPixel",
+    "aération"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit NeoPixel",
+      "ver": "1.15.5",
+      "repo": "adafruit/Adafruit_NeoPixel",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "strip",
+      "name": "Ruban / anneau LED WS2812B (NeoPixel)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "strip",
+      "name": "Ruban / anneau LED WS2812B (NeoPixel)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "strip",
+      "name": "Ruban / anneau LED WS2812B (NeoPixel)",
+      "pin": "DIN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance 330 Ω en série, condensateur 1000 µF sur l'alimentation"
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "scd40_co2",
+      "unit": "ppm",
+      "label": "CO₂",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "scd40_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "scd40_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    }
+  ],
+  "power": {
+    "modules_mA": 95,
+    "modules_peak_mA": 705,
+    "board_mA": 110,
+    "total_mA": 205,
+    "total_peak_mA": 965
+  },
+  "notes": [
+    "Consommation de pointe estimée 965 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Ruban / anneau LED WS2812B (NeoPixel) directement en 5 V externe et reliez les masses (GND commun).",
+    "Ruban / anneau LED WS2812B (NeoPixel) : la donnée 3,3 V fonctionne en général ; pour les longs rubans, un 74AHCT125 améliore la fiabilité."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

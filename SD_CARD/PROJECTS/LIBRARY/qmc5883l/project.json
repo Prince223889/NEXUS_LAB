@@ -1,0 +1,71 @@
+{
+  "id": "qmc5883l",
+  "title": "QMC5883L (boussole GY-273 récente)",
+  "category": "motion",
+  "kind": "module",
+  "description": "Magnétomètre 3 axes QST, piloté directement par registres.",
+  "tags": [
+    "boussole",
+    "magnétomètre",
+    "I2C",
+    "sans bibliothèque"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "qmc5883",
+      "name": "QMC5883L (boussole GY-273 récente)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "qmc5883",
+      "name": "QMC5883L (boussole GY-273 récente)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "qmc5883",
+      "name": "QMC5883L (boussole GY-273 récente)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "qmc5883",
+      "name": "QMC5883L (boussole GY-273 récente)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "qmc5883_heading",
+      "unit": "°",
+      "label": "Cap magnétique",
+      "module": "QMC5883L (boussole GY-273 récente)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

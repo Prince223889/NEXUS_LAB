@@ -1,0 +1,112 @@
+{
+  "id": "app_horloge_led",
+  "title": "Horloge / thermomètre à LED 8 chiffres",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Grands chiffres lumineux : température d'une sonde DS18B20 sur afficheur MAX7219.",
+  "tags": [
+    "horloge",
+    "7 segments",
+    "MAX7219"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "OneWire",
+      "ver": "2.3.8",
+      "repo": "PaulStoffregen/OneWire",
+      "author": "Paul Stoffregen"
+    },
+    {
+      "name": "DallasTemperature",
+      "ver": "4.0.6",
+      "repo": "milesburton/Arduino-Temperature-Control-Library",
+      "author": "Miles Burton"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ds18b20",
+      "name": "DS18B20",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 4,7 kΩ entre DATA et 3V3 obligatoire"
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "DIN",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "CS",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "CLK",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ds18b20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DS18B20"
+    }
+  ],
+  "power": {
+    "modules_mA": 61.5,
+    "modules_peak_mA": 61.5,
+    "board_mA": 45,
+    "total_mA": 106.5,
+    "total_peak_mA": 141.5
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

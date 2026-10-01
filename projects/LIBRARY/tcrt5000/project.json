@@ -1,0 +1,76 @@
+{
+  "id": "tcrt5000",
+  "title": "Suiveur de ligne TCRT5000",
+  "category": "distance",
+  "kind": "module",
+  "description": "Capteur réflectif pour robot suiveur de ligne : distingue une ligne noire d'un sol clair.",
+  "tags": [
+    "ligne",
+    "robot",
+    "infrarouge"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "line",
+      "name": "Suiveur de ligne TCRT5000",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "line",
+      "name": "Suiveur de ligne TCRT5000",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "line",
+      "name": "Suiveur de ligne TCRT5000",
+      "pin": "D0",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "line",
+      "name": "Suiveur de ligne TCRT5000",
+      "pin": "A0",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "line_black",
+      "unit": "",
+      "label": "Ligne noire (0/1)",
+      "module": "Suiveur de ligne TCRT5000"
+    },
+    {
+      "key": "line_refl",
+      "unit": "%",
+      "label": "Réflexion",
+      "module": "Suiveur de ligne TCRT5000"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

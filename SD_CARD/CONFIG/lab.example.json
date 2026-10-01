@@ -1,0 +1,16 @@
+{
+  "_note": "Exemple uniquement : la configuration réelle se fait dans Réglages › Configuration (stockée en NVS).",
+  "ap_ssid": "ESP32-LAB",
+  "ap_channel": 6,
+  "hostname": "esp32-lab",
+  "sta_ssid": "",
+  "sta_password": "",
+  "timezone": "CET-1CEST,M3.5.0,M10.5.0/3",
+  "ntp_server": "pool.ntp.org",
+  "whatsapp_phone": "",
+  "whatsapp_api": "",
+  "webhook_url": "",
+  "ai_endpoint": "",
+  "ai_key": "",
+  "ai_model": ""
+}

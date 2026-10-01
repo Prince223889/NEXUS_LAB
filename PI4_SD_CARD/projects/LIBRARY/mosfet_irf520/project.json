@@ -1,0 +1,58 @@
+{
+  "id": "mosfet_irf520",
+  "title": "Module MOSFET IRF520 / IRLZ44N",
+  "category": "act",
+  "kind": "module",
+  "description": "Commute une charge continue (ruban LED, moteur, électrovanne) jusqu'à 24 V en PWM.",
+  "tags": [
+    "MOSFET",
+    "PWM",
+    "puissance"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "mosfet_irf520",
+      "name": "Module MOSFET IRF520 / IRLZ44N",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "mosfet_irf520",
+      "name": "Module MOSFET IRF520 / IRLZ44N",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mosfet_irf520",
+      "name": "Module MOSFET IRF520 / IRLZ44N",
+      "pin": "SIG / Gate",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 5,
+    "modules_peak_mA": 5,
+    "board_mA": 45,
+    "total_mA": 50,
+    "total_peak_mA": 85
+  },
+  "notes": [
+    "L'IRF520 n'est pas « logic level » : en 3,3 V il conduit mal. Préférez un IRLZ44N ou un module à double MOSFET.",
+    "Diode de roue libre obligatoire pour les charges inductives."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,143 @@
+{
+ "v": 1,
+ "title": "Antivol à vibration (vélo, sac)",
+ "board": "esp32",
+ "device": "antivol_a_vibration_",
+ "emulable": true,
+ "needsDac": false,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 1500,
+ "rules": 1,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "digital",
+   "emu": 16,
+   "dut": 34,
+   "module": "Capteur de vibration SW-420",
+   "label": "vibration_sw420",
+   "inst": 0,
+   "out": "state",
+   "feed": "vibration_sw420_state"
+  },
+  {
+   "n": 1,
+   "dir": "out",
+   "kind": "level",
+   "emu": 18,
+   "dut": 4,
+   "module": "Buzzer actif 5 V",
+   "label": "buzz",
+   "inst": 1,
+   "invert": false
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO16",
+   "note": "Capteur de vibration SW-420 → sortie numérique de l'émulateur (retirez le capteur réel)"
+  },
+  {
+   "dut": "GPIO4",
+   "emu": "GPIO18",
+   "note": "Buzzer actif 5 V observé par l'émulateur (niveau) ; débranchez la charge"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 3000,
+   "expect": [
+    {
+     "feed": "vibration_sw420_state",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "n": 1,
+     "level": 0,
+     "state": 0
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — vibration_sw420 state = 1 (condition vraie)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 1
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "vibration_sw420_state",
+     "v": 1,
+     "tol": 0.01
+    },
+    {
+     "n": 1,
+     "level": 1,
+     "state": 1
+    }
+   ]
+  },
+  {
+   "label": "Règle 1 — vibration_sw420 state = 0 (retour)",
+   "set": [
+    {
+     "n": 0,
+     "raw": 0
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 0
+    }
+   ],
+   "wait": 1500,
+   "expect": [
+    {
+     "feed": "vibration_sw420_state",
+     "v": 0,
+     "tol": 0.01
+    },
+    {
+     "n": 1,
+     "level": 0,
+     "state": 0
+    }
+   ]
+  }
+ ],
+ "duration_ms": 6000,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__app_antivol__bench.ino.bin"
+}

@@ -1,0 +1,111 @@
+{
+  "id": "nrf24l01",
+  "title": "Radio nRF24L01+ (2,4 GHz)",
+  "category": "comm",
+  "kind": "module",
+  "description": "Liaison radio bas coût entre cartes (100 m, 1000 m en version PA+LNA) : envoie un compteur et écoute les réponses.",
+  "tags": [
+    "radio",
+    "2,4 GHz",
+    "nRF24",
+    "SPI"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "RF24",
+      "ver": "1.6.2",
+      "repo": "nRF24/RF24",
+      "author": "TMRh20"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "CE",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "nrf",
+      "name": "Radio nRF24L01+ (2,4 GHz)",
+      "pin": "CSN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "nrf_tx",
+      "unit": "",
+      "label": "Envoyé",
+      "module": "Radio nRF24L01+ (2,4 GHz)"
+    },
+    {
+      "key": "nrf_rx",
+      "unit": "",
+      "label": "Reçu",
+      "module": "Radio nRF24L01+ (2,4 GHz)"
+    }
+  ],
+  "power": {
+    "modules_mA": 12,
+    "modules_peak_mA": 115,
+    "board_mA": 45,
+    "total_mA": 57,
+    "total_peak_mA": 195
+  },
+  "notes": [
+    "Condensateur 10-100 µF au plus près des broches VCC/GND du module : indispensable.",
+    "3,3 V uniquement."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

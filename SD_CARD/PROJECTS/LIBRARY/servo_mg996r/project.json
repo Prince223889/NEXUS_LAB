@@ -1,0 +1,66 @@
+{
+  "id": "servo_mg996r",
+  "title": "Servomoteur MG996R (couple 10 kg·cm)",
+  "category": "motor",
+  "kind": "module",
+  "description": "Servo à pignons métal pour bras robotisés et mécanismes lourds.",
+  "tags": [
+    "servo",
+    "couple",
+    "bras robot"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "ESP32Servo",
+      "ver": "3.2.1",
+      "repo": "madhephaestus/ESP32Servo",
+      "author": "Kevin Harrington, John K. Bennett"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "servob",
+      "name": "Servomoteur MG996R (couple 10 kg·cm)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "servob",
+      "name": "Servomoteur MG996R (couple 10 kg·cm)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "servob",
+      "name": "Servomoteur MG996R (couple 10 kg·cm)",
+      "pin": "signal (orange)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 2500,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 2580
+  },
+  "notes": [
+    "Courant de blocage 2,5 A : alimentation 5-6 V / 3 A dédiée obligatoire.",
+    "Consommation de pointe estimée 2580 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Servomoteur MG996R (couple 10 kg·cm) directement en 5 V externe et reliez les masses (GND commun)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,143 @@
+{
+  "id": "app_joystick_servo",
+  "title": "Tourelle pan-tilt au joystick",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Deux servos (panoramique et inclinaison) suivent les axes d'un joystick.",
+  "tags": [
+    "servo",
+    "joystick",
+    "caméra"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "ESP32Servo",
+      "ver": "3.2.1",
+      "repo": "madhephaestus/ESP32Servo",
+      "author": "Kevin Harrington, John K. Bennett"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "VRx",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "VRy",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    },
+    {
+      "mod": "joy",
+      "name": "Joystick analogique KY-023",
+      "pin": "SW",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "pan",
+      "name": "Servomoteur SG90 / MG90S",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pan",
+      "name": "Servomoteur SG90 / MG90S",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pan",
+      "name": "Servomoteur SG90 / MG90S",
+      "pin": "signal (orange)",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "tilt",
+      "name": "Servomoteur SG90 / MG90S",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "tilt",
+      "name": "Servomoteur SG90 / MG90S",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tilt",
+      "name": "Servomoteur SG90 / MG90S",
+      "pin": "signal (orange)",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "joy_x",
+      "unit": "%",
+      "label": "Axe X",
+      "module": "Joystick analogique KY-023"
+    },
+    {
+      "key": "joy_y",
+      "unit": "%",
+      "label": "Axe Y",
+      "module": "Joystick analogique KY-023"
+    },
+    {
+      "key": "joy_click",
+      "unit": "",
+      "label": "Clic",
+      "module": "Joystick analogique KY-023"
+    }
+  ],
+  "power": {
+    "modules_mA": 21,
+    "modules_peak_mA": 1301,
+    "board_mA": 45,
+    "total_mA": 66,
+    "total_peak_mA": 1381
+  },
+  "notes": [
+    "Consommation de pointe estimée 1381 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Servomoteur SG90 / MG90S, Servomoteur SG90 / MG90S directement en 5 V externe et reliez les masses (GND commun)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,96 @@
+{
+  "id": "si1145",
+  "title": "SI1145 / SI1151 (UV, visible, IR)",
+  "category": "weather",
+  "kind": "module",
+  "description": "Capteur Silicon Labs : indice UV calculé, lumière visible et infrarouge.",
+  "tags": [
+    "UV",
+    "lumière",
+    "infrarouge",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SI1145 Library",
+      "ver": "1.2.2",
+      "repo": "adafruit/Adafruit_SI1145_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "si1145",
+      "name": "SI1145 / SI1151 (UV, visible, IR)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "si1145",
+      "name": "SI1145 / SI1151 (UV, visible, IR)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "si1145",
+      "name": "SI1145 / SI1151 (UV, visible, IR)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "si1145",
+      "name": "SI1145 / SI1151 (UV, visible, IR)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "si1145_uvi",
+      "unit": "",
+      "label": "Indice UV",
+      "module": "SI1145 / SI1151 (UV, visible, IR)"
+    },
+    {
+      "key": "si1145_vis",
+      "unit": "",
+      "label": "Visible",
+      "module": "SI1145 / SI1151 (UV, visible, IR)"
+    },
+    {
+      "key": "si1145_ir",
+      "unit": "",
+      "label": "Infrarouge",
+      "module": "SI1145 / SI1151 (UV, visible, IR)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

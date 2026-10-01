@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 906" width="980" height="906" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<rect width="980" height="906" fill="#ffffff"/>
+<text x="490" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111">app_station_meteo_ext — Station météo extérieure complète</text>
+<text x="151" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#111">ESP32 DevKit V1 (WROOM-32)</text>
+<rect x="36" y="96" width="230" height="286" rx="8" fill="#0d6ea8" stroke="#0a3d5c" stroke-width="2"/>
+<text x="248" y="127" text-anchor="end" font-size="14" font-weight="700" fill="#fff">3V3</text>
+<text x="248" y="159" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GND</text>
+<text x="248" y="191" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO4</text>
+<text x="248" y="223" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO13</text>
+<text x="248" y="255" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO14</text>
+<text x="248" y="287" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO34</text>
+<text x="248" y="319" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO35</text>
+<text x="248" y="351" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO36</text>
+<path d="M266 122 H306 V126 H600" fill="none" stroke="#e53935" stroke-width="3" stroke-linejoin="round"><title>3V3 → DHT22 / AM2302 VCC</title></path>
+<path d="M266 154 H326 V158 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → DHT22 / AM2302 GND</title></path>
+<path d="M266 186 H346 V190 H600" fill="none" stroke="#1e88e5" stroke-width="3" stroke-linejoin="round"><title>GPIO4 → DHT22 / AM2302 DATA — résistance de tirage 10 kΩ vers 3V3 (souvent déjà sur le module)</title></path>
+<path d="M266 122 H366 V270 H600" fill="none" stroke="#e53935" stroke-width="3" stroke-linejoin="round"><title>3V3 → Anémomètre à impulsions VCC</title></path>
+<path d="M266 154 H386 V302 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → Anémomètre à impulsions GND</title></path>
+<path d="M266 218 H406 V334 H600" fill="none" stroke="#43a047" stroke-width="3" stroke-linejoin="round"><title>GPIO13 → Anémomètre à impulsions fil 1 — fil 2 vers GND</title></path>
+<path d="M266 122 H426 V414 H600" fill="none" stroke="#e53935" stroke-width="3" stroke-linejoin="round"><title>3V3 → Girouette à résistances VCC</title></path>
+<path d="M266 154 H446 V446 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → Girouette à résistances GND</title></path>
+<path d="M266 282 H466 V478 H600" fill="none" stroke="#546e7a" stroke-width="3" stroke-linejoin="round"><title>GPIO34 → Girouette à résistances fil 1 — 10 kΩ entre 3V3 et le point de mesure, fil 2 vers GND</title></path>
+<path d="M266 122 H486 V558 H600" fill="none" stroke="#e53935" stroke-width="3" stroke-linejoin="round"><title>3V3 → Pluviomètre à auget VCC</title></path>
+<path d="M266 154 H506 V590 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → Pluviomètre à auget GND</title></path>
+<path d="M266 250 H526 V622 H600" fill="none" stroke="#8e24aa" stroke-width="3" stroke-linejoin="round"><title>GPIO14 → Pluviomètre à auget fil 1 — fil 2 vers GND</title></path>
+<path d="M266 122 H546 V702 H600" fill="none" stroke="#e53935" stroke-width="3" stroke-linejoin="round"><title>3V3 → Capteur de pluie FC-37 / YL-83 VCC</title></path>
+<path d="M266 154 H566 V734 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → Capteur de pluie FC-37 / YL-83 GND</title></path>
+<path d="M266 314 H306 V766 H600" fill="none" stroke="#00897b" stroke-width="3" stroke-linejoin="round"><title>GPIO35 → Capteur de pluie FC-37 / YL-83 AO</title></path>
+<path d="M266 346 H326 V798 H600" fill="none" stroke="#d81b60" stroke-width="3" stroke-linejoin="round"><title>GPIO36 → Capteur de pluie FC-37 / YL-83 DO</title></path>
+<circle cx="266" cy="122" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="154" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="186" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="218" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="250" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="282" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="314" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="346" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="772" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="#111">DHT22 / AM2302 (dht22)</text>
+<rect x="600" y="96" width="344" height="118" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="120" width="12" height="12" fill="#e53935"/>
+<text x="616" y="131" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="152" width="12" height="12" fill="#212121"/>
+<text x="616" y="163" font-size="13" fill="#111">GND</text>
+<rect x="594" y="184" width="12" height="12" fill="#1e88e5"/>
+<text x="616" y="195" font-size="13" fill="#111">DATA</text>
+<text x="934" y="195" text-anchor="end" font-size="10.5" fill="#666">résistance de tirage 10 kΩ vers 3…</text>
+<text x="772" y="234" text-anchor="middle" font-size="13" font-weight="700" fill="#111">Anémomètre à impulsions (wind)</text>
+<rect x="600" y="240" width="344" height="118" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="264" width="12" height="12" fill="#e53935"/>
+<text x="616" y="275" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="296" width="12" height="12" fill="#212121"/>
+<text x="616" y="307" font-size="13" fill="#111">GND</text>
+<rect x="594" y="328" width="12" height="12" fill="#43a047"/>
+<text x="616" y="339" font-size="13" fill="#111">fil 1</text>
+<text x="934" y="339" text-anchor="end" font-size="10.5" fill="#666">fil 2 vers GND</text>
+<text x="772" y="378" text-anchor="middle" font-size="13" font-weight="700" fill="#111">Girouette à résistances (vane)</text>
+<rect x="600" y="384" width="344" height="118" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="408" width="12" height="12" fill="#e53935"/>
+<text x="616" y="419" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="440" width="12" height="12" fill="#212121"/>
+<text x="616" y="451" font-size="13" fill="#111">GND</text>
+<rect x="594" y="472" width="12" height="12" fill="#546e7a"/>
+<text x="616" y="483" font-size="13" fill="#111">fil 1</text>
+<text x="934" y="483" text-anchor="end" font-size="10.5" fill="#666">10 kΩ entre 3V3 et le point de me…</text>
+<text x="772" y="522" text-anchor="middle" font-size="13" font-weight="700" fill="#111">Pluviomètre à auget (pluvio)</text>
+<rect x="600" y="528" width="344" height="118" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="552" width="12" height="12" fill="#e53935"/>
+<text x="616" y="563" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="584" width="12" height="12" fill="#212121"/>
+<text x="616" y="595" font-size="13" fill="#111">GND</text>
+<rect x="594" y="616" width="12" height="12" fill="#8e24aa"/>
+<text x="616" y="627" font-size="13" fill="#111">fil 1</text>
+<text x="934" y="627" text-anchor="end" font-size="10.5" fill="#666">fil 2 vers GND</text>
+<text x="772" y="666" text-anchor="middle" font-size="13" font-weight="700" fill="#111">Capteur de pluie FC-37 / YL-83 (rain)</text>
+<rect x="600" y="672" width="344" height="150" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="696" width="12" height="12" fill="#e53935"/>
+<text x="616" y="707" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="728" width="12" height="12" fill="#212121"/>
+<text x="616" y="739" font-size="13" fill="#111">GND</text>
+<rect x="594" y="760" width="12" height="12" fill="#00897b"/>
+<text x="616" y="771" font-size="13" fill="#111">AO</text>
+<rect x="594" y="792" width="12" height="12" fill="#d81b60"/>
+<text x="616" y="803" font-size="13" fill="#111">DO</text>
+<text x="36" y="884" font-size="12" fill="#777">ESP32 LAB 6.1.0 — fils : rouge = 3V3, orange = 5V, noir = GND, couleurs = signaux. Toujours câbler carte débranchée.</text>
+</svg>

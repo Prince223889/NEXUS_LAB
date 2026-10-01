@@ -1,0 +1,76 @@
+{
+  "id": "water_level",
+  "title": "Capteur de niveau d'eau (pistes)",
+  "category": "weather",
+  "kind": "module",
+  "description": "Plaque à pistes parallèles : tension proportionnelle à la hauteur d'eau (0-4 cm).",
+  "tags": [
+    "eau",
+    "niveau",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "wlevel",
+      "name": "Capteur de niveau d'eau (pistes)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "wlevel",
+      "name": "Capteur de niveau d'eau (pistes)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "wlevel",
+      "name": "Capteur de niveau d'eau (pistes)",
+      "pin": "S",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "wlevel",
+      "name": "Capteur de niveau d'eau (pistes)",
+      "pin": "+ (via GPIO)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "wlevel_level",
+      "unit": "%",
+      "label": "Niveau",
+      "module": "Capteur de niveau d'eau (pistes)"
+    },
+    {
+      "key": "wlevel_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "Capteur de niveau d'eau (pistes)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

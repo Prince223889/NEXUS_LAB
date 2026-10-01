@@ -1,0 +1,28 @@
+{
+  "id": "classic_hw_timer",
+  "title": "Minuterie matérielle",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Interruption précise toutes les 100 ms avec l'API timer d'Arduino-ESP32 3.x.",
+  "tags": [
+    "timer",
+    "interruption"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

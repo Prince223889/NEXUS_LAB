@@ -1,0 +1,68 @@
+{
+  "id": "ir_beam",
+  "title": "Barrière infrarouge (émetteur + récepteur)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Faisceau IR coupé = passage détecté : compteur de passages, détection d'intrusion.",
+  "tags": [
+    "barrière",
+    "comptage",
+    "infrarouge"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "beam",
+      "name": "Barrière infrarouge (émetteur + récepteur)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "beam",
+      "name": "Barrière infrarouge (émetteur + récepteur)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "beam",
+      "name": "Barrière infrarouge (émetteur + récepteur)",
+      "pin": "récepteur (collecteur ouvert)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "beam_cut",
+      "unit": "",
+      "label": "Faisceau coupé",
+      "module": "Barrière infrarouge (émetteur + récepteur)"
+    },
+    {
+      "key": "beam_passes",
+      "unit": "",
+      "label": "Passages",
+      "module": "Barrière infrarouge (émetteur + récepteur)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

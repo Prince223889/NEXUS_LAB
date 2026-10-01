@@ -1,0 +1,27 @@
+{
+  "id": "classic_deep_sleep_button",
+  "title": "Sommeil profond réveillé par bouton",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Réveil sur broche RTC (ext0) : télécommande ou sonnette sur pile.",
+  "tags": [
+    "basse consommation",
+    "bouton"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

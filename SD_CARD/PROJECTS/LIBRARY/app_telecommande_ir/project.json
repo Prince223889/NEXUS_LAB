@@ -1,0 +1,90 @@
+{
+  "id": "app_telecommande_ir",
+  "title": "Prise commandée par télécommande IR",
+  "category": "app",
+  "kind": "recipe",
+  "description": "La touche « 1 » (commande NEC 0x45) d'une télécommande allume le relais, toute autre touche l'éteint.",
+  "tags": [
+    "infrarouge",
+    "relais",
+    "télécommande"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "IRremote",
+      "ver": "4.7.1",
+      "repo": "Arduino-IRremote/Arduino-IRremote",
+      "author": "Armin Joachimsmeyer"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "irrx",
+      "name": "Récepteur infrarouge VS1838B / TSOP38238",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "irrx",
+      "name": "Récepteur infrarouge VS1838B / TSOP38238",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "irrx",
+      "name": "Récepteur infrarouge VS1838B / TSOP38238",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "relay",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "relay",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "relay",
+      "name": "Module relais 5 V (1 canal)",
+      "pin": "IN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "irrx_cmd",
+      "unit": "",
+      "label": "Dernière commande",
+      "module": "Récepteur infrarouge VS1838B / TSOP38238"
+    }
+  ],
+  "power": {
+    "modules_mA": 71,
+    "modules_peak_mA": 71,
+    "board_mA": 45,
+    "total_mA": 116,
+    "total_peak_mA": 151
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

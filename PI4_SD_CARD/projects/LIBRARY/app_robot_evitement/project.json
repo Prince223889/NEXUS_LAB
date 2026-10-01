@@ -1,0 +1,111 @@
+{
+  "id": "app_robot_evitement",
+  "title": "Robot éviteur d'obstacles",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Le moteur recule quand un obstacle est à moins de 20 cm, avance sinon (base de robot mobile).",
+  "tags": [
+    "robot",
+    "ultrason",
+    "moteur"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "TRIG",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "ECHO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur 1 kΩ / 2 kΩ : ECHO sort du 5 V"
+    },
+    {
+      "mod": "l298n",
+      "name": "Pont en H L298N (moteur CC)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "l298n",
+      "name": "Pont en H L298N (moteur CC)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "l298n",
+      "name": "Pont en H L298N (moteur CC)",
+      "pin": "ENA (retirer le cavalier)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "l298n",
+      "name": "Pont en H L298N (moteur CC)",
+      "pin": "IN1",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "l298n",
+      "name": "Pont en H L298N (moteur CC)",
+      "pin": "IN2",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "hcsr04_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "HC-SR04 (ultrasons)"
+    }
+  ],
+  "power": {
+    "modules_mA": 25,
+    "modules_peak_mA": 1515,
+    "board_mA": 45,
+    "total_mA": 70,
+    "total_peak_mA": 1595
+  },
+  "notes": [
+    "Consommation de pointe estimée 1595 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Pont en H L298N (moteur CC) directement en 5 V externe et reliez les masses (GND commun).",
+    "HC-SR04 (ultrasons) : la broche ECHO délivre 5 V : utilisez un pont diviseur (1 kΩ / 2 kΩ) ou un convertisseur de niveau."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

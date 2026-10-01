@@ -1,0 +1,84 @@
+{
+  "id": "dht11",
+  "title": "DHT11",
+  "category": "temp",
+  "kind": "module",
+  "description": "Capteur économique : 0-50 °C (±2 °C), 20-90 % HR (±5 %).",
+  "tags": [
+    "température",
+    "humidité",
+    "numérique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "DHT sensor library",
+      "ver": "1.4.7",
+      "repo": "adafruit/DHT-sensor-library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "dht11",
+      "name": "DHT11",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "dht11",
+      "name": "DHT11",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "dht11",
+      "name": "DHT11",
+      "pin": "DATA",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "résistance de tirage 10 kΩ vers 3V3 (souvent déjà sur le module)"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "dht11_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DHT11"
+    },
+    {
+      "key": "dht11_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "DHT11"
+    }
+  ],
+  "power": {
+    "modules_mA": 1.5,
+    "modules_peak_mA": 1.5,
+    "board_mA": 45,
+    "total_mA": 46.5,
+    "total_peak_mA": 81.5
+  },
+  "notes": [
+    "Ne pas interroger plus souvent qu'une fois toutes les 2 s.",
+    "Le premier relevé après la mise sous tension peut être « nan »."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

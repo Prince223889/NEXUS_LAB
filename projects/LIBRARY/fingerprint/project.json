@@ -1,0 +1,80 @@
+{
+  "id": "fingerprint",
+  "title": "Lecteur d'empreintes R307 / AS608",
+  "category": "id",
+  "kind": "module",
+  "description": "Reconnaissance d'empreintes digitales (jusqu'à 162 modèles) pour serrure ou pointeuse.",
+  "tags": [
+    "empreinte",
+    "biométrie",
+    "serrure",
+    "UART"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit Fingerprint Sensor Library",
+      "ver": "2.1.4",
+      "repo": "adafruit/Adafruit-Fingerprint-Sensor-Library",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "finger",
+      "name": "Lecteur d'empreintes R307 / AS608",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "finger",
+      "name": "Lecteur d'empreintes R307 / AS608",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "finger",
+      "name": "Lecteur d'empreintes R307 / AS608",
+      "pin": "TX (vert)",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "finger",
+      "name": "Lecteur d'empreintes R307 / AS608",
+      "pin": "RX (blanc)",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "finger_id",
+      "unit": "",
+      "label": "Dernier ID reconnu",
+      "module": "Lecteur d'empreintes R307 / AS608"
+    }
+  ],
+  "power": {
+    "modules_mA": 60,
+    "modules_peak_mA": 60,
+    "board_mA": 45,
+    "total_mA": 105,
+    "total_peak_mA": 140
+  },
+  "notes": [
+    "Enregistrez les empreintes avec l'exemple « enroll » de la bibliothèque Adafruit."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

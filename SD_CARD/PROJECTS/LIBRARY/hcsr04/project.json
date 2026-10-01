@@ -1,0 +1,72 @@
+{
+  "id": "hcsr04",
+  "title": "HC-SR04 (ultrasons)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Télémètre à ultrasons 2-400 cm (résolution 3 mm), le grand classique des robots.",
+  "tags": [
+    "distance",
+    "ultrason",
+    "robot"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "TRIG",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "ECHO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur 1 kΩ / 2 kΩ : ECHO sort du 5 V"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "hcsr04_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "HC-SR04 (ultrasons)"
+    }
+  ],
+  "power": {
+    "modules_mA": 15,
+    "modules_peak_mA": 15,
+    "board_mA": 45,
+    "total_mA": 60,
+    "total_peak_mA": 95
+  },
+  "notes": [
+    "HC-SR04 (ultrasons) : la broche ECHO délivre 5 V : utilisez un pont diviseur (1 kΩ / 2 kΩ) ou un convertisseur de niveau."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

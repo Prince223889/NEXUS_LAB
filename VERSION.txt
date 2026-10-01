@@ -1,0 +1,4 @@
+ESP32 LAB v6.1.0 « NEXUS »
+MASTER : ESP32-S3 N16R8, ESP-IDF 6.1
+WORKER : Arduino-ESP32 3.3.x (testé 3.3.12)
+Catalogue : 219 modules, 52 projets complets, 49 classiques (320 projets)

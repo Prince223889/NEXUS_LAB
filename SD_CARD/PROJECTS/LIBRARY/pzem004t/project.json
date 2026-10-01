@@ -1,0 +1,112 @@
+{
+  "id": "pzem004t",
+  "title": "PZEM-004T v3 (compteur d'énergie)",
+  "category": "power",
+  "kind": "module",
+  "description": "Compteur d'énergie monophasé : tension, courant, puissance, énergie cumulée, fréquence et facteur de puissance.",
+  "tags": [
+    "énergie",
+    "secteur",
+    "kWh",
+    "Modbus",
+    "UART"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "PZEM004Tv30",
+      "ver": "1.2.1",
+      "repo": "mandulaj/PZEM-004T-v30",
+      "author": "Jakub Mandula"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "pzem",
+      "name": "PZEM-004T v3 (compteur d'énergie)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pzem",
+      "name": "PZEM-004T v3 (compteur d'énergie)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pzem",
+      "name": "PZEM-004T v3 (compteur d'énergie)",
+      "pin": "TX du PZEM",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "pzem",
+      "name": "PZEM-004T v3 (compteur d'énergie)",
+      "pin": "RX du PZEM",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pzem_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "PZEM-004T v3 (compteur d'énergie)"
+    },
+    {
+      "key": "pzem_curr",
+      "unit": "A",
+      "label": "Courant",
+      "module": "PZEM-004T v3 (compteur d'énergie)"
+    },
+    {
+      "key": "pzem_power",
+      "unit": "W",
+      "label": "Puissance",
+      "module": "PZEM-004T v3 (compteur d'énergie)"
+    },
+    {
+      "key": "pzem_energy",
+      "unit": "kWh",
+      "label": "Énergie",
+      "module": "PZEM-004T v3 (compteur d'énergie)"
+    },
+    {
+      "key": "pzem_freq",
+      "unit": "Hz",
+      "label": "Fréquence",
+      "module": "PZEM-004T v3 (compteur d'énergie)"
+    },
+    {
+      "key": "pzem_pf",
+      "unit": "",
+      "label": "Facteur de puissance",
+      "module": "PZEM-004T v3 (compteur d'énergie)"
+    }
+  ],
+  "power": {
+    "modules_mA": 10,
+    "modules_peak_mA": 10,
+    "board_mA": 45,
+    "total_mA": 55,
+    "total_peak_mA": 90
+  },
+  "notes": [
+    "DANGER 230 V : installation par une personne qualifiée, dans un boîtier fermé.",
+    "La sortie série du PZEM est en 5 V : pont diviseur sur son TX recommandé."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

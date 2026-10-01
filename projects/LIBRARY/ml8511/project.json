@@ -1,0 +1,69 @@
+{
+  "id": "ml8511",
+  "title": "ML8511 (UV)",
+  "category": "weather",
+  "kind": "module",
+  "description": "Capteur UV-A/B Lapis : intensité en mW/cm² de 0 à 15.",
+  "tags": [
+    "UV",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ml8511",
+      "name": "ML8511 (UV)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ml8511",
+      "name": "ML8511 (UV)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ml8511",
+      "name": "ML8511 (UV)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "ml8511",
+      "name": "ML8511 (UV)",
+      "pin": "EN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "ou relier EN à 3V3"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ml8511_uv",
+      "unit": "mW/cm²",
+      "label": "Intensité UV",
+      "module": "ML8511 (UV)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

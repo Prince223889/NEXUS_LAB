@@ -1,0 +1,71 @@
+{
+  "id": "max7219_7seg",
+  "title": "Afficheur 8 chiffres MAX7219",
+  "category": "display",
+  "kind": "module",
+  "description": "Barrette 8 chiffres 7 segments : affiche la première mesure avec une décimale.",
+  "tags": [
+    "7 segments",
+    "MAX7219",
+    "afficheur"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "DIN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "CS",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "seg8",
+      "name": "Afficheur 8 chiffres MAX7219",
+      "pin": "CLK",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 60,
+    "modules_peak_mA": 60,
+    "board_mA": 45,
+    "total_mA": 105,
+    "total_peak_mA": 140
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

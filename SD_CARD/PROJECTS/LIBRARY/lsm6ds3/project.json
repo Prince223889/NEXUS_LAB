@@ -1,0 +1,120 @@
+{
+  "id": "lsm6ds3",
+  "title": "LSM6DS3TR-C",
+  "category": "motion",
+  "kind": "module",
+  "description": "IMU 6 axes ST : accéléromètre et gyroscope avec podomètre matériel.",
+  "tags": [
+    "IMU",
+    "accéléromètre",
+    "gyroscope",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit LSM6DS",
+      "ver": "4.7.4",
+      "repo": "adafruit/Adafruit_LSM6DS",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "lsm6ds3",
+      "name": "LSM6DS3TR-C",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "lsm6ds3",
+      "name": "LSM6DS3TR-C",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lsm6ds3",
+      "name": "LSM6DS3TR-C",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "lsm6ds3",
+      "name": "LSM6DS3TR-C",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "lsm6ds3_ax",
+      "unit": "m/s²",
+      "label": "Accél. X",
+      "module": "LSM6DS3TR-C"
+    },
+    {
+      "key": "lsm6ds3_ay",
+      "unit": "m/s²",
+      "label": "Accél. Y",
+      "module": "LSM6DS3TR-C"
+    },
+    {
+      "key": "lsm6ds3_az",
+      "unit": "m/s²",
+      "label": "Accél. Z",
+      "module": "LSM6DS3TR-C"
+    },
+    {
+      "key": "lsm6ds3_gx",
+      "unit": "°/s",
+      "label": "Gyro X",
+      "module": "LSM6DS3TR-C"
+    },
+    {
+      "key": "lsm6ds3_gy",
+      "unit": "°/s",
+      "label": "Gyro Y",
+      "module": "LSM6DS3TR-C"
+    },
+    {
+      "key": "lsm6ds3_gz",
+      "unit": "°/s",
+      "label": "Gyro Z",
+      "module": "LSM6DS3TR-C"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

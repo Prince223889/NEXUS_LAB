@@ -1,0 +1,89 @@
+{
+  "id": "htu21d",
+  "title": "HTU21D / SHT21 / Si7021 (GY-21)",
+  "category": "temp",
+  "kind": "module",
+  "description": "Capteur température/humidité compatible SHT21, module GY-21.",
+  "tags": [
+    "température",
+    "humidité",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit HTU21DF Library",
+      "ver": "1.1.2",
+      "repo": "adafruit/Adafruit_HTU21DF_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "htu21d",
+      "name": "HTU21D / SHT21 / Si7021 (GY-21)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "htu21d",
+      "name": "HTU21D / SHT21 / Si7021 (GY-21)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "htu21d",
+      "name": "HTU21D / SHT21 / Si7021 (GY-21)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "htu21d",
+      "name": "HTU21D / SHT21 / Si7021 (GY-21)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "htu21d_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "HTU21D / SHT21 / Si7021 (GY-21)"
+    },
+    {
+      "key": "htu21d_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "HTU21D / SHT21 / Si7021 (GY-21)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

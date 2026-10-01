@@ -1,0 +1,130 @@
+{
+  "id": "app_radar_recul",
+  "title": "Radar de recul sonore",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Plus l'obstacle est proche, plus le bip est aigu ; distance sur afficheur 4 chiffres.",
+  "tags": [
+    "parking",
+    "ultrason",
+    "buzzer"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "TM1637",
+      "ver": "1.2.0",
+      "repo": "avishorp/TM1637",
+      "author": "Avishay Orpaz"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "TRIG",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "hcsr04",
+      "name": "HC-SR04 (ultrasons)",
+      "pin": "ECHO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur 1 kΩ / 2 kΩ : ECHO sort du 5 V"
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "+",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "CLK",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "DIO",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "hcsr04_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "HC-SR04 (ultrasons)"
+    }
+  ],
+  "power": {
+    "modules_mA": 55,
+    "modules_peak_mA": 55,
+    "board_mA": 45,
+    "total_mA": 100,
+    "total_peak_mA": 135
+  },
+  "notes": [
+    "HC-SR04 (ultrasons) : la broche ECHO délivre 5 V : utilisez un pont diviseur (1 kΩ / 2 kΩ) ou un convertisseur de niveau."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

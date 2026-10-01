@@ -1,0 +1,89 @@
+{
+  "id": "bmp180",
+  "title": "BMP180 / BMP085",
+  "category": "temp",
+  "kind": "module",
+  "description": "Ancien baromètre Bosch, encore très répandu dans les kits.",
+  "tags": [
+    "pression",
+    "température",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BMP085 Library",
+      "ver": "1.2.4",
+      "repo": "adafruit/Adafruit-BMP085-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bmp180",
+      "name": "BMP180 / BMP085",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bmp180",
+      "name": "BMP180 / BMP085",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bmp180",
+      "name": "BMP180 / BMP085",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bmp180",
+      "name": "BMP180 / BMP085",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bmp180_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BMP180 / BMP085"
+    },
+    {
+      "key": "bmp180_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BMP180 / BMP085"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

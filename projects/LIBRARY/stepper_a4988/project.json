@@ -1,0 +1,94 @@
+{
+  "id": "stepper_a4988",
+  "title": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+  "category": "motor",
+  "kind": "module",
+  "description": "Moteur 200 pas/tour avec driver STEP/DIR : imprimante 3D, CNC, axe linéaire.",
+  "tags": [
+    "pas-à-pas",
+    "NEMA17",
+    "A4988",
+    "CNC"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "AccelStepper",
+      "ver": "1.64",
+      "repo": "waspinator/AccelStepper",
+      "author": "Mike McCauley"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "STEP",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "DIR",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "EN (actif bas)",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    },
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "VMOT",
+      "to": "alimentation 12 V + condensateur 100 µF",
+      "note": "réglez le courant (potentiomètre Vref)"
+    },
+    {
+      "mod": "nema",
+      "name": "Pas-à-pas NEMA 17 + A4988 / DRV8825",
+      "pin": "RESET + SLEEP",
+      "to": "reliées entre elles"
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 5,
+    "modules_peak_mA": 5,
+    "board_mA": 45,
+    "total_mA": 50,
+    "total_peak_mA": 85
+  },
+  "notes": [
+    "Ne jamais débrancher le moteur quand le driver est alimenté (destruction du A4988)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

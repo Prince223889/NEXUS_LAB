@@ -1,0 +1,135 @@
+{
+ "v": 1,
+ "title": "Humidité du sol capacitive v1.2 — mesure et affichage série",
+ "board": "esp32",
+ "device": "humidite_du_sol_capa",
+ "emulable": true,
+ "needsDac": true,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 4700,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "analog",
+   "emu": 25,
+   "dut": 34,
+   "module": "Humidité du sol capacitive v1.2",
+   "label": "soil",
+   "inst": 0,
+   "out": "moist",
+   "feed": "soil_moist"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO25",
+   "note": "Humidité du sol capacitive v1.2 → sortie DAC de l'émulateur (retirez le capteur réel)"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 70.69
+    }
+   ],
+   "wait": 9400,
+   "expect": [
+    {
+     "feed": "soil_moist",
+     "v": 70.69,
+     "tol": 5.517
+    }
+   ]
+  },
+  {
+   "label": "Mesure soil.moist = 11.72",
+   "set": [
+    {
+     "n": 0,
+     "raw": 2430
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 11.724
+    }
+   ],
+   "wait": 4700,
+   "expect": [
+    {
+     "feed": "soil_moist",
+     "v": 11.724,
+     "tol": 5.517
+    }
+   ]
+  },
+  {
+   "label": "Mesure soil.moist = 70.69",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 70.69
+    }
+   ],
+   "wait": 4700,
+   "expect": [
+    {
+     "feed": "soil_moist",
+     "v": 70.69,
+     "tol": 5.517
+    }
+   ]
+  },
+  {
+   "label": "Mesure soil.moist = 129.66",
+   "set": [
+    {
+     "n": 0,
+     "raw": 720
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 129.655
+    }
+   ],
+   "wait": 4700,
+   "expect": [
+    {
+     "feed": "soil_moist",
+     "v": 129.655,
+     "tol": 5.517
+    }
+   ]
+  }
+ ],
+ "duration_ms": 23500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__soil_cap__bench.ino.bin"
+}

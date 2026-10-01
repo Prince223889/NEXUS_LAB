@@ -1,0 +1,28 @@
+{
+  "id": "classic_ble_uart",
+  "title": "Liaison série BLE (UART Nordic)",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Échanges texte avec iPhone/Android via Bluetooth Low Energy.",
+  "tags": [
+    "BLE",
+    "Bluetooth"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

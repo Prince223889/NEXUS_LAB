@@ -1,0 +1,67 @@
+{
+  "id": "zmpt101b",
+  "title": "ZMPT101B (tension secteur AC)",
+  "category": "power",
+  "kind": "module",
+  "description": "Transformateur de mesure isolé : tension efficace du secteur (étalonnage requis).",
+  "tags": [
+    "tension",
+    "secteur",
+    "AC",
+    "analogique",
+    "énergie"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "zmpt",
+      "name": "ZMPT101B (tension secteur AC)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "zmpt",
+      "name": "ZMPT101B (tension secteur AC)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "zmpt",
+      "name": "ZMPT101B (tension secteur AC)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "zmpt_vrms",
+      "unit": "V",
+      "label": "Tension efficace",
+      "module": "ZMPT101B (tension secteur AC)"
+    }
+  ],
+  "power": {
+    "modules_mA": 5,
+    "modules_peak_mA": 5,
+    "board_mA": 45,
+    "total_mA": 50,
+    "total_peak_mA": 85
+  },
+  "notes": [
+    "DANGER 230 V : le côté secteur doit être câblé et protégé par une personne qualifiée.",
+    "Étalonnez « k » avec un multimètre."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

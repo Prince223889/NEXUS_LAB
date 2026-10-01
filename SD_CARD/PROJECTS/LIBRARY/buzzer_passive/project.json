@@ -1,0 +1,56 @@
+{
+  "id": "buzzer_passive",
+  "title": "Buzzer passif / haut-parleur piézo",
+  "category": "act",
+  "kind": "module",
+  "description": "Joue des notes et des mélodies avec tone() (fréquence variable).",
+  "tags": [
+    "son",
+    "mélodie",
+    "tone",
+    "buzzer"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tone",
+      "name": "Buzzer passif / haut-parleur piézo",
+      "pin": "+",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 20,
+    "modules_peak_mA": 20,
+    "board_mA": 45,
+    "total_mA": 65,
+    "total_peak_mA": 100
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

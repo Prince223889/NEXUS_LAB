@@ -1,0 +1,59 @@
+{
+  "id": "ssr",
+  "title": "Relais statique SSR G3MB-202P",
+  "category": "act",
+  "kind": "module",
+  "description": "Relais statique silencieux 2 A / 240 V AC, commutation au passage à zéro (charges résistives).",
+  "tags": [
+    "relais",
+    "commutation",
+    "230 V",
+    "domotique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "ssr",
+      "name": "Relais statique SSR G3MB-202P",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "ssr",
+      "name": "Relais statique SSR G3MB-202P",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ssr",
+      "name": "Relais statique SSR G3MB-202P",
+      "pin": "IN",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 12,
+    "modules_peak_mA": 12,
+    "board_mA": 45,
+    "total_mA": 57,
+    "total_peak_mA": 92
+  },
+  "notes": [
+    "DANGER : le 230 V doit être câblé par une personne qualifiée, dans un boîtier isolé.",
+    "La plupart des modules 1 relais sont actifs à l'état bas (LED allumée quand IN = 0)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

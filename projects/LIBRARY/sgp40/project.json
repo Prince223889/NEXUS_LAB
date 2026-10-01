@@ -1,0 +1,89 @@
+{
+  "id": "sgp40",
+  "title": "SGP40 (indice COV)",
+  "category": "air",
+  "kind": "module",
+  "description": "Indice COV Sensirion de 0 à 500 (100 = moyenne des dernières 24 h).",
+  "tags": [
+    "COV",
+    "qualité de l'air",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SGP40 Sensor",
+      "ver": "1.1.4",
+      "repo": "adafruit/Adafruit_SGP40",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sgp40_voc",
+      "unit": "",
+      "label": "Indice COV",
+      "module": "SGP40 (indice COV)"
+    },
+    {
+      "key": "sgp40_raw",
+      "unit": "",
+      "label": "Brut",
+      "module": "SGP40 (indice COV)"
+    }
+  ],
+  "power": {
+    "modules_mA": 3,
+    "modules_peak_mA": 3,
+    "board_mA": 45,
+    "total_mA": 48,
+    "total_peak_mA": 83
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,1 @@
+memory.jsonl : historique des questions à l'assistant (pas d'entraînement).

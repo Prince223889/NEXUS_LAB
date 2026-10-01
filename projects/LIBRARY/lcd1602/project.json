@@ -1,0 +1,74 @@
+{
+  "id": "lcd1602",
+  "title": "Écran LCD 16×2 + module I2C",
+  "category": "display",
+  "kind": "module",
+  "description": "L'écran à cristaux liquides le plus répandu, piloté par 2 fils grâce au module PCF8574.",
+  "tags": [
+    "LCD",
+    "HD44780",
+    "écran",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "LiquidCrystal I2C",
+      "ver": "1.1.2",
+      "repo": "johnrickman/LiquidCrystal_I2C",
+      "author": "Frank de Brabander"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 30,
+    "modules_peak_mA": 30,
+    "board_mA": 45,
+    "total_mA": 75,
+    "total_peak_mA": 110
+  },
+  "notes": [
+    "Réglez le contraste avec le potentiomètre bleu au dos du module.",
+    "Le module est alimenté en 5 V ; ses lignes I2C tirées au 5 V sont en pratique tolérées, sinon utilisez un convertisseur de niveau."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

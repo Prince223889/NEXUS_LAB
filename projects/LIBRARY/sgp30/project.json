@@ -1,0 +1,92 @@
+{
+  "id": "sgp30",
+  "title": "SGP30 (eCO₂ / COVT)",
+  "category": "air",
+  "kind": "module",
+  "description": "Capteur multi-pixels Sensirion : COV totaux et CO₂ équivalent, mesure chaque seconde.",
+  "tags": [
+    "COV",
+    "eCO2",
+    "qualité de l'air",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SGP30 Sensor",
+      "ver": "2.0.3",
+      "repo": "adafruit/Adafruit_SGP30",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "sgp30",
+      "name": "SGP30 (eCO₂ / COVT)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sgp30",
+      "name": "SGP30 (eCO₂ / COVT)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sgp30",
+      "name": "SGP30 (eCO₂ / COVT)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "sgp30",
+      "name": "SGP30 (eCO₂ / COVT)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sgp30_eco2",
+      "unit": "ppm",
+      "label": "eCO₂",
+      "module": "SGP30 (eCO₂ / COVT)"
+    },
+    {
+      "key": "sgp30_tvoc",
+      "unit": "ppb",
+      "label": "COVT",
+      "module": "SGP30 (eCO₂ / COVT)"
+    }
+  ],
+  "power": {
+    "modules_mA": 48,
+    "modules_peak_mA": 48,
+    "board_mA": 45,
+    "total_mA": 93,
+    "total_peak_mA": 128
+  },
+  "notes": [
+    "L'algorithme nécessite une mesure par seconde : gardez la période à 1000 ms."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

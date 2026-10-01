@@ -1,0 +1,186 @@
+{
+  "id": "app_capteur_lora",
+  "title": "Capteur distant LoRa (plusieurs km)",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Envoie température, humidité et pression par radio LoRa toutes les 10 s.",
+  "tags": [
+    "LoRa",
+    "longue portée",
+    "météo"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BME280 Library",
+      "ver": "2.3.0",
+      "repo": "adafruit/Adafruit_BME280_Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "LoRa",
+      "ver": "0.8.0",
+      "repo": "sandeepmistry/arduino-LoRa",
+      "author": "Sandeep Mistry"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bme280",
+      "name": "BME280",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "NSS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "RST",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "lora",
+      "name": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)",
+      "pin": "DIO0",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bme280_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BME280"
+    },
+    {
+      "key": "bme280_alt",
+      "unit": "m",
+      "label": "Altitude",
+      "module": "BME280"
+    },
+    {
+      "key": "lora_sent",
+      "unit": "",
+      "label": "Paquets envoyés",
+      "module": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)"
+    },
+    {
+      "key": "lora_rssi",
+      "unit": "dBm",
+      "label": "RSSI dernier reçu",
+      "module": "LoRa SX1276/SX1278 (Ra-01/Ra-02, RFM95)"
+    }
+  ],
+  "power": {
+    "modules_mA": 13,
+    "modules_peak_mA": 121,
+    "board_mA": 45,
+    "total_mA": 58,
+    "total_peak_mA": 201
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

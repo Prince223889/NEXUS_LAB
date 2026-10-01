@@ -1,0 +1,87 @@
+{
+  "id": "pms5003",
+  "title": "PMS5003 / PMS7003 (particules fines)",
+  "category": "air",
+  "kind": "module",
+  "description": "Compteur laser de particules Plantower : PM1.0, PM2.5 et PM10 en µg/m³.",
+  "tags": [
+    "PM2.5",
+    "PM10",
+    "particules",
+    "pollution",
+    "UART"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "TX du capteur",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "RX du capteur",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pms_pm1",
+      "unit": "µg/m³",
+      "label": "PM1.0",
+      "module": "PMS5003 / PMS7003 (particules fines)"
+    },
+    {
+      "key": "pms_pm25",
+      "unit": "µg/m³",
+      "label": "PM2.5",
+      "module": "PMS5003 / PMS7003 (particules fines)"
+    },
+    {
+      "key": "pms_pm10",
+      "unit": "µg/m³",
+      "label": "PM10",
+      "module": "PMS5003 / PMS7003 (particules fines)"
+    }
+  ],
+  "power": {
+    "modules_mA": 100,
+    "modules_peak_mA": 100,
+    "board_mA": 45,
+    "total_mA": 145,
+    "total_peak_mA": 180
+  },
+  "notes": [
+    "Seuil OMS PM2.5 : 15 µg/m³ en moyenne journalière.",
+    "Le ventilateur demande 5 V ; la liaison série est en 3,3 V."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

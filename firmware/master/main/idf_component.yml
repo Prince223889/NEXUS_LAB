@@ -1,0 +1,14 @@
+## Dépendances gérées par l'IDF Component Manager (téléchargées automatiquement au premier build).
+## Versions validées avec ESP-IDF v6.1 ; "~" autorise uniquement les correctifs (x.y.Z).
+version: "6.1.0"
+description: "ESP32 LAB MASTER - ESP-IDF 6.1 / ESP32-S3"
+dependencies:
+  idf: ">=6.0"
+  espressif/cjson: "~1.7.19"
+  espressif/mdns: "~1.13.1"
+  espressif/led_strip: "~3.0.3"
+  espressif/usb: "~1.5.0"
+  espressif/usb_host_cdc_acm: "~2.4.1"
+  espressif/usb_host_ch34x_vcp: "~2.2.1"
+  espressif/usb_host_cp210x_vcp: "~2.2.0"
+  espressif/usb_host_ftdi_vcp: "~2.1.1"

@@ -1,0 +1,83 @@
+{
+  "id": "app_variateur_potentiometre",
+  "title": "Variateur de LED au potentiomètre",
+  "category": "app",
+  "kind": "recipe",
+  "description": "La luminosité de la LED suit le potentiomètre (PWM avec correction de perception).",
+  "tags": [
+    "PWM",
+    "LED",
+    "débutant"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pot",
+      "name": "Potentiomètre 10 kΩ",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pot",
+      "name": "Potentiomètre 10 kΩ",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pot",
+      "name": "Potentiomètre 10 kΩ",
+      "pin": "curseur (broche du milieu)",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "extrémités sur 3V3 et GND"
+    },
+    {
+      "mod": "dim",
+      "name": "LED à intensité variable (PWM)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "dim",
+      "name": "LED à intensité variable (PWM)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "dim",
+      "name": "LED à intensité variable (PWM)",
+      "pin": "anode via 220 Ω",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pot_pos",
+      "unit": "%",
+      "label": "Position",
+      "module": "Potentiomètre 10 kΩ"
+    }
+  ],
+  "power": {
+    "modules_mA": 11,
+    "modules_peak_mA": 11,
+    "board_mA": 45,
+    "total_mA": 56,
+    "total_peak_mA": 91
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

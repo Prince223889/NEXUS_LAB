@@ -1,0 +1,76 @@
+{
+  "id": "mcp4725",
+  "title": "MCP4725 (CNA 12 bits I2C)",
+  "category": "io",
+  "kind": "module",
+  "description": "Sortie de tension analogique 12 bits (0-VCC) avec mémoire EEPROM de la valeur au démarrage.",
+  "tags": [
+    "DAC",
+    "tension",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit MCP4725",
+      "ver": "2.0.2",
+      "repo": "adafruit/Adafruit_MCP4725",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "mcp4725",
+      "name": "MCP4725 (CNA 12 bits I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "mcp4725",
+      "name": "MCP4725 (CNA 12 bits I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mcp4725",
+      "name": "MCP4725 (CNA 12 bits I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "mcp4725",
+      "name": "MCP4725 (CNA 12 bits I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

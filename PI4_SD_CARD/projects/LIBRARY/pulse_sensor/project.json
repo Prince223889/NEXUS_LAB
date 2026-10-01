@@ -1,0 +1,72 @@
+{
+  "id": "pulse_sensor",
+  "title": "Capteur de pouls (Pulse Sensor)",
+  "category": "bio",
+  "kind": "module",
+  "description": "Capteur optique au bout du doigt : détection des battements et fréquence cardiaque (BPM).",
+  "tags": [
+    "pouls",
+    "cœur",
+    "santé",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "pulse",
+      "name": "Capteur de pouls (Pulse Sensor)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "pulse",
+      "name": "Capteur de pouls (Pulse Sensor)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pulse",
+      "name": "Capteur de pouls (Pulse Sensor)",
+      "pin": "S (violet)",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "pulse_signal",
+      "unit": "mV",
+      "label": "Signal",
+      "module": "Capteur de pouls (Pulse Sensor)"
+    },
+    {
+      "key": "pulse_bpm",
+      "unit": "BPM",
+      "label": "Fréquence cardiaque",
+      "module": "Capteur de pouls (Pulse Sensor)"
+    }
+  ],
+  "power": {
+    "modules_mA": 4,
+    "modules_peak_mA": 4,
+    "board_mA": 45,
+    "total_mA": 49,
+    "total_peak_mA": 84
+  },
+  "notes": [
+    "Réglez le seuil `th` selon l'amplitude de votre signal (traceur série).",
+    "Usage pédagogique uniquement, pas de diagnostic médical."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

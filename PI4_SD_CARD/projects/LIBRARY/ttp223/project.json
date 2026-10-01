@@ -1,0 +1,68 @@
+{
+  "id": "ttp223",
+  "title": "Bouton tactile capacitif TTP223",
+  "category": "input",
+  "kind": "module",
+  "description": "Touche sensitive : fonctionne à travers 2-3 mm de plastique ou de verre.",
+  "tags": [
+    "tactile",
+    "bouton",
+    "capacitif"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "touch",
+      "name": "Bouton tactile capacitif TTP223",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "touch",
+      "name": "Bouton tactile capacitif TTP223",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "touch",
+      "name": "Bouton tactile capacitif TTP223",
+      "pin": "SIG",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "touch_touched",
+      "unit": "",
+      "label": "Touché (0/1)",
+      "module": "Bouton tactile capacitif TTP223"
+    },
+    {
+      "key": "touch_count",
+      "unit": "",
+      "label": "Touchers",
+      "module": "Bouton tactile capacitif TTP223"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

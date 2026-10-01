@@ -1,0 +1,69 @@
+{
+  "id": "battery_monitor",
+  "title": "Niveau de batterie Li-ion (pont 100k/100k)",
+  "category": "power",
+  "kind": "module",
+  "description": "Tension et pourcentage estimé d'une cellule 18650 (3,0-4,2 V) via un pont diviseur par 2.",
+  "tags": [
+    "batterie",
+    "Li-ion",
+    "autonomie",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "batt",
+      "name": "Niveau de batterie Li-ion (pont 100k/100k)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "batt",
+      "name": "Niveau de batterie Li-ion (pont 100k/100k)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "batt",
+      "name": "Niveau de batterie Li-ion (pont 100k/100k)",
+      "pin": "point milieu",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "100 kΩ vers la batterie +, 100 kΩ vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "batt_volt",
+      "unit": "V",
+      "label": "Tension",
+      "module": "Niveau de batterie Li-ion (pont 100k/100k)"
+    },
+    {
+      "key": "batt_pct",
+      "unit": "%",
+      "label": "Charge estimée",
+      "module": "Niveau de batterie Li-ion (pont 100k/100k)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

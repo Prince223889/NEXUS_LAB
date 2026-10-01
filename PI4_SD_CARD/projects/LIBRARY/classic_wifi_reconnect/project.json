@@ -1,0 +1,28 @@
+{
+  "id": "classic_wifi_reconnect",
+  "title": "Connexion Wi-Fi robuste",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Événements Wi-Fi, reconnexion automatique avec recul progressif, suivi du RSSI.",
+  "tags": [
+    "Wi-Fi",
+    "fiabilité"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

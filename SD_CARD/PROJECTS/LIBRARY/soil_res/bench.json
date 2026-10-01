@@ -1,0 +1,135 @@
+{
+ "v": 1,
+ "title": "Humidité du sol résistive YL-69 / FC-28 — mesure et affichage série",
+ "board": "esp32",
+ "device": "humidite_du_sol_resi",
+ "emulable": true,
+ "needsDac": true,
+ "reasons": [],
+ "skipped": [],
+ "warnings": [],
+ "settleMs": 10700,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "analog",
+   "emu": 25,
+   "dut": 34,
+   "module": "Humidité du sol résistive YL-69 / FC-28",
+   "label": "soilr",
+   "inst": 0,
+   "out": "moist",
+   "feed": "soilr_moist"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO34",
+   "emu": "GPIO25",
+   "note": "Humidité du sol résistive YL-69 / FC-28 → sortie DAC de l'émulateur (retirez le capteur réel)"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 81.25
+    }
+   ],
+   "wait": 21400,
+   "expect": [
+    {
+     "feed": "soilr_moist",
+     "v": 81.25,
+     "tol": 4
+    }
+   ]
+  },
+  {
+   "label": "Mesure soilr.moist = 38.5",
+   "set": [
+    {
+     "n": 0,
+     "raw": 2430
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 38.5
+    }
+   ],
+   "wait": 10700,
+   "expect": [
+    {
+     "feed": "soilr_moist",
+     "v": 38.5,
+     "tol": 4
+    }
+   ]
+  },
+  {
+   "label": "Mesure soilr.moist = 81.25",
+   "set": [
+    {
+     "n": 0,
+     "raw": 1575
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 81.25
+    }
+   ],
+   "wait": 10700,
+   "expect": [
+    {
+     "feed": "soilr_moist",
+     "v": 81.25,
+     "tol": 4
+    }
+   ]
+  },
+  {
+   "label": "Mesure soilr.moist = 124",
+   "set": [
+    {
+     "n": 0,
+     "raw": 720
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 124
+    }
+   ],
+   "wait": 10700,
+   "expect": [
+    {
+     "feed": "soilr_moist",
+     "v": 124,
+     "tol": 4
+    }
+   ]
+  }
+ ],
+ "duration_ms": 53500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__soil_res__bench.ino.bin"
+}

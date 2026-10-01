@@ -1,0 +1,141 @@
+{
+  "id": "app_arrosage_auto",
+  "title": "Arrosage automatique de plante",
+  "category": "app",
+  "kind": "recipe",
+  "description": "La pompe démarre sous 30 % d'humidité du sol et s'arrête à 40 % (sécurité 20 s max).",
+  "tags": [
+    "arrosage",
+    "pompe",
+    "sol"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "soil",
+      "name": "Humidité du sol capacitive v1.2",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "soil",
+      "name": "Humidité du sol capacitive v1.2",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "soil",
+      "name": "Humidité du sol capacitive v1.2",
+      "pin": "AOUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    },
+    {
+      "mod": "pump",
+      "name": "Mini-pompe à eau 5 V (via MOSFET)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pump",
+      "name": "Mini-pompe à eau 5 V (via MOSFET)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pump",
+      "name": "Mini-pompe à eau 5 V (via MOSFET)",
+      "pin": "grille MOSFET / IN relais",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "soil_moist",
+      "unit": "%",
+      "label": "Humidité du sol",
+      "module": "Humidité du sol capacitive v1.2"
+    },
+    {
+      "key": "soil_mv",
+      "unit": "mV",
+      "label": "Tension",
+      "module": "Humidité du sol capacitive v1.2"
+    }
+  ],
+  "power": {
+    "modules_mA": 221,
+    "modules_peak_mA": 421,
+    "board_mA": 110,
+    "total_mA": 331,
+    "total_peak_mA": 681
+  },
+  "notes": [
+    "Consommation de pointe estimée 681 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA).",
+    "Alimentez Mini-pompe à eau 5 V (via MOSFET) directement en 5 V externe et reliez les masses (GND commun)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

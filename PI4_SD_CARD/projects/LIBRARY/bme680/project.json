@@ -1,0 +1,112 @@
+{
+  "id": "bme680",
+  "title": "BME680",
+  "category": "air",
+  "kind": "module",
+  "description": "Capteur 4-en-1 : température, humidité, pression et résistance de gaz (qualité de l'air / COV).",
+  "tags": [
+    "température",
+    "humidité",
+    "pression",
+    "gaz",
+    "COV",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BME680 Library",
+      "ver": "2.0.6",
+      "repo": "adafruit/Adafruit_BME680",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bme680",
+      "name": "BME680",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bme680",
+      "name": "BME680",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bme680",
+      "name": "BME680",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bme680",
+      "name": "BME680",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bme680_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BME680"
+    },
+    {
+      "key": "bme680_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "BME680"
+    },
+    {
+      "key": "bme680_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BME680"
+    },
+    {
+      "key": "bme680_gas",
+      "unit": "kΩ",
+      "label": "Résistance gaz",
+      "module": "BME680"
+    }
+  ],
+  "power": {
+    "modules_mA": 12,
+    "modules_peak_mA": 12,
+    "board_mA": 45,
+    "total_mA": 57,
+    "total_peak_mA": 92
+  },
+  "notes": [
+    "La résistance de gaz augmente quand l'air est plus propre ; laissez chauffer 30 min pour une mesure stable."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

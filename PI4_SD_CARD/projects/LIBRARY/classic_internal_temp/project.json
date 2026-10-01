@@ -1,0 +1,28 @@
+{
+  "id": "classic_internal_temp",
+  "title": "Température interne de la puce",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Surveille l'échauffement du microcontrôleur.",
+  "tags": [
+    "température",
+    "diagnostic"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

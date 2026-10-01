@@ -1,0 +1,287 @@
+{
+  "id": "app_qualite_air_complet",
+  "title": "Station qualité de l'air complète",
+  "category": "app",
+  "kind": "recipe",
+  "description": "CO₂, COV, particules, température et humidité, enregistrés sur microSD et affichés sur OLED.",
+  "tags": [
+    "COV",
+    "CO2",
+    "particules",
+    "enregistreur"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SGP40 Sensor",
+      "ver": "1.1.4",
+      "repo": "adafruit/Adafruit_SGP40",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "scd40",
+      "name": "SCD40 / SCD41 (CO₂ photoacoustique)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "sgp40",
+      "name": "SGP40 (indice COV)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "TX du capteur",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "pms",
+      "name": "PMS5003 / PMS7003 (particules fines)",
+      "pin": "RX du capteur",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "scd40_co2",
+      "unit": "ppm",
+      "label": "CO₂",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "scd40_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "scd40_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "SCD40 / SCD41 (CO₂ photoacoustique)"
+    },
+    {
+      "key": "sgp40_voc",
+      "unit": "",
+      "label": "Indice COV",
+      "module": "SGP40 (indice COV)"
+    },
+    {
+      "key": "sgp40_raw",
+      "unit": "",
+      "label": "Brut",
+      "module": "SGP40 (indice COV)"
+    },
+    {
+      "key": "pms_pm1",
+      "unit": "µg/m³",
+      "label": "PM1.0",
+      "module": "PMS5003 / PMS7003 (particules fines)"
+    },
+    {
+      "key": "pms_pm25",
+      "unit": "µg/m³",
+      "label": "PM2.5",
+      "module": "PMS5003 / PMS7003 (particules fines)"
+    },
+    {
+      "key": "pms_pm10",
+      "unit": "µg/m³",
+      "label": "PM10",
+      "module": "PMS5003 / PMS7003 (particules fines)"
+    },
+    {
+      "key": "sd_count",
+      "unit": "",
+      "label": "Lignes écrites",
+      "module": "Module carte microSD (SPI)"
+    },
+    {
+      "key": "sd_used",
+      "unit": "Ko",
+      "label": "Espace utilisé",
+      "module": "Module carte microSD (SPI)"
+    }
+  ],
+  "power": {
+    "modules_mA": 188,
+    "modules_peak_mA": 428,
+    "board_mA": 110,
+    "total_mA": 298,
+    "total_peak_mA": 688
+  },
+  "notes": [
+    "Consommation de pointe estimée 688 mA : prévoyez une alimentation externe 5 V (le port USB d'un PC fournit ~500 mA)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

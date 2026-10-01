@@ -1,0 +1,97 @@
+{
+  "id": "sd_card",
+  "title": "Module carte microSD (SPI)",
+  "category": "id",
+  "kind": "module",
+  "description": "Enregistreur de données : écrit toutes les mesures du projet dans un fichier CSV (Excel/LibreOffice).",
+  "tags": [
+    "stockage",
+    "SD",
+    "journal",
+    "SPI",
+    "enregistreur"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "sd",
+      "name": "Module carte microSD (SPI)",
+      "pin": "CS",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "sd_count",
+      "unit": "",
+      "label": "Lignes écrites",
+      "module": "Module carte microSD (SPI)"
+    },
+    {
+      "key": "sd_used",
+      "unit": "Ko",
+      "label": "Espace utilisé",
+      "module": "Module carte microSD (SPI)"
+    }
+  ],
+  "power": {
+    "modules_mA": 50,
+    "modules_peak_mA": 100,
+    "board_mA": 45,
+    "total_mA": 95,
+    "total_peak_mA": 180
+  },
+  "notes": [
+    "Carte formatée en FAT32.",
+    "Beaucoup de modules ont un régulateur 5 V → 3,3 V : alimentez-les en 5 V."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

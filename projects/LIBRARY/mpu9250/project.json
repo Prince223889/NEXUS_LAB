@@ -1,0 +1,108 @@
+{
+  "id": "mpu9250",
+  "title": "MPU-9250 / MPU-6500",
+  "category": "motion",
+  "kind": "module",
+  "description": "IMU InvenSense lue directement par registres (accéléromètre ±4 g, gyroscope ±500 °/s).",
+  "tags": [
+    "IMU",
+    "accéléromètre",
+    "gyroscope",
+    "I2C",
+    "sans bibliothèque"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "mpu9250",
+      "name": "MPU-9250 / MPU-6500",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "mpu9250",
+      "name": "MPU-9250 / MPU-6500",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mpu9250",
+      "name": "MPU-9250 / MPU-6500",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "mpu9250",
+      "name": "MPU-9250 / MPU-6500",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mpu9250_ax",
+      "unit": "m/s²",
+      "label": "Accél. X",
+      "module": "MPU-9250 / MPU-6500"
+    },
+    {
+      "key": "mpu9250_ay",
+      "unit": "m/s²",
+      "label": "Accél. Y",
+      "module": "MPU-9250 / MPU-6500"
+    },
+    {
+      "key": "mpu9250_az",
+      "unit": "m/s²",
+      "label": "Accél. Z",
+      "module": "MPU-9250 / MPU-6500"
+    },
+    {
+      "key": "mpu9250_gx",
+      "unit": "°/s",
+      "label": "Gyro X",
+      "module": "MPU-9250 / MPU-6500"
+    },
+    {
+      "key": "mpu9250_gy",
+      "unit": "°/s",
+      "label": "Gyro Y",
+      "module": "MPU-9250 / MPU-6500"
+    },
+    {
+      "key": "mpu9250_gz",
+      "unit": "°/s",
+      "label": "Gyro Z",
+      "module": "MPU-9250 / MPU-6500"
+    },
+    {
+      "key": "mpu9250_temp",
+      "unit": "°C",
+      "label": "Température puce",
+      "module": "MPU-9250 / MPU-6500"
+    }
+  ],
+  "power": {
+    "modules_mA": 4,
+    "modules_peak_mA": 4,
+    "board_mA": 45,
+    "total_mA": 49,
+    "total_peak_mA": 84
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

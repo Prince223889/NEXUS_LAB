@@ -1,0 +1,73 @@
+{
+  "id": "senseair_s8",
+  "title": "SenseAir S8 (CO₂ NDIR)",
+  "category": "air",
+  "kind": "module",
+  "description": "Capteur CO₂ industriel 400-2000 ppm (±40 ppm), protocole Modbus RTU.",
+  "tags": [
+    "CO2",
+    "NDIR",
+    "Modbus",
+    "UART"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "s8",
+      "name": "SenseAir S8 (CO₂ NDIR)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "s8",
+      "name": "SenseAir S8 (CO₂ NDIR)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "s8",
+      "name": "SenseAir S8 (CO₂ NDIR)",
+      "pin": "UART_TxD",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "s8",
+      "name": "SenseAir S8 (CO₂ NDIR)",
+      "pin": "UART_RxD",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "s8_co2",
+      "unit": "ppm",
+      "label": "CO₂",
+      "module": "SenseAir S8 (CO₂ NDIR)"
+    }
+  ],
+  "power": {
+    "modules_mA": 30,
+    "modules_peak_mA": 300,
+    "board_mA": 45,
+    "total_mA": 75,
+    "total_peak_mA": 380
+  },
+  "notes": [
+    "Alimentez SenseAir S8 (CO₂ NDIR) directement en 5 V externe et reliez les masses (GND commun)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

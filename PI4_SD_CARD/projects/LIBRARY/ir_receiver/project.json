@@ -1,0 +1,69 @@
+{
+  "id": "ir_receiver",
+  "title": "Récepteur infrarouge VS1838B / TSOP38238",
+  "category": "light",
+  "kind": "module",
+  "description": "Décode les télécommandes TV (NEC, Sony, RC5, Samsung…) : protocole, adresse et commande.",
+  "tags": [
+    "infrarouge",
+    "télécommande",
+    "IR"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "IRremote",
+      "ver": "4.7.1",
+      "repo": "Arduino-IRremote/Arduino-IRremote",
+      "author": "Armin Joachimsmeyer"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "irrx",
+      "name": "Récepteur infrarouge VS1838B / TSOP38238",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "irrx",
+      "name": "Récepteur infrarouge VS1838B / TSOP38238",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "irrx",
+      "name": "Récepteur infrarouge VS1838B / TSOP38238",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "irrx_cmd",
+      "unit": "",
+      "label": "Dernière commande",
+      "module": "Récepteur infrarouge VS1838B / TSOP38238"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

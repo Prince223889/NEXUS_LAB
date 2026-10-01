@@ -1,0 +1,72 @@
+{
+  "id": "rgb_led",
+  "title": "LED RVB (cathode commune)",
+  "category": "act",
+  "kind": "module",
+  "description": "LED tricolore pilotée en PWM : toutes les couleurs par mélange rouge/vert/bleu.",
+  "tags": [
+    "LED",
+    "RVB",
+    "couleur",
+    "PWM"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "rgb",
+      "name": "LED RVB (cathode commune)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "rgb",
+      "name": "LED RVB (cathode commune)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rgb",
+      "name": "LED RVB (cathode commune)",
+      "pin": "rouge via 220 Ω",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "rgb",
+      "name": "LED RVB (cathode commune)",
+      "pin": "vert via 220 Ω",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    },
+    {
+      "mod": "rgb",
+      "name": "LED RVB (cathode commune)",
+      "pin": "bleu via 220 Ω",
+      "to": "GPIO14",
+      "gpio": 14,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 40,
+    "modules_peak_mA": 40,
+    "board_mA": 45,
+    "total_mA": 85,
+    "total_peak_mA": 120
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

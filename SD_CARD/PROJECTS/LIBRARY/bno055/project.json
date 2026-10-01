@@ -1,0 +1,105 @@
+{
+  "id": "bno055",
+  "title": "BNO055 (orientation absolue 9 axes)",
+  "category": "motion",
+  "kind": "module",
+  "description": "IMU Bosch avec fusion de capteurs intégrée : cap, roulis et tangage directement en degrés.",
+  "tags": [
+    "IMU",
+    "orientation",
+    "fusion",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BNO055",
+      "ver": "1.6.4",
+      "repo": "adafruit/Adafruit_BNO055",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bno055",
+      "name": "BNO055 (orientation absolue 9 axes)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bno055",
+      "name": "BNO055 (orientation absolue 9 axes)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bno055",
+      "name": "BNO055 (orientation absolue 9 axes)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bno055",
+      "name": "BNO055 (orientation absolue 9 axes)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bno055_heading",
+      "unit": "°",
+      "label": "Cap",
+      "module": "BNO055 (orientation absolue 9 axes)"
+    },
+    {
+      "key": "bno055_roll",
+      "unit": "°",
+      "label": "Roulis",
+      "module": "BNO055 (orientation absolue 9 axes)"
+    },
+    {
+      "key": "bno055_pitch",
+      "unit": "°",
+      "label": "Tangage",
+      "module": "BNO055 (orientation absolue 9 axes)"
+    },
+    {
+      "key": "bno055_calib",
+      "unit": "",
+      "label": "Étalonnage (0-3)",
+      "module": "BNO055 (orientation absolue 9 axes)"
+    }
+  ],
+  "power": {
+    "modules_mA": 12,
+    "modules_peak_mA": 12,
+    "board_mA": 45,
+    "total_mA": 57,
+    "total_peak_mA": 92
+  },
+  "notes": [
+    "Bougez le capteur en 8 pour étalonner le magnétomètre (calib = 3).",
+    "Le BNO055 étire l'horloge I2C : évitez les bus à 400 kHz."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

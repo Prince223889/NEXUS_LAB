@@ -1,0 +1,121 @@
+{
+  "id": "app_niveau_cuve",
+  "title": "Jauge de cuve d'eau de pluie",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Capteur ultrason étanche au-dessus de l'eau, distance affichée sur OLED et sur le web.",
+  "tags": [
+    "cuve",
+    "niveau",
+    "ultrason",
+    "web"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit SSD1306",
+      "ver": "2.5.17",
+      "repo": "adafruit/Adafruit_SSD1306",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit GFX Library",
+      "ver": "1.12.6",
+      "repo": "adafruit/Adafruit-GFX-Library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "jsn_sr04t",
+      "name": "JSN-SR04T (ultrasons étanche)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "jsn_sr04t",
+      "name": "JSN-SR04T (ultrasons étanche)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "jsn_sr04t",
+      "name": "JSN-SR04T (ultrasons étanche)",
+      "pin": "TRIG",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "jsn_sr04t",
+      "name": "JSN-SR04T (ultrasons étanche)",
+      "pin": "ECHO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "pont diviseur 1 kΩ / 2 kΩ : ECHO sort du 5 V"
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "oled",
+      "name": "Écran OLED 0,96\" SSD1306 128×64 (I2C)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "jsn_sr04t_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "JSN-SR04T (ultrasons étanche)"
+    }
+  ],
+  "power": {
+    "modules_mA": 35,
+    "modules_peak_mA": 35,
+    "board_mA": 110,
+    "total_mA": 145,
+    "total_peak_mA": 295
+  },
+  "notes": [
+    "JSN-SR04T (ultrasons étanche) : la broche ECHO délivre 5 V : utilisez un pont diviseur (1 kΩ / 2 kΩ) ou un convertisseur de niveau."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

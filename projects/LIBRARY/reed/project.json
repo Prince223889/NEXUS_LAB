@@ -1,0 +1,68 @@
+{
+  "id": "reed",
+  "title": "Contact reed (ILS)",
+  "category": "motion",
+  "kind": "module",
+  "description": "Interrupteur à lame souple : ouverture de porte/fenêtre, compteur à aimant.",
+  "tags": [
+    "magnétique",
+    "porte",
+    "alarme"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "reed",
+      "name": "Contact reed (ILS)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "reed",
+      "name": "Contact reed (ILS)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "reed",
+      "name": "Contact reed (ILS)",
+      "pin": "signal",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "l'autre borne vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "reed_state",
+      "unit": "",
+      "label": "État (0/1)",
+      "module": "Contact reed (ILS)"
+    },
+    {
+      "key": "reed_count",
+      "unit": "",
+      "label": "Déclenchements",
+      "module": "Contact reed (ILS)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

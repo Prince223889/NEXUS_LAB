@@ -1,0 +1,112 @@
+{
+  "id": "rc522",
+  "title": "Lecteur RFID RC522 (13,56 MHz)",
+  "category": "id",
+  "kind": "module",
+  "description": "Lit l'identifiant (UID) des badges et cartes MIFARE : contrôle d'accès, pointeuse.",
+  "tags": [
+    "RFID",
+    "badge",
+    "MIFARE",
+    "SPI",
+    "contrôle d'accès"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "MFRC522",
+      "ver": "1.4.12",
+      "repo": "miguelbalboa/rfid",
+      "author": "GithubCommunity"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "SCK",
+      "to": "GPIO18",
+      "gpio": 18,
+      "note": ""
+    },
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "MISO",
+      "to": "GPIO19",
+      "gpio": 19,
+      "note": ""
+    },
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "MOSI",
+      "to": "GPIO23",
+      "gpio": 23,
+      "note": ""
+    },
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "SDA (SS)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "rfid",
+      "name": "Lecteur RFID RC522 (13,56 MHz)",
+      "pin": "RST",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "rfid_granted",
+      "unit": "",
+      "label": "Dernier accès (0/1)",
+      "module": "Lecteur RFID RC522 (13,56 MHz)"
+    },
+    {
+      "key": "rfid_reads",
+      "unit": "",
+      "label": "Lectures",
+      "module": "Lecteur RFID RC522 (13,56 MHz)"
+    }
+  ],
+  "power": {
+    "modules_mA": 26,
+    "modules_peak_mA": 26,
+    "board_mA": 45,
+    "total_mA": 71,
+    "total_peak_mA": 106
+  },
+  "notes": [
+    "Le RC522 fonctionne en 3,3 V uniquement.",
+    "Remplacez « allowed » par l'UID affiché de votre badge."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

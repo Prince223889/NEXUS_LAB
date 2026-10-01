@@ -1,0 +1,93 @@
+{
+  "id": "mq3",
+  "title": "MQ-3 (alcool)",
+  "category": "gas",
+  "kind": "module",
+  "description": "Détecteur de vapeur d'alcool pour éthylotest pédagogique (0,05-10 mg/L).",
+  "tags": [
+    "gaz",
+    "alcool",
+    "MQ",
+    "analogique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "mq3",
+      "name": "MQ-3 (alcool)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "mq3",
+      "name": "MQ-3 (alcool)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "mq3",
+      "name": "MQ-3 (alcool)",
+      "pin": "AO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur 10 kΩ / 20 kΩ : la sortie monte à 5 V"
+    },
+    {
+      "mod": "mq3",
+      "name": "MQ-3 (alcool)",
+      "pin": "DO (seuil)",
+      "to": "GPIO35",
+      "gpio": 35,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "mq3_ppm",
+      "unit": "mg/L",
+      "label": "Alcool (estimation)",
+      "module": "MQ-3 (alcool)"
+    },
+    {
+      "key": "mq3_ratio",
+      "unit": "",
+      "label": "Rs/R0",
+      "module": "MQ-3 (alcool)"
+    },
+    {
+      "key": "mq3_rsk",
+      "unit": "kΩ",
+      "label": "Rs",
+      "module": "MQ-3 (alcool)"
+    },
+    {
+      "key": "mq3_alarm",
+      "unit": "",
+      "label": "Seuil DO",
+      "module": "MQ-3 (alcool)"
+    }
+  ],
+  "power": {
+    "modules_mA": 160,
+    "modules_peak_mA": 160,
+    "board_mA": 45,
+    "total_mA": 205,
+    "total_peak_mA": 240
+  },
+  "notes": [
+    "Valeurs indicatives : un étalonnage avec un gaz de référence est nécessaire pour des mesures fiables.",
+    "La résistance chauffante consomme ~150 mA : alimentation 5 V externe conseillée pour plusieurs capteurs.",
+    "Ne jamais utiliser comme détecteur de sécurité certifié."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

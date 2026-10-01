@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 538" width="980" height="538" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<rect width="980" height="538" fill="#ffffff"/>
+<text x="490" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111">app_robot_evitement — Robot éviteur d&apos;obstacles</text>
+<text x="151" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#111">ESP32 DevKit V1 (WROOM-32)</text>
+<rect x="36" y="96" width="230" height="254" rx="8" fill="#0d6ea8" stroke="#0a3d5c" stroke-width="2"/>
+<text x="248" y="127" text-anchor="end" font-size="14" font-weight="700" fill="#fff">5V</text>
+<text x="248" y="159" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GND</text>
+<text x="248" y="191" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO4</text>
+<text x="248" y="223" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO13</text>
+<text x="248" y="255" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO14</text>
+<text x="248" y="287" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO16</text>
+<text x="248" y="319" text-anchor="end" font-size="14" font-weight="700" fill="#fff">GPIO34</text>
+<path d="M266 122 H306 V126 H600" fill="none" stroke="#fb8c00" stroke-width="3" stroke-linejoin="round"><title>5V (VIN) → HC-SR04 (ultrasons) VCC</title></path>
+<path d="M266 154 H326 V158 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → HC-SR04 (ultrasons) GND</title></path>
+<path d="M266 218 H346 V190 H600" fill="none" stroke="#43a047" stroke-width="3" stroke-linejoin="round"><title>GPIO13 → HC-SR04 (ultrasons) TRIG</title></path>
+<path d="M266 314 H366 V222 H600" fill="none" stroke="#00897b" stroke-width="3" stroke-linejoin="round"><title>GPIO34 → HC-SR04 (ultrasons) ECHO — pont diviseur 1 kΩ / 2 kΩ : ECHO sort du 5 V</title></path>
+<path d="M266 122 H386 V302 H600" fill="none" stroke="#fb8c00" stroke-width="3" stroke-linejoin="round"><title>5V (VIN) → Pont en H L298N (moteur CC) VCC</title></path>
+<path d="M266 154 H406 V334 H600" fill="none" stroke="#212121" stroke-width="3" stroke-linejoin="round"><title>GND → Pont en H L298N (moteur CC) GND</title></path>
+<path d="M266 186 H426 V366 H600" fill="none" stroke="#1e88e5" stroke-width="3" stroke-linejoin="round"><title>GPIO4 → Pont en H L298N (moteur CC) ENA (retirer le cavalier)</title></path>
+<path d="M266 250 H446 V398 H600" fill="none" stroke="#8e24aa" stroke-width="3" stroke-linejoin="round"><title>GPIO14 → Pont en H L298N (moteur CC) IN1</title></path>
+<path d="M266 282 H466 V430 H600" fill="none" stroke="#546e7a" stroke-width="3" stroke-linejoin="round"><title>GPIO16 → Pont en H L298N (moteur CC) IN2</title></path>
+<circle cx="266" cy="122" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="154" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="186" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="218" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="250" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="282" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<circle cx="266" cy="314" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="772" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="#111">HC-SR04 (ultrasons) (hcsr04)</text>
+<rect x="600" y="96" width="344" height="150" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="120" width="12" height="12" fill="#fb8c00"/>
+<text x="616" y="131" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="152" width="12" height="12" fill="#212121"/>
+<text x="616" y="163" font-size="13" fill="#111">GND</text>
+<rect x="594" y="184" width="12" height="12" fill="#43a047"/>
+<text x="616" y="195" font-size="13" fill="#111">TRIG</text>
+<rect x="594" y="216" width="12" height="12" fill="#00897b"/>
+<text x="616" y="227" font-size="13" fill="#111">ECHO</text>
+<text x="934" y="227" text-anchor="end" font-size="10.5" fill="#666">pont diviseur 1 kΩ / 2 kΩ : ECHO …</text>
+<text x="772" y="266" text-anchor="middle" font-size="13" font-weight="700" fill="#111">Pont en H L298N (moteur CC) (l298n)</text>
+<rect x="600" y="272" width="344" height="182" rx="6" fill="#f3f0e6" stroke="#111" stroke-width="1.5"/>
+<rect x="594" y="296" width="12" height="12" fill="#fb8c00"/>
+<text x="616" y="307" font-size="13" fill="#111">VCC</text>
+<rect x="594" y="328" width="12" height="12" fill="#212121"/>
+<text x="616" y="339" font-size="13" fill="#111">GND</text>
+<rect x="594" y="360" width="12" height="12" fill="#1e88e5"/>
+<text x="616" y="371" font-size="13" fill="#111">ENA (retirer le cavalier)</text>
+<rect x="594" y="392" width="12" height="12" fill="#8e24aa"/>
+<text x="616" y="403" font-size="13" fill="#111">IN1</text>
+<rect x="594" y="424" width="12" height="12" fill="#546e7a"/>
+<text x="616" y="435" font-size="13" fill="#111">IN2</text>
+<text x="36" y="516" font-size="12" fill="#777">ESP32 LAB 6.1.0 — fils : rouge = 3V3, orange = 5V, noir = GND, couleurs = signaux. Toujours câbler carte débranchée.</text>
+</svg>

@@ -1,0 +1,68 @@
+{
+  "id": "hc05",
+  "title": "Bluetooth HC-05 / HC-06 (série)",
+  "category": "comm",
+  "kind": "module",
+  "description": "Pont série Bluetooth classique : dialogue avec une application Android « terminal Bluetooth ».",
+  "tags": [
+    "Bluetooth",
+    "série",
+    "smartphone",
+    "UART"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "bt",
+      "name": "Bluetooth HC-05 / HC-06 (série)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "bt",
+      "name": "Bluetooth HC-05 / HC-06 (série)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bt",
+      "name": "Bluetooth HC-05 / HC-06 (série)",
+      "pin": "TXD du HC-05",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "bt",
+      "name": "Bluetooth HC-05 / HC-06 (série)",
+      "pin": "RXD du HC-05",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 30,
+    "modules_peak_mA": 30,
+    "board_mA": 45,
+    "total_mA": 75,
+    "total_peak_mA": 110
+  },
+  "notes": [
+    "Le HC-05 accepte 3,3 V sur RXD ; son TXD (3,3 V) est compatible.",
+    "Code d'appairage par défaut : 1234.",
+    "L'ESP32 classique a aussi le Bluetooth intégré (bibliothèque BluetoothSerial)."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

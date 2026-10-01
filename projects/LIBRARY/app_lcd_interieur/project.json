@@ -1,0 +1,129 @@
+{
+  "id": "app_lcd_interieur",
+  "title": "Afficheur de confort intérieur (LCD)",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Température et humidité sur un écran LCD 16×2 : le premier projet « utile » à offrir.",
+  "tags": [
+    "LCD",
+    "confort"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit AHTX0",
+      "ver": "2.0.6",
+      "repo": "adafruit/Adafruit_AHTX0",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    },
+    {
+      "name": "LiquidCrystal I2C",
+      "ver": "1.1.2",
+      "repo": "johnrickman/LiquidCrystal_I2C",
+      "author": "Frank de Brabander"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "aht20",
+      "name": "AHT10 / AHT20 / AHT21",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "lcd1602",
+      "name": "Écran LCD 16×2 + module I2C",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "aht20_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "AHT10 / AHT20 / AHT21"
+    },
+    {
+      "key": "aht20_hum",
+      "unit": "%",
+      "label": "Humidité",
+      "module": "AHT10 / AHT20 / AHT21"
+    }
+  ],
+  "power": {
+    "modules_mA": 31,
+    "modules_peak_mA": 31,
+    "board_mA": 45,
+    "total_mA": 76,
+    "total_peak_mA": 111
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

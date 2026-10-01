@@ -1,0 +1,18 @@
+NEXUS LAB — livraison complète
+
+CE QUE CONTIENT L’ARCHIVE
+SD_CARD/ : contenu FAT32 à copier à la racine d’une carte destinée au mode S3 autonome.
+PI4_SD_CARD/ : fichiers logiciels à installer sur un Raspberry Pi déjà démarré avec Raspberry Pi OS Lite 64 bits. Ce n’est pas une image bootable.
+ANDROID/app-debug.apk : application mobile NEXUS générale; ce n’est pas une APK de projet créée dans le Studio.
+
+DEUX CARTES microSD DISTINCTES
+Le Pi démarre Raspberry Pi OS Lite depuis la clé USB 8 Go et garde sa microSD 64 Go pour les données FAT32 label NEXUS. Sa carte reste dans le Pi.
+Le S3 garde sa propre microSD 2 Go, formatée en FAT32, avec le contenu de SD_CARD/ copié à la racine (binaires .bin/.hex, montages et explications). Exécute python scripts/prepare_sd.py avant la copie.
+Sur le Pi démarré par USB, copie PI4_SD_CARD et SD_CARD, vérifie soigneusement que /dev/mmcblk0 est la carte de 64 Go, puis lance pi/prepare_shared_sd.sh --format /dev/mmcblk0 seulement si elle doit être formatée. Cette étape efface la carte après vérification et confirmation écrite. Lance ensuite pi/install.sh.
+Les deux cartes restent dans leurs appareils. Le S3 et le Pi échangent projets et firmwares par Wi-Fi; le S3 garde ses fonctions locales quand le Pi est éteint. Ne retire pas une carte pendant une écriture.
+
+APK PERSONNALISÉE ET QR
+Pour une APK projet : exporte le projet depuis le Studio, extrais son ZIP, puis lance scripts/build_project_apk.bat <dossier-exporte> sur Windows. Lance ensuite scripts/publish_project_apk.bat pour envoyer l’APK au Pi et produire un QR LAN. Le Pi 4 ARM64 ne compile pas l’APK avec les outils Android x86_64 de ce modèle.
+Aucun QR fictif n’est livré : après création d’une APK projet, scripts/publish_project_apk.bat l’envoie au Pi, vérifie son SHA-256 et génère le QR local correspondant au vrai lien de téléchargement.
+
+Le code source, les scripts de vérification et le MASTER sont inclus. Les vérifications logicielles ont réussi; aucune communication radio, installation Pi, mesure capteur ou opération de flash n’a été testée sur matériel réel.

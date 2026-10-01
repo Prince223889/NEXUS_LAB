@@ -1,0 +1,35 @@
+{
+  "id": "classic_mqtt",
+  "title": "Client MQTT (Home Assistant)",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Publie des mesures et reçoit des commandes par MQTT.",
+  "tags": [
+    "MQTT",
+    "domotique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "PubSubClient",
+      "ver": "2.8",
+      "repo": "knolleary/pubsubclient",
+      "author": "Nick O'Leary"
+    }
+  ],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

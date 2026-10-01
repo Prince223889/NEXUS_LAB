@@ -1,0 +1,28 @@
+{
+  "id": "classic_ntp_clock",
+  "title": "Horloge Internet NTP",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Heure exacte avec fuseau horaire et changement d'heure automatiques.",
+  "tags": [
+    "NTP",
+    "heure"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

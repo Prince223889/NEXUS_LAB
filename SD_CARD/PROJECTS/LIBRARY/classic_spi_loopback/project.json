@@ -1,0 +1,28 @@
+{
+  "id": "classic_spi_loopback",
+  "title": "Test de boucle SPI",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Vérifie le bus SPI avec un fil MOSI→MISO.",
+  "tags": [
+    "SPI",
+    "test"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

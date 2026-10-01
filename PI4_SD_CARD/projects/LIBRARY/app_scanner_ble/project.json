@@ -1,0 +1,67 @@
+{
+  "id": "app_scanner_ble",
+  "title": "Détecteur de présence Bluetooth",
+  "category": "app",
+  "kind": "recipe",
+  "description": "Compte les appareils BLE à proximité (téléphones, montres) ; LED allumée si l'un est très proche.",
+  "tags": [
+    "BLE",
+    "présence",
+    "LED"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "led",
+      "name": "LED + résistance 220 Ω",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "led",
+      "name": "LED + résistance 220 Ω",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "led",
+      "name": "LED + résistance 220 Ω",
+      "pin": "anode (+) via 220 Ω",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": "cathode (patte courte) vers GND"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ble_devices",
+      "unit": "",
+      "label": "Appareils",
+      "module": "Scanner Bluetooth Low Energy (intégré)"
+    },
+    {
+      "key": "ble_best",
+      "unit": "dBm",
+      "label": "Meilleur signal",
+      "module": "Scanner Bluetooth Low Energy (intégré)"
+    }
+  ],
+  "power": {
+    "modules_mA": 100,
+    "modules_peak_mA": 100,
+    "board_mA": 45,
+    "total_mA": 145,
+    "total_peak_mA": 180
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

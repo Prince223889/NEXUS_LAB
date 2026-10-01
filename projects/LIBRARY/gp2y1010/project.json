@@ -1,0 +1,77 @@
+{
+  "id": "gp2y1010",
+  "title": "Sharp GP2Y1010AU0F (poussière)",
+  "category": "air",
+  "kind": "module",
+  "description": "Capteur optique de poussière : densité en mg/m³ par impulsion infrarouge.",
+  "tags": [
+    "poussière",
+    "particules",
+    "analogique"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "gp2y",
+      "name": "Sharp GP2Y1010AU0F (poussière)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "gp2y",
+      "name": "Sharp GP2Y1010AU0F (poussière)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "gp2y",
+      "name": "Sharp GP2Y1010AU0F (poussière)",
+      "pin": "LED (broche 3)",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "gp2y",
+      "name": "Sharp GP2Y1010AU0F (poussière)",
+      "pin": "Vo (broche 5)",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": "via pont diviseur 10 kΩ / 20 kΩ (sortie jusqu'à 3,6 V)"
+    },
+    {
+      "mod": "gp2y",
+      "name": "Sharp GP2Y1010AU0F (poussière)",
+      "pin": "V-LED",
+      "to": "5V via 150 Ω + condensateur 220 µF vers GND",
+      "note": "circuit recommandé par Sharp"
+    }
+  ],
+  "outputs": [
+    {
+      "key": "gp2y_dust",
+      "unit": "mg/m³",
+      "label": "Poussière",
+      "module": "Sharp GP2Y1010AU0F (poussière)"
+    }
+  ],
+  "power": {
+    "modules_mA": 11,
+    "modules_peak_mA": 11,
+    "board_mA": 45,
+    "total_mA": 56,
+    "total_peak_mA": 91
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

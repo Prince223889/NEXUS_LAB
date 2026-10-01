@@ -1,0 +1,3 @@
+LIBRARY : 320 projets du catalogue (générés).
+MY_PROJECTS : projets enregistrés depuis le Studio.
+IMPORTED : projets importés depuis INBOX.

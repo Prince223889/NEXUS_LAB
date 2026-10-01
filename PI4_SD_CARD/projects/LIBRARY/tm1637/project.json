@@ -1,0 +1,70 @@
+{
+  "id": "tm1637",
+  "title": "Afficheur 4 chiffres TM1637",
+  "category": "display",
+  "kind": "module",
+  "description": "Afficheur 7 segments 4 chiffres avec deux-points : montre la première mesure du projet (ou un compteur).",
+  "tags": [
+    "7 segments",
+    "horloge",
+    "afficheur"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "TM1637",
+      "ver": "1.2.0",
+      "repo": "avishorp/TM1637",
+      "author": "Avishay Orpaz"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "CLK",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "seg4",
+      "name": "Afficheur 4 chiffres TM1637",
+      "pin": "DIO",
+      "to": "GPIO13",
+      "gpio": 13,
+      "note": ""
+    }
+  ],
+  "outputs": [],
+  "power": {
+    "modules_mA": 20,
+    "modules_peak_mA": 20,
+    "board_mA": 45,
+    "total_mA": 65,
+    "total_peak_mA": 100
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

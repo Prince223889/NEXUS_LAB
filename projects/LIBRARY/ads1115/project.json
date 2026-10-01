@@ -1,0 +1,104 @@
+{
+  "id": "ads1115",
+  "title": "ADS1115 (CAN 16 bits, 4 voies)",
+  "category": "io",
+  "kind": "module",
+  "description": "Convertisseur analogique-numérique 16 bits avec gain programmable : bien plus précis que l'ADC interne.",
+  "tags": [
+    "ADC",
+    "précision",
+    "analogique",
+    "I2C"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit ADS1X15",
+      "ver": "2.6.2",
+      "repo": "adafruit/Adafruit_ADS1X15",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ads",
+      "name": "ADS1115 (CAN 16 bits, 4 voies)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ads",
+      "name": "ADS1115 (CAN 16 bits, 4 voies)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ads",
+      "name": "ADS1115 (CAN 16 bits, 4 voies)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ads",
+      "name": "ADS1115 (CAN 16 bits, 4 voies)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ads_a0",
+      "unit": "V",
+      "label": "A0",
+      "module": "ADS1115 (CAN 16 bits, 4 voies)"
+    },
+    {
+      "key": "ads_a1",
+      "unit": "V",
+      "label": "A1",
+      "module": "ADS1115 (CAN 16 bits, 4 voies)"
+    },
+    {
+      "key": "ads_a2",
+      "unit": "V",
+      "label": "A2",
+      "module": "ADS1115 (CAN 16 bits, 4 voies)"
+    },
+    {
+      "key": "ads_a3",
+      "unit": "V",
+      "label": "A3",
+      "module": "ADS1115 (CAN 16 bits, 4 voies)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [
+    "Ne dépassez jamais VDD + 0,3 V sur une entrée, quel que soit le gain."
+  ],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

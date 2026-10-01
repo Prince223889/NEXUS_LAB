@@ -1,0 +1,71 @@
+{
+  "id": "max44009",
+  "title": "MAX44009 (GY-49)",
+  "category": "light",
+  "kind": "module",
+  "description": "Luxmètre ultra-basse consommation 0,045-188 000 lx (lecture directe des registres).",
+  "tags": [
+    "lumière",
+    "lux",
+    "I2C",
+    "sans bibliothèque"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "max44009",
+      "name": "MAX44009 (GY-49)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "max44009",
+      "name": "MAX44009 (GY-49)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "max44009",
+      "name": "MAX44009 (GY-49)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "max44009",
+      "name": "MAX44009 (GY-49)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "max44009_lux",
+      "unit": "lx",
+      "label": "Éclairement",
+      "module": "MAX44009 (GY-49)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

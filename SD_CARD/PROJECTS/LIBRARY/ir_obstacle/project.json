@@ -1,0 +1,62 @@
+{
+  "id": "ir_obstacle",
+  "title": "Détecteur d'obstacle IR (FC-51)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Émetteur/récepteur IR réfléchi : détecte un obstacle de 2 à 30 cm (seuil réglable).",
+  "tags": [
+    "obstacle",
+    "infrarouge",
+    "robot"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "irobs",
+      "name": "Détecteur d'obstacle IR (FC-51)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "irobs",
+      "name": "Détecteur d'obstacle IR (FC-51)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "irobs",
+      "name": "Détecteur d'obstacle IR (FC-51)",
+      "pin": "OUT",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "irobs_near",
+      "unit": "",
+      "label": "Obstacle (0/1)",
+      "module": "Détecteur d'obstacle IR (FC-51)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

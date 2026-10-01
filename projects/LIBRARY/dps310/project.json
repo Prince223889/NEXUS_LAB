@@ -1,0 +1,96 @@
+{
+  "id": "dps310",
+  "title": "DPS310",
+  "category": "temp",
+  "kind": "module",
+  "description": "Baromètre Infineon ±0,002 hPa (±2 cm) — détecte un étage d'immeuble.",
+  "tags": [
+    "pression",
+    "altitude",
+    "précision",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit DPS310",
+      "ver": "1.1.6",
+      "repo": "adafruit/Adafruit_DPS310",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "dps310",
+      "name": "DPS310",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "dps310",
+      "name": "DPS310",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "dps310",
+      "name": "DPS310",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "dps310",
+      "name": "DPS310",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "dps310_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "DPS310"
+    },
+    {
+      "key": "dps310_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "DPS310"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

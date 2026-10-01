@@ -1,0 +1,70 @@
+{
+  "id": "hcsr04p",
+  "title": "HC-SR04P / RCWL-1601 (3,3 V)",
+  "category": "distance",
+  "kind": "module",
+  "description": "Variante 3-5,5 V du HC-SR04 : compatible directement 3,3 V, sans pont diviseur.",
+  "tags": [
+    "distance",
+    "ultrason",
+    "robot"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "hcsr04p",
+      "name": "HC-SR04P / RCWL-1601 (3,3 V)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04p",
+      "name": "HC-SR04P / RCWL-1601 (3,3 V)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "hcsr04p",
+      "name": "HC-SR04P / RCWL-1601 (3,3 V)",
+      "pin": "TRIG",
+      "to": "GPIO4",
+      "gpio": 4,
+      "note": ""
+    },
+    {
+      "mod": "hcsr04p",
+      "name": "HC-SR04P / RCWL-1601 (3,3 V)",
+      "pin": "ECHO",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "hcsr04p_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "HC-SR04P / RCWL-1601 (3,3 V)"
+    }
+  ],
+  "power": {
+    "modules_mA": 15,
+    "modules_peak_mA": 15,
+    "board_mA": 45,
+    "total_mA": 60,
+    "total_peak_mA": 95
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

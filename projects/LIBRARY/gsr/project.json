@@ -1,0 +1,63 @@
+{
+  "id": "gsr",
+  "title": "Capteur GSR (conductance cutanée)",
+  "category": "bio",
+  "kind": "module",
+  "description": "Mesure la réponse électrodermale (sudation) : émotion, stress, détecteur de mensonge ludique.",
+  "tags": [
+    "stress",
+    "peau",
+    "santé",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "gsr",
+      "name": "Capteur GSR (conductance cutanée)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "gsr",
+      "name": "Capteur GSR (conductance cutanée)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "gsr",
+      "name": "Capteur GSR (conductance cutanée)",
+      "pin": "SIG",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "gsr_gsr",
+      "unit": "mV",
+      "label": "GSR",
+      "module": "Capteur GSR (conductance cutanée)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

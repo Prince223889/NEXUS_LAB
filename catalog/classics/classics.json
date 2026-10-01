@@ -1,0 +1,802 @@
+[
+ {
+  "id": "classic_blink",
+  "title": "Clignotement de la LED intégrée",
+  "desc": "Le « Hello world » : faire clignoter une LED sans bloquer le programme (millis()).",
+  "tags": [
+   "débutant",
+   "LED"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_wifi_scan",
+  "title": "Scanner de réseaux Wi-Fi",
+  "desc": "Liste les réseaux avec puissance, canal et type de sécurité.",
+  "tags": [
+   "Wi-Fi",
+   "diagnostic"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_wifi_ap_web",
+  "title": "Point d'accès + serveur web",
+  "desc": "La carte crée son propre Wi-Fi et sert une page de commande (sans box).",
+  "tags": [
+   "Wi-Fi",
+   "web",
+   "AP"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_wifi_reconnect",
+  "title": "Connexion Wi-Fi robuste",
+  "desc": "Événements Wi-Fi, reconnexion automatique avec recul progressif, suivi du RSSI.",
+  "tags": [
+   "Wi-Fi",
+   "fiabilité"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_web_gpio",
+  "title": "Tableau de bord web des GPIO",
+  "desc": "Page web qui commande 4 sorties et lit une entrée analogique en direct.",
+  "tags": [
+   "web",
+   "GPIO"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_http_json",
+  "title": "Client HTTPS + JSON (météo Open-Meteo)",
+  "desc": "Interroge une API publique et décode la réponse JSON avec ArduinoJson.",
+  "tags": [
+   "HTTPS",
+   "JSON",
+   "API"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [
+   "arduinojson"
+  ],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_ntp_clock",
+  "title": "Horloge Internet NTP",
+  "desc": "Heure exacte avec fuseau horaire et changement d'heure automatiques.",
+  "tags": [
+   "NTP",
+   "heure"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_mdns",
+  "title": "Nom réseau mDNS (.local)",
+  "desc": "Accéder à la carte par http://esp32-demo.local/ au lieu de son adresse IP.",
+  "tags": [
+   "mDNS",
+   "réseau"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_udp_echo",
+  "title": "Serveur UDP écho",
+  "desc": "Renvoie chaque datagramme reçu : base des protocoles légers.",
+  "tags": [
+   "UDP",
+   "réseau"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_tcp_server",
+  "title": "Console Telnet (serveur TCP)",
+  "desc": "Commandes à distance par telnet : LED, mémoire, uptime.",
+  "tags": [
+   "TCP",
+   "Telnet"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_espnow_sender",
+  "title": "ESP-NOW émetteur",
+  "desc": "Envoi direct carte à carte sans box Wi-Fi, avec accusé de réception.",
+  "tags": [
+   "ESP-NOW",
+   "radio"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_espnow_receiver",
+  "title": "ESP-NOW récepteur",
+  "desc": "Affiche son adresse MAC et les messages reçus avec le RSSI.",
+  "tags": [
+   "ESP-NOW",
+   "radio"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_espnow_broadcast",
+  "title": "ESP-NOW en diffusion (maillage simple)",
+  "desc": "Chaque carte émet et reçoit : réseau de capteurs sans routeur.",
+  "tags": [
+   "ESP-NOW",
+   "diffusion"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_deep_sleep_timer",
+  "title": "Sommeil profond minuté",
+  "desc": "Réveil périodique à ~10 µA : l'essentiel des objets sur batterie.",
+  "tags": [
+   "basse consommation",
+   "batterie"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_deep_sleep_button",
+  "title": "Sommeil profond réveillé par bouton",
+  "desc": "Réveil sur broche RTC (ext0) : télécommande ou sonnette sur pile.",
+  "tags": [
+   "basse consommation",
+   "bouton"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_preferences",
+  "title": "Réglages en mémoire non volatile (NVS)",
+  "desc": "Enregistre un nom, un seuil et un compteur de démarrages avec Preferences.",
+  "tags": [
+   "NVS",
+   "stockage"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_littlefs",
+  "title": "Fichiers dans la flash (LittleFS)",
+  "desc": "Écrire, relire et lister des fichiers dans la mémoire flash interne.",
+  "tags": [
+   "LittleFS",
+   "fichiers"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_heap_monitor",
+  "title": "Moniteur de mémoire",
+  "desc": "RAM, PSRAM, fragmentation et pile en direct : chasse aux fuites mémoire.",
+  "tags": [
+   "mémoire",
+   "diagnostic"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_chip_info",
+  "title": "Carte d'identité de la puce",
+  "desc": "Modèle, révision, flash, PSRAM, MAC, versions, table des partitions.",
+  "tags": [
+   "diagnostic",
+   "puce"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_freertos_tasks",
+  "title": "Multitâche FreeRTOS",
+  "desc": "Deux tâches, une file de messages et un mutex répartis sur les deux cœurs.",
+  "tags": [
+   "FreeRTOS",
+   "multitâche"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 3
+ },
+ {
+  "id": "classic_hw_timer",
+  "title": "Minuterie matérielle",
+  "desc": "Interruption précise toutes les 100 ms avec l'API timer d'Arduino-ESP32 3.x.",
+  "tags": [
+   "timer",
+   "interruption"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_task_watchdog",
+  "title": "Chien de garde (watchdog)",
+  "desc": "Redémarrage automatique si le programme se bloque.",
+  "tags": [
+   "watchdog",
+   "fiabilité"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_ledc_fade",
+  "title": "Fondu LED matériel (LEDC)",
+  "desc": "Variation de luminosité réalisée par le périphérique, sans charger le CPU.",
+  "tags": [
+   "PWM",
+   "LED"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_ledc_tone",
+  "title": "Mélodie sur buzzer passif",
+  "desc": "Frère Jacques joué avec tone().",
+  "tags": [
+   "son",
+   "mélodie"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_adc_oversampling",
+  "title": "Mesure analogique étalonnée",
+  "desc": "Suréchantillonnage, min/max et bruit avec analogReadMilliVolts().",
+  "tags": [
+   "ADC",
+   "mesure"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_pcnt_counter",
+  "title": "Compteur d'impulsions matériel (PCNT)",
+  "desc": "Compte des impulsions jusqu'à plusieurs MHz sans interruption.",
+  "tags": [
+   "PCNT",
+   "compteur"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3"
+  ],
+  "libs": [],
+  "difficulty": 3
+ },
+ {
+  "id": "classic_interrupt_counter",
+  "title": "Interruption et anti-rebond",
+  "desc": "Compter les appuis sur le bouton BOOT par interruption.",
+  "tags": [
+   "interruption",
+   "bouton"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_serial_cli",
+  "title": "Console de commandes série",
+  "desc": "Mini-shell : LED, PWM, mémoire, scan Wi-Fi, redémarrage.",
+  "tags": [
+   "série",
+   "console"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_json_serial",
+  "title": "Échanges JSON sur le port série",
+  "desc": "Piloter la carte depuis un PC (Python) en JSON avec ArduinoJson.",
+  "tags": [
+   "JSON",
+   "série",
+   "Python"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [
+   "arduinojson"
+  ],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_serial_binary",
+  "title": "Protocole série binaire avec CRC",
+  "desc": "Trames binaires robustes (en-tête, longueur, CRC-16).",
+  "tags": [
+   "série",
+   "protocole"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 3
+ },
+ {
+  "id": "classic_uuid",
+  "title": "Identifiants uniques (UUID v4)",
+  "desc": "UUID aléatoires par le générateur matériel et identifiant de puce.",
+  "tags": [
+   "aléatoire",
+   "identifiant"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_uart_loopback",
+  "title": "Test de boucle UART",
+  "desc": "Vérifie un UART et ses broches avec un simple fil TX→RX.",
+  "tags": [
+   "UART",
+   "test"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_spi_loopback",
+  "title": "Test de boucle SPI",
+  "desc": "Vérifie le bus SPI avec un fil MOSI→MISO.",
+  "tags": [
+   "SPI",
+   "test"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_arduino_ota",
+  "title": "Mise à jour sans fil (ArduinoOTA)",
+  "desc": "Téléverser depuis l'IDE Arduino par le réseau, protégé par mot de passe.",
+  "tags": [
+   "OTA",
+   "Wi-Fi"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_web_ota",
+  "title": "Page web de mise à jour firmware",
+  "desc": "Envoyer un .bin depuis le navigateur pour mettre à jour la carte.",
+  "tags": [
+   "OTA",
+   "web"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_wifi_portal",
+  "title": "Portail captif de configuration Wi-Fi",
+  "desc": "Saisir le réseau Wi-Fi depuis un téléphone, mémorisé en NVS.",
+  "tags": [
+   "Wi-Fi",
+   "portail captif",
+   "configuration"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_webhook_ntfy",
+  "title": "Notification smartphone (ntfy.sh)",
+  "desc": "Recevoir une notification sur son téléphone à l'appui d'un bouton.",
+  "tags": [
+   "notification",
+   "HTTPS"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_mqtt",
+  "title": "Client MQTT (Home Assistant)",
+  "desc": "Publie des mesures et reçoit des commandes par MQTT.",
+  "tags": [
+   "MQTT",
+   "domotique"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [
+   "pubsub"
+  ],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_bluetooth_serial",
+  "title": "Terminal Bluetooth classique (SPP)",
+  "desc": "Liaison série sans fil avec un téléphone Android.",
+  "tags": [
+   "Bluetooth",
+   "série"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_ble_uart",
+  "title": "Liaison série BLE (UART Nordic)",
+  "desc": "Échanges texte avec iPhone/Android via Bluetooth Low Energy.",
+  "tags": [
+   "BLE",
+   "Bluetooth"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 3
+ },
+ {
+  "id": "classic_ble_beacon",
+  "title": "Balise iBeacon",
+  "desc": "Émet une balise BLE détectable par les applications de proximité.",
+  "tags": [
+   "BLE",
+   "balise"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_internal_temp",
+  "title": "Température interne de la puce",
+  "desc": "Surveille l'échauffement du microcontrôleur.",
+  "tags": [
+   "température",
+   "diagnostic"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_sensor_to_master",
+  "title": "Envoyer des mesures au MASTER ESP32 LAB",
+  "desc": "Exemple minimal du protocole UDP « LAB|… » affiché par le dashboard.",
+  "tags": [
+   "MASTER",
+   "UDP",
+   "télémétrie"
+  ],
+  "boards": [
+   "esp32",
+   "esp32s3",
+   "esp32c3"
+  ],
+  "libs": [],
+  "difficulty": 1
+ },
+ {
+  "id": "classic_psram_test",
+  "title": "Test de la PSRAM",
+  "desc": "Taille, débit et intégrité de la PSRAM externe.",
+  "tags": [
+   "PSRAM",
+   "mémoire"
+  ],
+  "boards": [
+   "esp32s3",
+   "esp32"
+  ],
+  "libs": [],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_station_meteo_rtc",
+  "title": "Station météo BME280 + OLED + DS3231 (manuscrite)",
+  "desc": "Projet complet écrit à la main : mesures horodatées et écran OLED.",
+  "tags": [
+   "météo",
+   "OLED",
+   "RTC"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [
+   "bme280",
+   "sensor",
+   "busio",
+   "ssd1306",
+   "gfx",
+   "rtclib"
+  ],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_acces_rfid_web",
+  "title": "Contrôle d'accès RFID + servo + dashboard Wi-Fi",
+  "desc": "Badge RFID, verrou à servomoteur et page web de suivi.",
+  "tags": [
+   "RFID",
+   "servo",
+   "web"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [
+   "mfrc522",
+   "servo"
+  ],
+  "difficulty": 3
+ },
+ {
+  "id": "classic_robot_servos",
+  "title": "Robot éviteur à deux servos continus",
+  "desc": "Robot mobile à ultrason et servos à rotation continue.",
+  "tags": [
+   "robot",
+   "ultrason",
+   "servo"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [
+   "servo"
+  ],
+  "difficulty": 3
+ },
+ {
+  "id": "classic_datalogger_csv",
+  "title": "Enregistreur DHT22 + BH1750 + DS3231 (CSV série)",
+  "desc": "Journal horodaté en CSV sur le port série.",
+  "tags": [
+   "enregistreur",
+   "CSV"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [
+   "dht",
+   "sensor",
+   "bh1750",
+   "rtclib",
+   "busio"
+  ],
+  "difficulty": 2
+ },
+ {
+  "id": "classic_alarme_web",
+  "title": "Alarme ultrason + NeoPixel + buzzer + dashboard",
+  "desc": "Système d'alarme complet avec interface web.",
+  "tags": [
+   "alarme",
+   "web",
+   "NeoPixel"
+  ],
+  "boards": [
+   "esp32"
+  ],
+  "libs": [
+   "neopixel"
+  ],
+  "difficulty": 3
+ }
+]

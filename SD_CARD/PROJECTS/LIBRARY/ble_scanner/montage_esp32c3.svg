@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 200" width="980" height="200" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<rect width="980" height="200" fill="#ffffff"/>
+<text x="490" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111">ble_scanner — Scanner Bluetooth Low Energy (intégré)</text>
+<text x="151" y="82" text-anchor="middle" font-size="16" font-weight="700" fill="#111">ESP32-C3 SuperMini / DevKitM</text>
+<rect x="36" y="96" width="230" height="60" rx="8" fill="#0d6ea8" stroke="#0a3d5c" stroke-width="2"/>
+<text x="490" y="156" text-anchor="middle" font-size="15" fill="#666">Aucun câblage externe pour ce projet.</text>
+<text x="36" y="178" font-size="12" fill="#777">ESP32 LAB 6.1.0 — fils : rouge = 3V3, orange = 5V, noir = GND, couleurs = signaux. Toujours câbler carte débranchée.</text>
+</svg>

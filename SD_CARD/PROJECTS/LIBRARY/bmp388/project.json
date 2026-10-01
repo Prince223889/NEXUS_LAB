@@ -1,0 +1,102 @@
+{
+  "id": "bmp388",
+  "title": "BMP388 / BMP390",
+  "category": "temp",
+  "kind": "module",
+  "description": "Baromètre haute précision (±0,5 m) pour drones et altimètres.",
+  "tags": [
+    "pression",
+    "altitude",
+    "précision",
+    "I2C"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit BMP3XX Library",
+      "ver": "2.1.6",
+      "repo": "adafruit/Adafruit_BMP3XX",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "bmp388",
+      "name": "BMP388 / BMP390",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "bmp388",
+      "name": "BMP388 / BMP390",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "bmp388",
+      "name": "BMP388 / BMP390",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "bmp388",
+      "name": "BMP388 / BMP390",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "bmp388_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "BMP388 / BMP390"
+    },
+    {
+      "key": "bmp388_press",
+      "unit": "hPa",
+      "label": "Pression",
+      "module": "BMP388 / BMP390"
+    },
+    {
+      "key": "bmp388_alt",
+      "unit": "m",
+      "label": "Altitude",
+      "module": "BMP388 / BMP390"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

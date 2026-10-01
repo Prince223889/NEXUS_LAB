@@ -1,0 +1,61 @@
+{
+  "id": "temt6000",
+  "title": "TEMT6000 (phototransistor)",
+  "category": "light",
+  "kind": "module",
+  "description": "Capteur de lumière ambiante calé sur la sensibilité de l'œil humain (0-1000 lx environ).",
+  "tags": [
+    "lumière",
+    "analogique"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "temt",
+      "name": "TEMT6000 (phototransistor)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "temt",
+      "name": "TEMT6000 (phototransistor)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "temt",
+      "name": "TEMT6000 (phototransistor)",
+      "pin": "SIG",
+      "to": "GPIO34",
+      "gpio": 34,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "temt_lux",
+      "unit": "lx",
+      "label": "Éclairement",
+      "module": "TEMT6000 (phototransistor)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

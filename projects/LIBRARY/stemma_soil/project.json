@@ -1,0 +1,96 @@
+{
+  "id": "stemma_soil",
+  "title": "Adafruit STEMMA Soil Sensor (seesaw)",
+  "category": "weather",
+  "kind": "module",
+  "description": "Sonde capacitive I2C : humidité du sol et température, sans ADC.",
+  "tags": [
+    "sol",
+    "capacitif",
+    "I2C",
+    "jardin"
+  ],
+  "difficulty": 1,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit seesaw Library",
+      "ver": "1.7.9",
+      "repo": "adafruit/Adafruit_seesaw",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [
+    {
+      "mod": "ssoil",
+      "name": "Adafruit STEMMA Soil Sensor (seesaw)",
+      "pin": "VCC",
+      "to": "3V3",
+      "note": ""
+    },
+    {
+      "mod": "ssoil",
+      "name": "Adafruit STEMMA Soil Sensor (seesaw)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "ssoil",
+      "name": "Adafruit STEMMA Soil Sensor (seesaw)",
+      "pin": "SDA",
+      "to": "GPIO21",
+      "gpio": 21,
+      "note": ""
+    },
+    {
+      "mod": "ssoil",
+      "name": "Adafruit STEMMA Soil Sensor (seesaw)",
+      "pin": "SCL",
+      "to": "GPIO22",
+      "gpio": 22,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "ssoil_moist",
+      "unit": "%",
+      "label": "Humidité du sol",
+      "module": "Adafruit STEMMA Soil Sensor (seesaw)"
+    },
+    {
+      "key": "ssoil_cap",
+      "unit": "",
+      "label": "Capacité brute",
+      "module": "Adafruit STEMMA Soil Sensor (seesaw)"
+    },
+    {
+      "key": "ssoil_temp",
+      "unit": "°C",
+      "label": "Température",
+      "module": "Adafruit STEMMA Soil Sensor (seesaw)"
+    }
+  ],
+  "power": {
+    "modules_mA": 1,
+    "modules_peak_mA": 1,
+    "board_mA": 45,
+    "total_mA": 46,
+    "total_peak_mA": 81
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

@@ -1,0 +1,57 @@
+{
+  "id": "classic_datalogger_csv",
+  "title": "Enregistreur DHT22 + BH1750 + DS3231 (CSV série)",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Journal horodaté en CSV sur le port série.",
+  "tags": [
+    "enregistreur",
+    "CSV"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "DHT sensor library",
+      "ver": "1.4.7",
+      "repo": "adafruit/DHT-sensor-library",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit Unified Sensor",
+      "ver": "1.1.15",
+      "repo": "adafruit/Adafruit_Sensor",
+      "author": "Adafruit"
+    },
+    {
+      "name": "BH1750",
+      "ver": "1.3.0",
+      "repo": "claws/BH1750",
+      "author": "Christopher Laws"
+    },
+    {
+      "name": "RTClib",
+      "ver": "2.1.4",
+      "repo": "adafruit/RTClib",
+      "author": "Adafruit"
+    },
+    {
+      "name": "Adafruit BusIO",
+      "ver": "1.17.4",
+      "repo": "adafruit/Adafruit_BusIO",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

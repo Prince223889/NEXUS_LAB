@@ -1,0 +1,34 @@
+{
+  "id": "classic_alarme_web",
+  "title": "Alarme ultrason + NeoPixel + buzzer + dashboard",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Système d'alarme complet avec interface web.",
+  "tags": [
+    "alarme",
+    "web",
+    "NeoPixel"
+  ],
+  "difficulty": 3,
+  "board": "esp32",
+  "boards": [
+    "esp32"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [
+    {
+      "name": "Adafruit NeoPixel",
+      "ver": "1.15.5",
+      "repo": "adafruit/Adafruit_NeoPixel",
+      "author": "Adafruit"
+    }
+  ],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

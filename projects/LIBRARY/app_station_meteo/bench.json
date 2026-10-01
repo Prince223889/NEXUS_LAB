@@ -1,0 +1,190 @@
+{
+ "v": 1,
+ "title": "Station météo intérieure connectée",
+ "board": "esp32",
+ "device": "station_meteo_interi",
+ "emulable": true,
+ "needsDac": false,
+ "reasons": [],
+ "skipped": [
+  "BME280 : non émulé (absent pendant le test).",
+  "Écran OLED 0,96\" SSD1306 128×64 (I2C) : non émulé (absent pendant le test)."
+ ],
+ "warnings": [],
+ "settleMs": 2700,
+ "rules": 0,
+ "channels": [
+  {
+   "n": 0,
+   "dir": "in",
+   "kind": "i2c",
+   "emu": 21,
+   "dut": 21,
+   "module": "BH1750 (GY-30 / GY-302)",
+   "label": "bh1750",
+   "inst": 1,
+   "addr": 35,
+   "pointer": false,
+   "out": "lux",
+   "feed": "bh1750_lux"
+  }
+ ],
+ "wiring": [
+  {
+   "dut": "GND",
+   "emu": "GND",
+   "note": "masse commune obligatoire"
+  },
+  {
+   "dut": "GPIO21 (SDA)",
+   "emu": "GPIO21 (SDA)",
+   "note": "BH1750 (GY-30 / GY-302) émulé à l'adresse 0x23 ; tirage 4,7 kΩ vers 3V3"
+  },
+  {
+   "dut": "GPIO22 (SCL)",
+   "emu": "GPIO22 (SCL)",
+   "note": "tirage 4,7 kΩ vers 3V3"
+  }
+ ],
+ "steps": [
+  {
+   "label": "Initialisation : capteurs au repos",
+   "set": [
+    {
+     "n": 0,
+     "raw": "8000"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 27306.25
+    }
+   ],
+   "wait": 5400,
+   "expect": [
+    {
+     "feed": "bh1750_lux",
+     "v": 27306.25,
+     "tol": 1.25
+    }
+   ]
+  },
+  {
+   "label": "Mesure bh1750.lux = 10922.5",
+   "set": [
+    {
+     "n": 0,
+     "raw": "3333"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 10922.5
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "bh1750_lux",
+     "v": 10922.5,
+     "tol": 1.25
+    }
+   ]
+  },
+  {
+   "label": "Mesure bh1750.lux = 27306.25",
+   "set": [
+    {
+     "n": 0,
+     "raw": "8000"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 27306.25
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "bh1750_lux",
+     "v": 27306.25,
+     "tol": 1.25
+    }
+   ]
+  },
+  {
+   "label": "Mesure bh1750.lux = 43690",
+   "set": [
+    {
+     "n": 0,
+     "raw": "cccc"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 43690
+    }
+   ],
+   "wait": 2700,
+   "expect": [
+    {
+     "feed": "bh1750_lux",
+     "v": 43690,
+     "tol": 1.25
+    }
+   ]
+  },
+  {
+   "label": "Débranchement de bh1750 (plus d'acquittement I2C)",
+   "set": [
+    {
+     "n": 0,
+     "online": 0
+    }
+   ],
+   "values": [],
+   "wait": 4000,
+   "expect": [
+    {
+     "feed": "bh1750_lux",
+     "absent": true
+    }
+   ],
+   "note": "La mesure doit s'interrompre et les actionneurs garder leur état."
+  },
+  {
+   "label": "Rebranchement de bh1750",
+   "set": [
+    {
+     "n": 0,
+     "online": 1
+    },
+    {
+     "n": 0,
+     "raw": "cccc"
+    }
+   ],
+   "values": [
+    {
+     "n": 0,
+     "v": 43690
+    }
+   ],
+   "wait": 4000,
+   "expect": [
+    {
+     "feed": "bh1750_lux",
+     "v": 43690,
+     "tol": 1.25
+    }
+   ]
+  }
+ ],
+ "duration_ms": 21500,
+ "bin": "/sd/FIRMWARE/WORKER/esp32__app_station_meteo__bench.ino.bin"
+}

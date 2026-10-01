@@ -1,0 +1,28 @@
+{
+  "id": "classic_tcp_server",
+  "title": "Console Telnet (serveur TCP)",
+  "category": "classic",
+  "kind": "classic",
+  "description": "Commandes à distance par telnet : LED, mémoire, uptime.",
+  "tags": [
+    "TCP",
+    "Telnet"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [],
+  "outputs": [],
+  "power": {
+    "modules_mA": 0,
+    "modules_peak_mA": 0
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}

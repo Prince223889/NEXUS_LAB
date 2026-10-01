@@ -1,0 +1,76 @@
+{
+  "id": "tfmini",
+  "title": "Benewake TFmini / TF-Luna (LiDAR)",
+  "category": "distance",
+  "kind": "module",
+  "description": "LiDAR ToF 0,2-8 m (TF-Luna) / 12 m (TFmini) à 100 Hz, trame série 9 octets.",
+  "tags": [
+    "distance",
+    "LiDAR",
+    "UART"
+  ],
+  "difficulty": 2,
+  "board": "esp32",
+  "boards": [
+    "esp32",
+    "esp32s3",
+    "esp32c3"
+  ],
+  "fqbn": "esp32:esp32:esp32",
+  "libraries": [],
+  "wiring": [
+    {
+      "mod": "tfmini",
+      "name": "Benewake TFmini / TF-Luna (LiDAR)",
+      "pin": "VCC",
+      "to": "5V (VIN)",
+      "note": ""
+    },
+    {
+      "mod": "tfmini",
+      "name": "Benewake TFmini / TF-Luna (LiDAR)",
+      "pin": "GND",
+      "to": "GND",
+      "note": ""
+    },
+    {
+      "mod": "tfmini",
+      "name": "Benewake TFmini / TF-Luna (LiDAR)",
+      "pin": "TX du LiDAR",
+      "to": "GPIO16",
+      "gpio": 16,
+      "note": ""
+    },
+    {
+      "mod": "tfmini",
+      "name": "Benewake TFmini / TF-Luna (LiDAR)",
+      "pin": "RX du LiDAR",
+      "to": "GPIO17",
+      "gpio": 17,
+      "note": ""
+    }
+  ],
+  "outputs": [
+    {
+      "key": "tfmini_dist",
+      "unit": "cm",
+      "label": "Distance",
+      "module": "Benewake TFmini / TF-Luna (LiDAR)"
+    },
+    {
+      "key": "tfmini_strength",
+      "unit": "",
+      "label": "Intensité du signal",
+      "module": "Benewake TFmini / TF-Luna (LiDAR)"
+    }
+  ],
+  "power": {
+    "modules_mA": 70,
+    "modules_peak_mA": 70,
+    "board_mA": 45,
+    "total_mA": 115,
+    "total_peak_mA": 150
+  },
+  "notes": [],
+  "generator": "ESP32 LAB Studio 6.1.0"
+}
