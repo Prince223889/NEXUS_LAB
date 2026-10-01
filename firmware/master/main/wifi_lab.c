@@ -2,6 +2,7 @@
 #include "lab_config.h"
 #include "captive_dns.h"
 #include "event_log.h"
+#include "veille.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_mac.h"
@@ -149,6 +150,10 @@ static void evt(void *arg, esp_event_base_t base, int32_t id, void *data)
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
         wifi_event_ap_staconnected_t *e = data;
         ESP_LOGI(TAG, "client AP connecté " MACSTR, MAC2STR(e->mac));
+        veille_station(e->mac, true);
+    } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STADISCONNECTED) {
+        wifi_event_ap_stadisconnected_t *e = data;
+        veille_station(e->mac, false);
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_SCAN_DONE) {
         if (s_scan_mx && xSemaphoreTake(s_scan_mx, pdMS_TO_TICKS(100)) == pdTRUE) {
             uint16_t n = SCAN_MAX;

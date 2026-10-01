@@ -15,6 +15,8 @@ Résultat :
   capteurs/<projet>/<projet>.hex           firmware Arduino Uno / Nano (ATmega328P)
   SD_CARD/PROJECTS/LIBRARY/…  et  SD_CARD/PROJECTS/ARDUINO/…   copie prête pour la microSD
   SD_CARD/FIRMWARE/WORKER/<carte>__<projet>__bench.ino.bin     firmwares du banc fantôme
+  SD_CARD/FIRMWARE/WORKER/<carte>/worker.bin (+ bootloader, partitions, flash_args)
+                                           firmware worker complet : flashé par le port USB du MASTER
   build/compile_all_report.md              rapport (✅ / ❌ + première erreur)
 
 Compilation incrémentale : un projet déjà compilé et plus récent que son .ino est ignoré (--force pour tout refaire).
@@ -185,6 +187,48 @@ def compile_esp(cli: str, it: dict, force: bool) -> dict:
     return res
 
 
+# ---------------------------------------------------------------- firmware worker (flash USB du MASTER)
+
+WORKER_SRC = ROOT / "firmware" / "worker"
+WORKER_FQBN = {"esp32": "esp32:esp32:esp32", "esp32s3": "esp32:esp32:esp32s3", "esp32c3": "esp32:esp32:esp32c3"}
+
+
+def compile_worker(cli: str, board: str, force: bool) -> dict:
+    """Compile firmware/worker pour une carte et range l'image complète dans SD_CARD/FIRMWARE/WORKER/<carte>/ :
+    le MASTER l'écrit sur un ESP32 neuf branché sur son port USB (bootloader + partitions + application)."""
+    res = {"id": "worker", "board": board, "name": "worker", "ok": False, "skipped": False, "error": "", "size": 0}
+    ino = WORKER_SRC / "worker.ino"
+    if not ino.exists():
+        res["error"] = "firmware/worker/worker.ino absent"
+        return res
+    bp = BUILD / "cli" / f"worker_{board}"
+    dest = SD / "FIRMWARE" / "WORKER" / board
+    app = dest / "worker.bin"
+    newest = max(f.stat().st_mtime for f in WORKER_SRC.iterdir() if f.is_file())
+    if not force and app.exists() and app.stat().st_mtime >= newest and (dest / "flash_args").exists():
+        res.update(ok=True, skipped=True, size=app.stat().st_size)
+        return res
+    fqbn = WORKER_FQBN[board] + ":PartitionScheme=min_spiffs"
+    r = run([cli, "compile", "-b", fqbn, "--build-path", str(bp), str(WORKER_SRC)], timeout=1800)
+    if r.returncode != 0 or not (bp / "worker.ino.bin").exists():
+        res["error"] = first_error(r.stdout + r.stderr)
+        return res
+    dest.mkdir(parents=True, exist_ok=True)
+    rename = {"worker.ino.bin": "worker.bin", "worker.ino.bootloader.bin": "worker.bootloader.bin",
+              "worker.ino.partitions.bin": "worker.partitions.bin", "boot_app0.bin": "boot_app0.bin"}
+    for src, dst in rename.items():
+        if (bp / src).exists():
+            shutil.copy2(bp / src, dest / dst)
+    fa = bp / "flash_args"
+    if fa.exists():
+        text = fa.read_text(encoding="utf-8", errors="ignore")
+        for src, dst in rename.items():
+            text = text.replace(src, dst)
+        (dest / "flash_args").write_text(text.replace("\r\n", "\n"), encoding="utf-8")
+    res.update(ok=True, size=app.stat().st_size)
+    return res
+
+
 # ---------------------------------------------------------------- Arduino (capteurs/)
 
 def compile_avr(cli: str, folder: pathlib.Path, force: bool) -> dict:
@@ -264,6 +308,13 @@ def main() -> int:
                 done += 1
                 tag = "IGNORÉ" if res["skipped"] else ("OK    " if res["ok"] else "ERREUR")
                 say(f"  [{done:3}/{len(items)}] {tag} {res['name']}" + (f" — {res['error']}" if res["error"] else ""))
+
+    if not a.only or "worker" in only:
+        for board in [b for b in targets if b in WORKER_FQBN]:
+            res = compile_worker(cli, board, a.force)
+            results.append(res)
+            tag = "IGNORÉ" if res["skipped"] else ("OK    " if res["ok"] else "ERREUR")
+            say(f"== firmware worker {board} : {tag}" + (f" — {res['error']}" if res["error"] else ""))
 
     if "arduino" in targets and CAPTEURS.exists():
         folders = sorted(p for p in CAPTEURS.iterdir() if p.is_dir() and (not only or p.name in only))

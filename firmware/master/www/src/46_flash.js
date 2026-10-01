@@ -10,6 +10,31 @@
   const PROFILES = [['ATmega328P_Optiboot', 'Uno / Nano (bootloader récent) · 115200'], ['ATmega328P_Old', 'Nano « Old Bootloader » · 57600'], ['ATmega168P_STK500', 'ATmega168 (Diecimila, Nano 168) · 19200']];
   const sdUrl = (p) => '/api/sd/download?inline=1&path=' + encodeURIComponent(p);
   const espBin = (id, board) => `/sd/PROJECTS/LIBRARY/${id}/bin/${board}/${id}.bin`;
+  const workerBin = (board) => `/sd/FIRMWARE/WORKER/${board}/worker.bin`;
+  const DET_NAMES = { avr: 'Arduino (ATmega)', esp32: 'ESP32', esp32s3: 'ESP32-S3', esp32c3: 'ESP32-C3', esp32s2: 'ESP32-S2', esp32c6: 'ESP32-C6', esp32h2: 'ESP32-H2', esp: 'ESP (modèle inconnu)' };
+
+  /* Carte branchée sur l'USB du S3, identifiée par le MASTER (usb.detect) → ce qu'il faut y flasher.
+   * ESP32 / S3 / C3 : le firmware worker complet de la microSD (ou un projet du catalogue) ;
+   * Arduino : un projet .hex de capteurs/ ; autre puce : rien de prêt. */
+  A.usbAdvice = function (usb) {
+    const d = (usb && usb.detect) || {};
+    if (!usb || !usb.connected) return { state: 'none', text: 'Aucune carte branchée sur le port USB du S3.' };
+    if (d.busy) return { state: 'busy', text: 'Identification de la carte en cours…' };
+    const b = d.board || '';
+    if (!b) return { state: 'unknown', text: d.text || 'Carte pas encore identifiée.' };
+    const name = DET_NAMES[b] || b;
+    if (b === 'avr') return { state: 'ok', board: 'avr', kind: 'avr', name, profile: d.profile || 'ATmega328P_Optiboot', text: `${name} détecté (bootloader ${d.profile || 'Optiboot'}) : choisissez un projet Arduino (.hex) à flasher.` };
+    if (BOARD_NAMES[b]) return { state: 'ok', board: b, kind: 'esp', name, worker: workerBin(b), text: `${name} détecté : installez le firmware worker pour en faire un worker du labo, ou flashez un projet.` };
+    return { state: 'unsupported', board: b, name, text: `${name} détecté : aucun firmware du labo n'est prévu pour cette puce.` };
+  };
+  /* Chemin du firmware à flasher sur la carte USB : 'worker' ou l'identifiant d'un projet. */
+  A.usbFirmwarePath = function (adv, what) {
+    if (!adv || adv.state !== 'ok') return null;
+    if (adv.kind === 'esp') return !what || what === 'worker' ? adv.worker : espBin(what, adv.board);
+    if (!what || what === 'worker') return null;
+    const n = String(what).replace(/\.hex$/i, '');
+    return `/sd/PROJECTS/ARDUINO/${n}/${n}.hex`;
+  };
 
   /* ---------- styles scopés ---------- */
   (function style() {
@@ -172,11 +197,13 @@
       let chosen = null;
       let pos = 0, paused = false, stamps = store.get('usb.ts', false), buf = '';
       let flSince = 0, flTimer = null;
+      let autoGo = false;
 
       el.innerHTML = `<div class="grid g-3">
         <div class="span-2 stack">
           <div class="card"><div class="card-h"><div class="grow"><h2>Programmer une carte par câble</h2><div class="card-sub">Carte branchée sur le port USB-OTG du MASTER · Arduino (.hex) ou ESP32 (.bin)</div></div><span id="us-badge"></span></div>
             <div class="card-b stack" style="gap:14px">
+              <div id="fl-det"></div>
               <div class="field"><label>1. Type de carte</label><div class="seg" id="fl-board" style="flex-wrap:wrap">${Object.keys(BOARD_NAMES).map((b) => `<button data-b="${b}" class="${b === board ? 'on' : ''}">${esc(BOARD_NAMES[b])}</button>`).join('')}</div></div>
               <div class="field" id="fl-prof-w"><label>Bootloader Arduino</label><select class="select" id="fl-prof">${PROFILES.map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join('')}</select></div>
               <div class="field"><label>2. Firmware</label><div id="fl-pick"></div></div>
@@ -214,10 +241,12 @@
         $('#fl-sel', el).innerHTML = ex.ok ? `<div class="banner" style="margin:0">${icon('check')}<div><b>${esc(it.title)}</b> — <span class="mono small">${esc(it.path)}</span> (${fmtBytes(ex.size)})</div></div>`
           : `<div class="banner warn" style="margin:0">${icon('alert')}<div>Firmware pas encore compilé : <span class="mono small">${esc(it.path)}</span>. Lancez <code>scripts\\compile_all.bat</code> sur le PC puis recopiez <code>SD_CARD/</code> sur la microSD.</div></div>`;
         go.disabled = !ex.ok;
-        $('#fl-montage', el).innerHTML = `<h3 style="margin:4px 0 8px">Montage</h3>` + (await A.montageHtml(it.ctx));
+        if (autoGo && ex.ok) { autoGo = false; startFlash(false); }
+        else if (autoGo) { autoGo = false; toast('Firmware absent de la microSD : lancez scripts\\compile_all.bat puis recopiez SD_CARD/', 'warn'); }
+        $('#fl-montage', el).innerHTML = it.ctx ? `<h3 style="margin:4px 0 8px">Montage</h3>` + (await A.montageHtml(it.ctx)) : '';
       });
       const loadList = async () => {
-        $('#fl-prof-w', el).hidden = board !== 'avr';
+        $('#fl-prof-w', el).style.display = board === 'avr' ? '' : 'none';
         $('#fl-sel', el).innerHTML = '';
         $('#fl-montage', el).innerHTML = '';
         $('#fl-go', el).disabled = true;
@@ -228,6 +257,8 @@
         const pre = A.flashPreselect;
         if (pre && pre.board === board) {
           A.flashPreselect = null;
+          autoGo = !!pre.auto;
+          if (pre.profile) $('#fl-prof', el).value = pre.profile;
           pk.pick(items.find((it) => it.path === pre.path) || { key: pre.path, title: pre.path.split('/').pop(), sub: pre.path.replace('/sd/', ''), path: pre.path, ctx: pre.ctx });
         }
       };
@@ -290,15 +321,16 @@
         flTimer = setInterval(pollFlash, 500);
         pollFlash();
       };
-      $('#fl-go', el).onclick = async () => {
+      const startFlash = async (ask) => {
         if (!chosen) return;
-        if (!(await confirmBox('Flasher la carte', `Écrire « ${chosen.title} » sur la carte ${BOARD_NAMES[board]} branchée au MASTER ?`, 'Flasher'))) return;
+        if (ask && !(await confirmBox('Flasher la carte', `Écrire « ${chosen.title} » sur la carte ${BOARD_NAMES[board]} branchée au MASTER ?`, 'Flasher'))) return;
         $('#fl-go', el).disabled = true;
         try {
           await postJSON('/api/usb/flash', { kind: board === 'avr' ? 'avr' : 'esp', path: chosen.path, profile: $('#fl-prof', el).value });
           startMonitor();
         } catch (e) { toast(e.message, 'bad'); $('#fl-go', el).disabled = false; }
       };
+      $('#fl-go', el).onclick = () => startFlash(true);
       // Flash déjà en cours (page rouverte) : on raccroche le moniteur
       api('/api/usb/flash/status?since=0').then((r) => { if (r && r.busy) startMonitor(); }).catch(() => {});
 
@@ -314,8 +346,47 @@
         if (atBottom) term.scrollTop = term.scrollHeight;
         $('#us-count', el).textContent = fmtBytes(buf.length) + ' affichés';
       };
+      let detSeq = -1, detBusy = null;
+      const drawDetect = (u) => {
+        const adv = A.usbAdvice(u);
+        const box = $('#fl-det', el);
+        if (!box) return adv;
+        const cls = adv.state === 'ok' ? '' : adv.state === 'busy' || adv.state === 'none' ? 'info' : 'warn';
+        const btns = adv.state === 'ok' && adv.kind === 'esp' ? `<button class="btn sm primary" data-det-worker>${icon('upload')}Installer le firmware worker</button>` : '';
+        box.innerHTML = `<div class="banner ${cls}" style="margin:0">${icon(adv.state === 'ok' ? 'check' : adv.state === 'busy' ? 'refresh' : 'usb')}<div class="grow"><b>Carte détectée sur l'USB du S3</b><div class="small">${esc(adv.text)}</div>
+          <div class="row wrap" style="gap:6px;margin-top:6px">${btns}<button class="btn sm" data-det-again ${u && u.connected && adv.state !== 'busy' ? '' : 'disabled'}>${icon('refresh')}Identifier à nouveau</button></div></div></div>`;
+        return adv;
+      };
+      const applyDetect = (u) => {
+        const d = (u && u.detect) || {};
+        const adv = drawDetect(u);
+        if (d.seq === detSeq && !!d.busy === detBusy) return;
+        const fresh = detSeq !== -1 || !A.flashPreselect;
+        detSeq = d.seq; detBusy = !!d.busy;
+        if (adv.state !== 'ok' || !fresh || (A.flashPreselect && A.flashPreselect.board)) return;
+        if (adv.board !== board) {
+          board = adv.board;
+          store.set('fl.board', board);
+          $$('#fl-board button', el).forEach((x) => x.classList.toggle('on', x.dataset.b === board));
+          loadList();
+        }
+        if (adv.kind === 'avr' && adv.profile) $('#fl-prof', el).value = adv.profile;
+      };
+      el.addEventListener('click', async (e) => {
+        if (e.target.closest('[data-det-again]')) {
+          try { await postJSON('/api/usb/detect', {}); toast('Identification de la carte…', 'ok'); } catch (err) { toast(err.message, 'bad'); }
+        } else if (e.target.closest('[data-det-worker]')) {
+          const adv = A.usbAdvice(lastUsb);
+          if (adv.state !== 'ok' || adv.kind !== 'esp') return;
+          if (board !== adv.board) { board = adv.board; $$('#fl-board button', el).forEach((x) => x.classList.toggle('on', x.dataset.b === board)); await loadList(); }
+          pk.pick({ key: adv.worker, title: 'Firmware worker ' + adv.name, sub: adv.worker.replace('/sd/', ''), path: adv.worker, ctx: null });
+        }
+      });
+      let lastUsb = null;
       const info = (u) => {
         if (!u) return;
+        lastUsb = u;
+        applyDetect(u);
         $('#us-badge', el).innerHTML = u.flashing ? '<span class="badge warn"><span class="dot busy"></span>programmation</span>' : u.connected ? `<span class="badge ok">${esc(u.chip)} connectée</span>` : '<span class="badge">aucune carte</span>';
         $('#us-info', el).innerHTML = `<dt>Hôte USB</dt><dd>${u.host ? 'actif' : '<span style="color:var(--bad)">inactif</span>'}</dd><dt>Puce USB</dt><dd>${esc(u.chip || '—')}</dd><dt>VID:PID</dt><dd class="mono">${esc(u.vid_pid)}</dd><dt>Débit</dt><dd class="num">${u.baud} bauds</dd><dt>Octets reçus</dt><dd class="num">${fmtNum(u.rx_total, 0)}</dd>`;
         $('#us-sub', el).textContent = u.connected ? `${u.chip} · ${u.baud} bauds` : 'Branchez une carte sur le port USB-OTG du MASTER.';
@@ -384,8 +455,8 @@
     if (asProject) pk.setItems(espItems(board));
     else {
       const files = [];
-      for (const dir of ['/sd/FIRMWARE/WORKER', '/sd/FIRMWARE']) {
-        try { const r = await api('/api/sd/list?path=' + encodeURIComponent(dir)); (r.items || []).filter((f) => f.type === 'f' && /worker.*\.bin$/i.test(f.name)).forEach((f) => files.push({ key: dir + '/' + f.name, title: f.name, sub: dir.replace('/sd/', '') + ' · ' + fmtBytes(f.size), path: dir + '/' + f.name, ctx: null })); } catch (e) { /* absent */ }
+      for (const dir of ['/sd/FIRMWARE/WORKER/' + board, '/sd/FIRMWARE/WORKER', '/sd/FIRMWARE']) {
+        try { const r = await api('/api/sd/list?path=' + encodeURIComponent(dir)); (r.items || []).filter((f) => f.type === 'f' && /worker.*\.bin$/i.test(f.name) && !/bootloader|partitions/i.test(f.name)).forEach((f) => files.push({ key: dir + '/' + f.name, title: f.name, sub: dir.replace('/sd/', '') + ' · ' + fmtBytes(f.size), path: dir + '/' + f.name, ctx: null })); } catch (e) { /* absent */ }
       }
       pk.setItems(files);
     }

@@ -15,6 +15,7 @@
 #include "storage.h"
 #include "telemetry.h"
 #include "usb_avr.h"
+#include "veille.h"
 #include "web_server.h"
 #include "wifi_lab.h"
 #include "worker_pool.h"
@@ -47,6 +48,7 @@ void app_main(void)
 
     led_status_init();
     led_status_mode("boot");
+    veille_start();   /* avant le Wi-Fi : aucune association au point d'accès n'échappe à la veille */
     wifi_lab_start();
     storage_init();
     evlog_add('I', "system", "démarrage %s (%s)", LAB_VERSION, storage_ready() ? "microSD OK" : "sans microSD");

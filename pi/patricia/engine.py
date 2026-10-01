@@ -34,10 +34,11 @@ ACTIONS = {
     "github_push": ("pi", "moyen"), "github_create": ("pi", "moyen"),
     "flash_studio": ("ui", "élevé"), "build_studio": ("ui", "faible"),
     "fs_mkdir": ("pi", "faible"), "fs_write": ("pi", "faible"), "fs_delete": ("pi", "moyen"), "apply_fix": ("pi", "moyen"),
+    "usb_flash": ("ui", "élevé"), "veille": ("ui", "faible"),
 }
 # Actions que l'interface lance d'elle-même quand le réglage « Agir directement » est actif (Patricia → Réglages).
 # Restent toujours à confirmer : envoi sur GitHub, suppression, remplacement d'un fichier, correction de code, voitures.
-AUTO_KINDS = {"s3_job", "flash", "flash_studio", "verify", "build", "build_studio", "apk", "fs_mkdir", "fs_write"}
+AUTO_KINDS = {"s3_job", "flash", "flash_studio", "usb_flash", "verify", "build", "build_studio", "apk", "fs_mkdir", "fs_write", "veille"}
 CONFIRM_TTL = 300
 
 PERSONA = """Tu es Patricia, l'assistante du laboratoire NEXUS (box ESP32 : un MASTER ESP32-S3 avec microSD 2 Go, \
@@ -53,6 +54,8 @@ ni une personne réelle (tu es une IA). Pas de jeu de rôle amoureux ni de conte
 Règles :
 - Ne refuse jamais une demande technique du labo. Si le matériel ne permet pas quelque chose, dis-le franchement \
 et propose l'alternative la plus proche qui marche.
+- Veille du labo (ce que l'utilisateur appelle « option espion ») : elle surveille SON matériel (appareils inconnus sur \
+le Wi-Fi du box, workers éteints, alarmes de ses capteurs). Tu ne surveilles jamais une personne à son insu.
 - Pour agir (flash, compilation, APK, dossiers, fichiers, GitHub, check-up, voitures), utilise l'outil propose_action : \
 selon ses réglages, l'interface la lance directement ou lui demande de valider. Quand il dit « flash » ou « compile », \
 propose l'action tout de suite au lieu d'expliquer. Ne prétends jamais qu'une action est faite si elle est seulement proposée.
@@ -177,6 +180,8 @@ class Engine:
             "GitHub : « crée un dépôt github mon-robot », « envoie serre sur GitHub ».",
             "Analyse : « analyse mon projet », « corrige les erreurs de serre » (sauvegarde gardée).",
             "Cartes : « quelles cartes sont branchées ? », « lance un voltmètre sur le worker 2 », « fais un test des broches ».",
+            "USB du S3 : « flashe la carte USB » (ESP32 → firmware worker), « flashe la carte USB avec bme280 » (Arduino ou ESP32).",
+            "Veille du labo : « active la veille » : alerte si un appareil inconnu rejoint le Wi-Fi du box, si un worker s'éteint ou si un capteur se déclenche.",
         ]
         return self._resp("Voici ce que je sais faire :\n• " + "\n• ".join(caps), "help",
                           suggestions=["Je veux faire un projet", "Mes projets", "État du labo"])
@@ -613,7 +618,10 @@ class Engine:
             lines.append("• MASTER : je n'ai pas reçu son état (ce navigateur ne le joint pas).")
         usb = ctx.get("usb") or {}
         if usb:
-            lines.append("• USB du S3 : " + (f"carte branchée ({usb.get('chip') or usb.get('vid_pid')})." if usb.get("connected") else "rien de branché."))
+            det = (usb.get("detect") or {}).get("board") or ""
+            kind = {"avr": "Arduino", "esp32": "ESP32", "esp32s3": "ESP32-S3", "esp32c3": "ESP32-C3"}.get(det, det.upper())
+            lines.append("• USB du S3 : " + ((f"{kind} branché" if kind else "carte branchée") + f" (pont {usb.get('chip') or usb.get('vid_pid')})." +
+                                            (" Dis « flashe la carte USB » pour la programmer." if kind else "") if usb.get("connected") else "rien de branché."))
         try:
             dev = self.host.usb_devices() if self.host and hasattr(self.host, "usb_devices") else []
         except Exception:
@@ -630,6 +638,57 @@ class Engine:
             acts = [self._propose("s3_job", {"type": "SYSTEM_TEST", "worker": w["id"]}, f"Check-up complet du worker {w['id']}") for w in on[:10]]
         return self._resp("Voici ce qui est branché :\n" + "\n".join(lines), "boards", cards=[{"type": "boards"}], actions=acts,
                           suggestions=[] if acts else (["Fais un check-up de toutes les cartes"] if on else []))
+
+    # ============================================================ carte branchée sur l'USB du S3
+    def _h_usb_flash(self, text, s, ctx):
+        usb = ctx.get("usb") or {}
+        if usb and not usb.get("connected"):
+            return self._resp("Rien n'est branché sur le port USB du S3. Branche ta carte (ESP32 ou Arduino) avec un câble OTG : "
+                              "je l'identifie toute seule, puis redis « flashe la carte USB ».", "usb_flash", suggestions=["Quelles cartes sont branchées ?"])
+        det = usb.get("detect") or {}
+        names = {"avr": "un Arduino", "esp32": "un ESP32", "esp32s3": "un ESP32-S3", "esp32c3": "un ESP32-C3"}
+        board = det.get("board") or ""
+        proj = (s.get("project") or "").strip()
+        if board and board not in names:
+            return self._resp(f"La carte branchée est un {board.upper()} : aucun firmware du labo n'est prévu pour cette puce. "
+                              "Le labo flashe les ESP32, ESP32-S3, ESP32-C3 et les Arduino Uno/Nano.", "usb_flash")
+        what = proj or "worker"
+        if board == "avr" and not proj:
+            return self._resp("C'est un Arduino. Quel projet dois-je y mettre ? Par exemple « flashe la carte USB avec bme280 ». "
+                              "Je t'ouvre aussi la liste dans USB & Flash.", "usb_flash",
+                              actions=[self._propose("open_page", {"page": "usb"}, "Ouvrir USB & Flash")])
+        who = names.get(board, "la carte (je l'identifie d'abord)")
+        label = f"« {proj} »" if proj else "le firmware worker"
+        summary = f"Identifier la carte USB du S3 et y flasher {label}" if not board else f"Flasher {label} sur {who} branché à l'USB du S3"
+        act = self._propose("usb_flash", {"what": what, "board": board}, summary)
+        lead = f"La carte branchée sur le S3 est {who}. " if board else "J'identifie d'abord la carte branchée sur le S3 (ESP32 ou Arduino). "
+        tail = ("Je flashe le firmware worker : la carte rejoindra le Wi-Fi du S3 comme nouveau worker." if not proj
+                else f"Je flashe « {proj} », puis le moniteur série s'ouvre pour vérifier que ça tourne.")
+        return self._resp(lead + tail + self._confirm_hint(ctx, "Confirme pour lancer."), "usb_flash", actions=[act])
+
+    # ============================================================ veille du labo (option espion)
+    def _h_veille(self, text, s, ctx):
+        mode = s.get("mode") or "report"
+        if mode == "people":
+            return self._resp("Ça, je ne le fais pas : surveiller une personne à son insu (messages, appels, caméra, Wi-Fi) est illégal "
+                              "et trahit sa confiance. Par contre je peux surveiller ton propre labo : je te préviens si un appareil "
+                              "inconnu rejoint le Wi-Fi du box, si un worker s'éteint ou si un de tes capteurs (mouvement, porte) se déclenche.",
+                              "veille", suggestions=["Active la veille du labo"])
+        v = ctx.get("veille") or (ctx.get("lab") or {}).get("veille") or {}
+        if mode in ("on", "off"):
+            on = mode == "on"
+            if v and bool(v.get("armed")) == on:
+                return self._resp("La veille du labo est déjà " + ("active." if on else "arrêtée."), "veille", cards=[{"type": "veille"}])
+            act = self._propose("veille", {"armed": on}, "Activer la veille du labo" if on else "Arrêter la veille du labo")
+            msg = ("J'active la veille du labo : je te préviens (ici, sur le téléphone et par notification si elle est configurée) si un appareil "
+                   "inconnu rejoint le Wi-Fi du box, si un worker s'éteint ou revient, ou si une alarme de capteur se déclenche. "
+                   "Rien n'est écouté ni filmé : je ne vois que ton propre matériel." if on else "J'arrête la veille du labo.")
+            return self._resp(msg + self._confirm_hint(ctx, "Confirme pour lancer."), "veille", actions=[act])
+        state = ("active" if v.get("armed") else "arrêtée") if v else "inconnue (je n'ai pas reçu l'état du MASTER)"
+        n = v.get("count") or 0
+        return self._resp(f"La veille du labo est {state}" + (f", {n} alerte(s) depuis son activation." if v.get("armed") else ".") +
+                          " Voici le journal :", "veille", cards=[{"type": "veille"}],
+                          suggestions=["Arrête la veille" if v.get("armed") else "Active la veille du labo"])
 
     # ============================================================ fichiers et dossiers
     def _ws(self):
@@ -1063,7 +1122,8 @@ TOOLS = [
     tool_schema("propose_action", "Propose une action à l'utilisateur, qui devra la confirmer. kinds : " + ", ".join(ACTIONS) +
                 ". params : s3_job {type, worker} ; flash {worker, project, board} ; build {project, board} ; apk {project, title, modules} ; "
                 "fleet_goal {goals: {V1: [x, y]}} ; open_page {page} ; verify {worker} ; fs_mkdir {path} ; fs_write {path, content, overwrite} ; "
-                "fs_delete {path} ; github_push {project, repo, private} ; github_create {repo, private} ; apply_fix {project, ids}.",
+                "fs_delete {path} ; github_push {project, repo, private} ; github_create {repo, private} ; apply_fix {project, ids} ; "
+                "usb_flash {what: 'worker' ou projet} (carte branchée sur l'USB du S3) ; veille {armed} (veille du labo).",
                 {"kind": {"type": "string", "enum": list(ACTIONS)}, "params": {"type": "object"}, "summary": {"type": "string"}}, ["kind", "params", "summary"]),
     tool_schema("lab_state", "Renvoie l'état du MASTER et des workers vu par l'interface.", {}),
     tool_schema("list_files", "Liste les dossiers et fichiers des projets de l'utilisateur sur le Pi.", {"path": {"type": "string"}}),

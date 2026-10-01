@@ -1,5 +1,14 @@
 # USB : moniteur, flash ESP32 et Arduino
 
+## Identification automatique de la carte
+
+À chaque branchement, le MASTER identifie la carte : il essaie le bootloader ROM d'un ESP32 (SYNC + détection de puce : ESP32, ESP32-S3, ESP32-C3…), puis le bootloader STK500 d'un Arduino (profils Optiboot 115200, « Old Bootloader » 57600, ATmega168 19200, signature vérifiée). La carte redémarre ensuite sur son programme. La page **USB & Flash** choisit alors le bon type et propose :
+
+- **ESP32 / S3 / C3** : « Installer le firmware worker » (`/sd/FIRMWARE/WORKER/<carte>/worker.bin` avec bootloader, partitions et `flash_args`, créés par `scripts\compile_all.bat`) : la carte devient un worker qui rejoint le Wi-Fi du S3 ; ou un projet de la bibliothèque ;
+- **Arduino** : un projet `.hex` de `PROJECTS/ARDUINO/`, avec le bon profil de bootloader déjà sélectionné.
+
+Le bouton « Identifier à nouveau » relance l'identification (`POST /api/usb/detect`). Patricia fait la même chose avec « flashe la carte USB ».
+
 ## Connexion physique recommandée
 
 Pour la première utilisation, éviter de fabriquer un câble directement soudé au connecteur USB du S3. Utiliser :

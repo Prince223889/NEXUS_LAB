@@ -15,5 +15,10 @@
 esp_err_t usb_flash_start_avr(const char *hex_path, const char *profile, char *err, size_t cap);
 esp_err_t usb_flash_start_esp(const char *bin_path, char *err, size_t cap);
 bool usb_flash_busy(void);
+/* Identifie la carte branchée (en tâche de fond, après `delay_ms`) : ESP32/S3/C3… par le bootloader ROM,
+ * sinon Arduino par le bootloader STK500. Lancée automatiquement à chaque branchement. */
+esp_err_t usb_flash_start_detect(uint32_t delay_ms, char *err, size_t cap);
+/* {busy, seq, board:"avr|esp32|esp32s3|esp32c3|…|", profile, text} — vide si aucune carte. */
+void usb_flash_detect_json(cJSON *obj);
 /* {busy, kind, file, step, progress, ok, result, chip, baud, last, log:[{seq,text}]} ; log depuis `since`. */
 void usb_flash_status_json(cJSON *obj, uint32_t since);

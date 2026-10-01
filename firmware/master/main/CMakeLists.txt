@@ -20,6 +20,7 @@ idf_component_register(
         "telemetry.c"
         "usb_avr.c"
         "usb_flash.c"
+        "veille.c"
         "web_api.c"
         "web_server.c"
         "wifi_lab.c"
