@@ -9,7 +9,7 @@
   const P = (A.Patricia = {});
   const SESSION = store.get('patricia.session', null) || ('s' + Date.now().toString(36));
   store.set('patricia.session', SESSION);
-  const prefs = Object.assign({ speak: false, handsfree: false, voice: '', rate: 0.92, style: 'scientifique' }, store.get('patricia.prefs', {}));
+  const prefs = Object.assign({ speak: false, handsfree: false, voice: '', rate: 0.95, style: 'scientifique', direct: true }, store.get('patricia.prefs', {}));
   const savePrefs = () => store.set('patricia.prefs', prefs);
   let piOk = null, voiceCaps = { stt: false, tts: false };
 
@@ -28,7 +28,15 @@
 
   function labContext() {
     const st = A.S.state || {};
-    return { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label, ip: w.ip, job: w.job })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+    const ctx = { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label, ip: w.ip, job: w.job, rssi: w.rssi, version: w.version })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+    const spec = store.get('studio.spec', null);   // projet ouvert dans le Studio : « flash », « compile », « crée l'APK » le visent
+    if (spec && (spec.modules || []).length) {
+      let warnings = [];
+      try { warnings = window.LAB.generate(spec).warnings || []; } catch (e) { warnings = [e.message]; }
+      const clean = JSON.parse(JSON.stringify(spec)); if (clean.options) delete clean.options.wifi_pass;
+      ctx.studio = { spec: clean, warnings: warnings.slice(0, 12) };
+    }
+    return ctx;
   }
 
   /* ------------------------------------------------------------ texte riche */
@@ -112,28 +120,157 @@
       }
       this.stopFn = finish;
     },
-    speak(text) {
-      text = String(text || '').replace(/[•#*`]/g, ' ').slice(0, 600);
-      if (!text.trim()) return Promise.resolve();
-      const pitch = prefs.style === 'complice' ? 1.12 : 1.03;
-      if (window.NexusNative && window.NexusNative.speakWith) { window.NexusNative.speakWith(text, prefs.rate, pitch); return new Promise((r) => setTimeout(r, Math.min(20000, 66 * text.length / prefs.rate))); }
-      if (window.NexusNative && window.NexusNative.speak) { window.NexusNative.speak(text); return new Promise((r) => setTimeout(r, Math.min(15000, 60 * text.length))); }
-      if (window.speechSynthesis) {
-        return new Promise((res) => {
-          const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'fr-FR'; u.rate = prefs.rate; u.pitch = pitch;
-          const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
-          const v = vs.find((x) => x.name === prefs.voice) || vs.find((x) => /female|amelie|audrey|julie|denise|hortense|google/i.test(x.name)) || vs[0];
-          if (v) u.voice = v;
-          u.onend = res; u.onerror = res;
-          speechSynthesis.cancel(); speechSynthesis.speak(u);
-        });
+    /* ---- synthèse : la voix la plus naturelle disponible ----
+     * Classement des voix françaises : 3 = neuronales (Edge « Natural/Online », Apple « Premium/Enhanced »),
+     * 2 = Google (Chrome, Android), 1 = voix locales classiques, 0 = eSpeak (très robotique). Voix féminine préférée
+     * (une voix d'homme ne passe devant une voix de femme que si elle est d'une classe nettement plus naturelle).
+     * Hauteur 1.0 partout (monter la hauteur rend la voix métallique) ; le style « complice » parle juste un peu plus lentement.
+     * Le texte est nettoyé (markdown, émojis, code, liens, unités en mots) puis lu phrase par phrase (< 200 caractères) :
+     * intonation plus naturelle et pas de coupure de Chrome après ~15 s. */
+    FEMALE: /denise|eloise|vivienne|brigitte|c[eé]leste|coralie|jacqueline|jos[eé]phine|yvette|sylvie|charline|ariane|am[eé]lie|audrey|aur[eé]lie|julie|hortense|marie|virginie|l[eé]a\b|chantal|female|femme|google/i,
+    MALE: /henri|r[eé]my|alain|claude|j[eé]r[oô]me|maurice|\byves\b|antoine|\bjean\b|thierry|g[eé]rard|fabrice|thomas|nicolas|\bdaniel\b|\bpaul\b|\bmale\b|homme/i,
+    tier(name) { return /espeak|mbrola/i.test(name) ? 0 : /natural|neural|online|premium|enhanced|wavenet/i.test(name) ? 3 : /google/i.test(name) ? 2 : 1; },
+    score(v) { const n = v.name || ''; return this.tier(n) * 10 + (this.FEMALE.test(n) ? 3 : this.MALE.test(n) ? -12 : 0) + (/^fr[-_]FR/i.test(v.lang) ? 1 : 0); },
+    webVoices() { try { return window.speechSynthesis ? speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang)).sort((a, b) => this.score(b) - this.score(a)) : []; } catch (e) { return []; } },
+    /* getVoices() est vide au premier appel dans Chrome : on attend « voiceschanged » (1,5 s au plus). */
+    voicesReady() {
+      if (!window.speechSynthesis) return Promise.resolve([]);
+      if (speechSynthesis.getVoices().length) return Promise.resolve(this.webVoices());
+      return new Promise((res) => {
+        const done = () => { clearTimeout(t); try { speechSynthesis.removeEventListener('voiceschanged', done); } catch (e) { /* ignoré */ } res(this.webVoices()); };
+        const t = setTimeout(done, 1500);
+        try { speechSynthesis.addEventListener('voiceschanged', done); } catch (e) { /* vieux navigateur : le délai suffit */ }
+      });
+    },
+    /* Voix du téléphone (APK NEXUS récente), déjà classées par Android : [{name, label}]. */
+    nativeVoices() { try { return window.NexusNative && window.NexusNative.voices ? JSON.parse(window.NexusNative.voices() || '[]') : []; } catch (e) { return []; } },
+    hasNative() { const N = window.NexusNative; return !!(N && (N.speakWith || N.speak)); },
+    /* Moteur à utiliser : { kind: 'piper' | 'native' | 'web' | null, voice }. Automatique = meilleure voix naturelle du
+     * navigateur (Natural/Online/Google), sinon Piper sur le Pi, sinon la meilleure voix locale. */
+    pick(list, noPiper) {
+      if (prefs.voice === 'piper' && !noPiper) return { kind: 'piper' };
+      if (this.hasNative()) return { kind: 'native' };
+      const vs = list || this.webVoices();
+      const v = (prefs.voice && vs.find((x) => x.name === prefs.voice)) || vs[0];
+      if (v && (v.name === prefs.voice || this.tier(v.name) >= 2)) return { kind: 'web', voice: v };
+      if (voiceCaps.tts && !noPiper) return { kind: 'piper' };
+      return { kind: window.speechSynthesis ? 'web' : null, voice: v };
+    },
+    describe() {
+      const e = this.pick();
+      if (e.kind === 'piper') return 'Piper sur le Pi (siwis, hors ligne)';
+      if (e.kind === 'native') return 'voix Android' + (prefs.voice ? ' · ' + prefs.voice : ' (meilleure voix française du téléphone)');
+      if (e.kind === 'web') return e.voice ? e.voice.name + (this.tier(e.voice.name) >= 2 ? ' (naturelle)' : ' (voix locale)') : 'voix par défaut du navigateur';
+      return 'aucune voix disponible ici';
+    },
+    /* Texte → phrases dites : sans markdown, émojis, blocs de code ni liens ; symboles et unités en mots. */
+    spoken(text) {
+      let t = String(text || '')
+        .replace(/```[\s\S]*?```/g, ' (le code est affiché à l\'écran). ')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/https?:\/\/\S+/g, ' le lien affiché ')
+        .replace(/#library\?p=[a-z0-9_]+/gi, ' ')
+        .replace(/→|->|⇒|=>/g, ' vers ').replace(/←|<-/g, ' depuis ').replace(/≈|~/g, ' environ ').replace(/±/g, ' plus ou moins ')
+        .replace(/≥|>=/g, ' au moins ').replace(/≤|<=/g, ' au plus ').replace(/&/g, ' et ')
+        .replace(/°\s?C\b/g, ' degrés').replace(/°/g, ' degrés').replace(/\s?%/g, ' pour cent')
+        .replace(/\bW(\d+)\b/g, 'worker $1')
+        .replace(/\b(\d)V(\d)\b/g, '$1,$2 volts')
+        .replace(/(\d)\s?mA\b/g, '$1 milliampères').replace(/(\d)\s?mV\b/g, '$1 millivolts')
+        .replace(/(\d)\s?V\b/g, '$1 volts').replace(/(\d)\s?A\b/g, '$1 ampères')
+        .replace(/(\d)\s?kΩ/g, '$1 kilo-ohms').replace(/(\d)\s?Ω/g, '$1 ohms')
+        .replace(/(\d)\s?ms\b/g, '$1 millisecondes').replace(/(\d)\s?MHz\b/g, '$1 mégahertz').replace(/(\d)\s?kHz\b/g, '$1 kilohertz')
+        .replace(/(\d)\s?Ko\b/g, '$1 kilo-octets').replace(/(\d)\s?Mo\b/g, '$1 mégaoctets').replace(/(\d)\s?Go\b/g, '$1 gigaoctets')
+        .replace(/(^|[^\d.])(\d+)\.(\d+)(?![.\d])/g, '$1$2,$3')
+        .replace(/[*_#>|`•]+/g, ' ')
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{21FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, ' ');
+      t = t.split(/\n+/).map((l) => l.replace(/^[\s-]+|\s+$/g, '')).filter(Boolean).map((l) => (/[.!?…:;,]$/.test(l) ? l : l + '.')).join(' ');
+      return t.replace(/([.!?…])(\s*\.)+/g, '$1').replace(/\s+/g, ' ').trim().slice(0, 1500);
+    },
+    chunks(text, max) {
+      max = max || 190;
+      const out = []; let cur = '';
+      text.replace(/([.!?…;:])\s+/g, '$1\n').split('\n').forEach((s) => {
+        s = s.trim();
+        while (s.length > max) {
+          let cut = s.lastIndexOf(', ', max); if (cut < max / 3) cut = s.lastIndexOf(' ', max); if (cut < 1) cut = max;
+          if (cur) { out.push(cur); cur = ''; }
+          out.push(s.slice(0, cut + 1).trim()); s = s.slice(cut + 1).trim();
+        }
+        if (!s) return;
+        if (cur && cur.length + 1 + s.length > max) { out.push(cur); cur = s; } else cur = cur ? cur + ' ' + s : s;
+      });
+      if (cur) out.push(cur);
+      return out;
+    },
+    speaking: 0,
+    audio: null, audioEnd: null,
+    /* Coupe la parole en cours (navigateur, téléphone ou Pi). */
+    hush() {
+      this.speaking++;
+      try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { /* ignoré */ }
+      if (this.audio) { this.audio.pause(); this.audio = null; }
+      if (this.audioEnd) this.audioEnd();
+      try { if (window.NexusNative && window.NexusNative.stopSpeaking) window.NexusNative.stopSpeaking(); } catch (e) { /* ignoré */ }
+      if (window.__nexusSpoken) window.__nexusSpoken();
+    },
+    /* Lit le texte et se résout quand Patricia a fini de parler. */
+    async speak(text) {
+      text = this.spoken(text);
+      if (!text) return;
+      const id = ++this.speaking;
+      const rate = Math.max(0.5, Math.min(1.6, prefs.rate * (prefs.style === 'complice' ? 0.92 : 1)));
+      const list = this.hasNative() || prefs.voice === 'piper' ? null : await this.voicesReady();
+      if (id !== this.speaking) return;
+      let e = this.pick(list);
+      if (e.kind === 'piper') {
+        try { return await this.piper(text, rate, id); } catch (err) { if (id !== this.speaking) return; e = this.pick(list, true); }
       }
-      if (voiceCaps.tts) {
-        return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text, speed: 1 / prefs.rate }) })
-          .then((r) => r.blob()).then((b) => new Promise((res) => { const a = new Audio(URL.createObjectURL(b)); a.onended = res; a.onerror = res; a.play().catch(res); }));
-      }
-      return Promise.resolve();
+      if (e.kind === 'native') return this.nativeSay(text, rate);
+      if (e.kind === 'web') return this.webSay(this.chunks(text), rate, e.voice, id);
+    },
+    nativeSay(text, rate) {
+      const N = window.NexusNative;
+      if (window.__nexusSpoken) window.__nexusSpoken();
+      return new Promise((res) => {
+        // fin signalée par l'APK (__nexusSpoken) ; délai de secours pour les anciennes APK
+        const t = setTimeout(done, Math.min(90000, 75 * text.length / rate) + 800);
+        function done() { clearTimeout(t); if (window.__nexusSpoken === done) window.__nexusSpoken = null; res(); }
+        window.__nexusSpoken = done;
+        const name = prefs.voice && prefs.voice !== 'piper' ? prefs.voice : '';
+        if (N.speakAs && name) N.speakAs(text, rate, 1.0, name);
+        else if (N.speakWith) N.speakWith(text, rate, 1.0);
+        else N.speak(text);
+      });
+    },
+    webSay(parts, rate, voice, id) {
+      try { speechSynthesis.cancel(); } catch (e) { /* ignoré */ }
+      return new Promise((res) => {
+        let i = 0;
+        const next = () => {
+          if (id !== this.speaking || i >= parts.length) return res();
+          const u = new SpeechSynthesisUtterance(parts[i++]);
+          u.lang = voice ? voice.lang : 'fr-FR'; if (voice) u.voice = voice;
+          u.rate = rate; u.pitch = 1;
+          let fired = false;
+          const go = () => { if (fired) return; fired = true; clearTimeout(t); next(); };
+          const t = setTimeout(go, 4000 + 120 * u.text.length / rate);   // Chrome oublie parfois « onend »
+          u.onend = go; u.onerror = go;
+          speechSynthesis.speak(u);
+        };
+        next();
+      });
+    },
+    /* Voix du Pi : Piper découpe en phrases et marque une courte pause entre elles ; « rate » suit le curseur Débit. */
+    piper(text, rate, id) {
+      return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text, rate }) })
+        .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+        .then((b) => new Promise((res) => {
+          if (id !== this.speaking) return res();
+          const url = URL.createObjectURL(b), a = new Audio(url);
+          const end = () => { if (this.audioEnd === end) { this.audioEnd = null; this.audio = null; } URL.revokeObjectURL(url); res(); };
+          this.audio = a; this.audioEnd = end;
+          a.onended = end; a.onerror = end; a.play().catch(end);
+        }));
     }
   });
   function encodeWav(chunks, inRate, outRate) {
@@ -161,6 +298,7 @@
       case 'generate': return `<div class="pa-card" data-gen="${i}"><div class="pa-card-h">${icon('code')}${esc(c.title || 'Projet')} · ${esc(c.board)}</div><div class="pa-gen-body small muted">Génération…</div></div>`;
       case 'fleet': return `<div class="pa-card"><div class="pa-card-h">${icon('car')}Flotte</div><div class="row wrap"><a class="btn sm" href="#vehicles">${icon('radar')}Ouvrir l'écran Flotte</a><button class="btn sm danger" data-estop>${icon('stop')}ARRÊT</button></div></div>`;
       case 'lab': { const st = A.S.state || {}; const ws = st.workers || []; return `<div class="pa-card"><div class="pa-card-h">${icon('cpu')}Workers</div><div class="pa-workers">${ws.map((w) => `<span class="pa-w ${w.state === 'OFFLINE' ? 'off' : ''}" title="${esc(w.state)}">W${w.id}<small>${esc(w.state || '')}</small></span>`).join('') || '<span class="muted small">Aucun</span>'}</div></div>`; }
+      case 'boards': return `<div class="pa-card" data-boards><div class="pa-card-h">${icon('cpu')}<span class="grow">Cartes branchées</span><a class="btn sm ghost" href="#boards">${icon('chevron')}Détails</a></div><div class="pa-boards-body small muted">Inventaire…</div></div>`;
       case 'pi_projects': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('sd')}Sur la microSD du Pi</div><div class="chips">${c.items.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : '';
       default: return '';
     }
@@ -201,13 +339,14 @@
     return `<div class="pa-action" data-aid="${esc(a.id)}"><div class="grow"><div class="small"><b>${esc(a.summary)}</b></div><div class="hint">${a.executor === 'ui' ? 'Exécuté par le MASTER S3' : 'Exécuté par le Pi'}${a.risk && a.risk !== 'aucun' ? ` · risque ${esc(a.risk)}` : ''}</div></div>
       <button class="btn sm" data-cancel>Annuler</button><button class="btn sm ${a.risk === 'élevé' ? 'danger' : 'primary'}" data-confirm>${a.needs_confirm ? 'Confirmer' : 'Faire'}</button></div>`;
   }
+  const autoRun = (a) => prefs.direct && a.auto;
   async function runAction(el, a, log) {
     const row = el.closest('.pa-action');
     const status = (t, cls) => { row.innerHTML = `<div class="small ${cls || ''}">${t}</div>`; };
     let res;
     try { res = await piJSON(`/api/v1/patricia/actions/${a.id}/confirm`, {}, 300000); }
     catch (e) { status(esc(e.message), 'bad-text'); return; }
-    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); if (a.kind === 'github_push' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.files} fichier(s) · ${res.result.created ? 'dépôt créé' : 'mis à jour'}</div>`); return; }
+    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); if (a.kind === 'github_create' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.created ? 'dépôt créé' : 'existait déjà'}</div>`); if (a.kind === 'apply_fix' && res.result) row.insertAdjacentHTML('beforeend', `<div class="small">${(res.result.applied || []).length} correction(s) appliquée(s)${(res.result.changed_files || []).length ? ' dans ' + res.result.changed_files.map(esc).join(', ') : ''} · sauvegarde : <code>${esc(res.result.backup || '')}</code></div>`); if (/^fs_/.test(a.kind) && res.result) row.insertAdjacentHTML('beforeend', `<div class="small muted">${esc(res.result.trash ? 'Corbeille : ' + res.result.trash : res.result.path + (res.result.bytes != null ? ' · ' + res.result.bytes + ' octets' : ''))}</div>`); if (a.kind === 'github_push' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.files} fichier(s) · ${res.result.created ? 'dépôt créé' : 'mis à jour'}</div>`); return; }
     const p = res.params || a.params;
     try {
       if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
@@ -215,6 +354,8 @@
       else if (a.kind === 'apk') { await apkFlow(p, row, a); }
       else if (a.kind === 'save_project') { const card = log.querySelector('[data-gen]'); status('Enregistrement…'); const c = card && P._cards[card.dataset.gen]; if (c) { const res2 = window.LAB.generate({ board: c.board, title: c.title, modules: c.modules.map((id) => ({ id })) }); const id = await saveToPi(c, res2); status(id ? `${icon('check')} Enregistré : ${esc(id)}` : 'Échec'); report(a.id, !!id, { id }); } }
       else if (a.kind === 'flash') { await flashFlow(p, row, a, log); }
+      else if (a.kind === 'flash_studio') { status(`${icon('zap')} Flash de « ${esc(p.title)} » sur le worker ${esc(p.worker)} : suis les étapes dans la fenêtre ouverte.`); A.flashPipeline({ spec: p.spec, title: p.title, worker: p.worker, auto: true }); report(a.id, true, { worker: p.worker }); }
+      else if (a.kind === 'build_studio') { await buildStudioFlow(p, row, a, log); }
       else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
     } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
   }
@@ -222,7 +363,8 @@
   async function apkFlow(p, row, a) {
     if (!A.AppStudio) throw new Error('Studio APK non chargé');
     row.innerHTML = '<div class="small">Préparation de l\'application…</div>';
-    const spec = { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
+    const fromCat = p.catalog && A.projectById ? A.projectById(p.catalog) : null;
+    const spec = p.spec || (fromCat && fromCat.spec) || { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
     const design = A.AppStudio.fromSpec(spec, p.title);
     design.id = A.AppStudio.slug(p.project || p.title);
     row.innerHTML = '<div class="small">Le Pi assemble et signe l\'APK…</div>';
@@ -234,6 +376,16 @@
       <div class="small" style="margin-top:6px;word-break:break-all">${esc(res.apk_url)}</div>
       <div class="small">Appli web : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">ouvrir</a> · <a href="#apkstudio?p=${encodeURIComponent(p.project)}">personnaliser dans le Studio APK</a></div></div></div></div>`;
     report(a.id, true, { apk: res.apk_url, sha256: res.sha256 });
+  }
+  /* Projet du Studio : enregistré sur le Pi (code généré + fiche), puis compilé ; une erreur part à Patricia. */
+  async function buildStudioFlow(p, row, a, log) {
+    const res = window.LAB.generate(p.spec);
+    const id = A.norm(p.title || 'projet').replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'projet';
+    row.innerHTML = '<div class="small">Enregistrement sur le Pi…</div>';
+    await A.piSaveProject(id, { [id + '.ino']: res.code, 'project.json': JSON.stringify({ title: p.title, board: p.board, spec: p.spec, outs: res.outs, wiring: res.wiring, created_by: 'Patricia' }, null, 2) });
+    const q = await piJSON('/api/v1/build', { project_id: id, board: p.board || res.board, priority: 70 });
+    const j = await watchBuild(q.id, row, log);
+    report(a.id, !!(j && j.status === 'success'), { project: id, job: q.id });
   }
   async function report(aid, ok, details, serial) {
     try { return await piJSON(`/api/v1/patricia/actions/${aid}/report`, { ok, details, serial_log: serial || '' }); } catch (e) { return null; }
@@ -320,10 +472,12 @@
     const mode = [r.mode === 'ia' ? 'IA' : r.mode === 'local' ? 'hors ligne' : r.mode, r.notice].filter(Boolean).join(' · ');
     m.innerHTML = `<div>${rich(r.answer)}</div>${cards}${acts}${fu}${sugg}<span class="mode">${esc(mode)}</span>`;
     $$('[data-gen]', m).forEach((box) => renderGenerate(box, P._cards[box.dataset.gen]));
+    $$('[data-boards]', m).forEach((box) => { if (A.boardsReport) A.boardsReport().then((rep) => { $('.pa-boards-body', box).className = 'pa-boards-body'; $('.pa-boards-body', box).innerHTML = A.boardsHtml(rep, true); }).catch((e) => { $('.pa-boards-body', box).textContent = e.message; }); });
     (r.actions || []).forEach((a) => {
       const row = m.querySelector(`[data-aid="${a.id}"]`);
       row.querySelector('[data-confirm]').onclick = (e) => runAction(e.target, a, log);
       row.querySelector('[data-cancel]').onclick = () => { piJSON(`/api/v1/patricia/actions/${a.id}/cancel`, {}).catch(() => {}); row.innerHTML = '<div class="small muted">Annulé.</div>'; };
+      if (autoRun(a)) setTimeout(() => runAction(row.querySelector('[data-confirm]'), a, log), 50);   // réglage « Agir directement »
     });
     if (r.project) P.project = r.project;
     log.scrollTop = log.scrollHeight;
@@ -343,6 +497,7 @@
     const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
     let r;
     const context = labContext();
+    try { const si = await A.api('/api/system/info'); if (si && si.usb) context.usb = si.usb; } catch (e) { /* MASTER injoignable */ }
     try { const f = await A.api('/api/feeds'); context.feeds = (Array.isArray(f) ? f : f.feeds || []).slice(0, 80).map((x) => ({ device: x.source || x.device, key: x.key, value: x.value, unit: x.unit, ip: x.ip, age_ms: x.age_ms })); } catch (e) { /* MASTER injoignable */ }
     try { r = await piJSON('/api/v1/patricia/chat', { q, session: SESSION, context }, 150000); piOk = true; }
     catch (e) { piOk = false; r = await localAnswer(q); }
@@ -381,9 +536,12 @@
         <li>${icon('alert')}Trouver la cause d'une erreur de compilation, de flash ou du moniteur série.</li>
         <li>${icon('zap')}Compiler sur le Pi, flasher un worker et vérifier qu'il fonctionne.</li>
         <li>${icon('car')}Piloter jusqu'à 9 voitures avec anticollision ; « stop » arrête tout.</li>
-        <li>${icon('phone')}Préparer l'application Android de ton projet.</li></ul>
-        <p class="hint" style="margin-top:8px">Toute action sur le matériel te demande une confirmation. L'arrêt d'urgence, lui, est immédiat.</p></div>
-        <div class="card pad small"><h3 style="margin-bottom:8px">Essaie</h3><div class="chips" id="pa-try">${['Je veux faire une serre connectée avec un ESP32-S3', 'Comment brancher un HC-SR04 ?', 'Note que la pompe consomme 300 mA', 'On reprend', 'État du labo', 'Toutes les voitures en ligne'].map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div></div></div></div>`;
+        <li>${icon('phone')}Créer l'application Android de ton projet, avec lien et QR.</li>
+        <li>${icon('folder')}Créer et ranger tes dossiers et fichiers, et les envoyer sur GitHub.</li>
+        <li>${icon('search')}Analyser ton code et corriger les erreurs (copie de sauvegarde gardée).</li>
+        <li>${icon('cpu')}Faire le bilan des cartes branchées en Wi-Fi et en USB.</li></ul>
+        <p class="hint" style="margin-top:8px">« Flash » et « compile » partent directement ou après validation, selon Patricia → Réglages. L'arrêt d'urgence est immédiat.</p></div>
+        <div class="card pad small"><h3 style="margin-bottom:8px">Essaie</h3><div class="chips" id="pa-try">${['Je veux faire une serre connectée avec un ESP32-S3', 'Quelles cartes sont branchées ?', 'Flash', 'Fais-moi une APK pour la serre', 'Analyse mon projet', 'Crée un dossier essais', 'Qui es-tu ?'].map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div></div></div></div>`;
     const log = (P.log = $('#pa-log', el));
     micBtn = $('#pa-mic', el); inputEl = $('#pa-in', el);
     const send = () => { const v = inputEl.value; inputEl.value = ''; inputEl.style.height = ''; P.ask(v); };
@@ -460,7 +618,6 @@
 
   /* ------------------------------------------------------------ réglages */
   async function settingsTab(el) {
-    const voices = (window.speechSynthesis ? speechSynthesis.getVoices() : []).filter((v) => /^fr/i.test(v.lang));
     el.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2>Cerveau de Patricia</h2></div><div class="card-b stack">
       <div class="seg" id="ps-preset"><button data-p="local">Hors ligne (règles)</button><button data-p="ollama">IA locale sur le Pi</button><button data-p="online">IA en ligne</button></div>
       <label class="field">Adresse « chat/completions » (vue depuis le Pi)<input class="input" id="ps-ep" placeholder="http://127.0.0.1:11434/v1/chat/completions"></label>
@@ -471,14 +628,18 @@
       <div class="card"><div class="card-h"><h2>Voix</h2></div><div class="card-b stack small">
       <div>Micro : <b>${Voice.native() ? 'natif Android (APK NEXUS)' : Voice.web() ? 'reconnaissance du navigateur' : Voice.rec() ? 'Vosk sur le Pi' : 'indisponible ici'}</b></div>
       ${Voice.available() ? '' : `<div class="banner warn">${icon('alert')}<div>${esc(Voice.why())}</div></div>`}
-      <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b>${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
+      <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b id="ps-piper">${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
       <label class="switch"><input type="checkbox" id="ps-speak" ${prefs.speak ? 'checked' : ''}><span class="track"></span>Voix activée (sinon Patricia écrit seulement)</label>
       <label class="field">Débit de la voix : <b id="ps-rate-v">${Math.round(prefs.rate * 100)} %</b><input type="range" id="ps-rate" min="0.7" max="1.2" step="0.02" value="${prefs.rate}"></label>
-      <label class="field">Voix de lecture<select class="input" id="ps-voice"><option value="">Automatique</option>${voices.map((v) => `<option ${v.name === prefs.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
-      <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div>
+      <label class="field">Voix<select class="input" id="ps-voice"><option value="">Automatique (la plus naturelle)</option></select></label>
+      <div class="row"><button class="btn sm" id="ps-test">${icon('volume')}Écouter</button><span class="muted" id="ps-voice-now"></span></div>
+      <div class="hint">Les voix les plus humaines : « Natural » d'Edge sur PC, la voix Google sur Android ou Chrome, Piper (siwis) hors ligne sur le Pi.</div></div></div>
       <div class="card"><div class="card-h"><h2>Personnalité</h2></div><div class="card-b stack small">
       <div class="seg" id="ps-style"><button data-st="scientifique" class="${prefs.style !== 'complice' ? 'on' : ''}">Scientifique</button><button data-st="complice" class="${prefs.style === 'complice' ? 'on' : ''}">Complice</button></div>
       <div class="hint"><b>Scientifique</b> (par défaut) : pédagogue et neutre, elle explique pas à pas et te corrige. <b>Complice</b> : même rigueur, mais taquine et chaleureuse ; elle te pose de petites questions et redevient sérieuse dès qu'il s'agit de sécurité.</div></div></div>
+      <div class="card"><div class="card-h"><h2 class="grow">Quand je dis « flash » ou « compile »</h2></div><div class="card-b stack small">
+      <div class="seg" id="ps-direct"><button data-d="1" class="${prefs.direct ? 'on' : ''}">Patricia agit directement</button><button data-d="0" class="${prefs.direct ? '' : 'on'}">Patricia me demande de valider</button></div>
+      <p class="hint">Agir directement : flash, compilation, APK, check-up, nouveaux dossiers et fichiers partent tout de suite. Restent toujours à valider : envoi sur GitHub, suppression ou remplacement d'un fichier, correction de ton code, déplacement des voitures.</p></div></div>
       <div class="card"><div class="card-h"><h2 class="grow">GitHub</h2><span class="badge" id="ps-gh-state">…</span></div><div class="card-b stack small">
       <div class="muted">Dis « envoie la serre sur GitHub » : Patricia crée le dépôt s'il n'existe pas et y dépose le projet, après ta confirmation. Le Pi a besoin d'Internet (Wi-Fi amont du S3).</div>
       <label class="field">Jeton GitHub (fine-grained : Administration + Contents en écriture)<input class="input" id="ps-gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
@@ -491,9 +652,25 @@
     catch (e) { $('#ps-state', el).textContent = 'Pi injoignable : ' + e.message; }
     $('#ps-preset', el).onclick = (e) => { const b = e.target.closest('[data-p]'); if (!b) return; const p = presets[b.dataset.p]; $('#ps-ep', el).value = p.ep; $('#ps-model', el).value = p.model; $$('#ps-preset button', el).forEach((x) => x.classList.toggle('on', x === b)); };
     $('#ps-save', el).onclick = async () => { try { const r = await piJSON('/api/v1/assistant/config', { endpoint: $('#ps-ep', el).value.trim(), model: $('#ps-model', el).value.trim(), key: $('#ps-key', el).value }); $('#ps-key', el).value = ''; $('#ps-state', el).textContent = r.endpoint ? 'IA enregistrée' : 'Mode hors ligne'; toast('Réglages de Patricia enregistrés', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
-    $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); };
-    $('#ps-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak && window.speechSynthesis) speechSynthesis.cancel(); };
+    /* Liste des voix : celles du téléphone (APK) ou du navigateur, la plus naturelle d'abord, plus Piper si le Pi l'a. */
+    const voiceNow = () => { const n = $('#ps-voice-now', el); if (n) n.textContent = 'Voix utilisée : ' + Voice.describe(); };
+    const fillVoices = async () => {
+      try { voiceCaps = Object.assign({}, voiceCaps, await pi('/api/v1/patricia/voice')); } catch (e) { /* Pi absent : pas de Piper */ }
+      const sel = $('#ps-voice', el); if (!sel) return;
+      const nat = Voice.nativeVoices();
+      const list = nat.length ? nat.map((v) => ({ name: v.name, label: v.label || v.name }))
+        : (await Voice.voicesReady()).map((v) => ({ name: v.name, label: v.name + ' (' + v.lang + (Voice.tier(v.name) >= 2 ? ', naturelle' : Voice.tier(v.name) ? '' : ', robotique') + ')' }));
+      const opts = [{ name: '', label: 'Automatique (la plus naturelle)' }].concat(list, voiceCaps.tts || prefs.voice === 'piper' ? [{ name: 'piper', label: 'Voix du Pi (Piper, hors ligne)' }] : []);
+      if (prefs.voice && !opts.some((o) => o.name === prefs.voice)) opts.push({ name: prefs.voice, label: prefs.voice + ' (absente ici → automatique)' });
+      sel.innerHTML = opts.map((o) => `<option value="${esc(o.name)}" ${o.name === prefs.voice ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
+      const pb = $('#ps-piper', el); if (pb) pb.textContent = voiceCaps.tts ? 'installé' : 'absent';
+      voiceNow();
+    };
+    fillVoices();
+    $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); voiceNow(); };
+    $('#ps-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak) Voice.hush(); };
     $('#ps-rate', el).oninput = (e) => { prefs.rate = Number(e.target.value); $('#ps-rate-v', el).textContent = Math.round(prefs.rate * 100) + ' %'; savePrefs(); };
+    $('#ps-direct', el).onclick = (e) => { const b = e.target.closest('[data-d]'); if (!b) return; prefs.direct = b.dataset.d === '1'; savePrefs(); $$('#ps-direct button', el).forEach((x) => x.classList.toggle('on', x === b)); toast(prefs.direct ? 'Patricia agit directement' : 'Patricia demande de valider', 'ok'); };
     $('#ps-style', el).onclick = async (e) => {
       const b = e.target.closest('[data-st]'); if (!b) return;
       prefs.style = b.dataset.st; savePrefs();
@@ -505,7 +682,7 @@
     pi('/api/v1/patricia/github').then(ghShow).catch(() => { $('#ps-gh-state', el).textContent = 'Pi injoignable'; });
     $('#ps-gh-save', el).onclick = async () => { try { const tok = $('#ps-gh-token', el).value.trim(); ghShow(await piJSON('/api/v1/patricia/github', Object.assign({ owner: $('#ps-gh-owner', el).value.trim(), private: $('#ps-gh-private', el).checked }, tok ? { token: tok } : {}), 30000)); $('#ps-gh-token', el).value = ''; toast('GitHub enregistré', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
     $('#ps-gh-del', el).onclick = async () => { try { ghShow(await piJSON('/api/v1/patricia/github', { delete: true })); toast('Jeton GitHub oublié', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
-    $('#ps-test', el).onclick = () => Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
+    $('#ps-test', el).onclick = () => { Voice.hush(); Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?'); };
   }
 
   /* ------------------------------------------------------------ enregistrement */

@@ -199,3 +199,19 @@ def push_project(project_dir: Path, project_id: str, repo: str | None = None, pr
         files["README.md"] = f"# {project_id}\n\nProjet ESP32 créé avec NEXUS LAB et envoyé par Patricia.\n".encode()
     return client.push(owner, name, files, message or f"NEXUS LAB : projet {project_id} envoyé par Patricia", priv,
                        f"Projet ESP32 « {project_id} » (NEXUS LAB)")
+
+
+def create_repo(name: str, private: bool | None = None, description: str = "") -> dict:
+    """Crée un dépôt (avec un README initial) sur le compte configuré ; ne touche pas à un dépôt existant."""
+    cfg = load_config()
+    if not cfg.get("token"):
+        raise GitHubError("GitHub n'est pas configuré : ajoute un jeton dans Patricia → Réglages → GitHub.")
+    client = Client(cfg["token"])
+    owner = cfg.get("owner") or cfg.get("login") or client.user()["login"]
+    name = repo_name(name)
+    if not REPO_RE.fullmatch(name):
+        raise GitHubError("Nom de dépôt invalide.")
+    priv = cfg.get("private", True) if private is None else bool(private)
+    repo, created = client.ensure_repo(owner, name, priv, description or "Dépôt créé par Patricia (NEXUS LAB)")
+    return {"repo": f"{owner}/{name}", "url": repo.get("html_url") or f"https://github.com/{owner}/{name}", "created": created,
+            "private": bool(repo.get("private", priv))}

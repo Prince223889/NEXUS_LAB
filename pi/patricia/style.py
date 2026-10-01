@@ -13,7 +13,7 @@ STYLES = {"scientifique": "Scientifique (neutre, pédagogue)", "complice": "Comp
 DEFAULT = "scientifique"
 
 # Intentions où l'on reste sobre, quel que soit le style.
-SERIOUS = {"estop", "drive", "fleet_status", "flash", "verify", "job", "build", "install_library", "empty"}
+SERIOUS = {"estop", "drive", "fleet_status", "flash", "verify", "job", "build", "install_library", "empty", "identity", "files", "analyze", "boards"}
 
 TEACH = """
 Façon d'expliquer :

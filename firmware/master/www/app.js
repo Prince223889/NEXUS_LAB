@@ -1,4 +1,4 @@
-/* ESP32 LAB — app.js généré depuis www/src (20 fichiers). Ne pas modifier : éditez www/src. */
+/* ESP32 LAB — app.js généré depuis www/src (21 fichiers). Ne pas modifier : éditez www/src. */
 /* ---- 10_core.js ---- */
 /* ESP32 LAB 6 — application web du MASTER (PC, tablette, téléphone).
  * Fichier source : les fichiers de www/src/ sont concaténés dans www/app.js par tools/bundle_www.py
@@ -769,7 +769,14 @@
     { id: 'MEM_TEST', name: 'Test mémoire', desc: 'Allocation et motif sur la RAM (et PSRAM).', icon: 'memory' },
     { id: 'I2C_SCAN', name: 'Scan I2C', desc: 'Liste les adresses présentes sur le bus I2C du worker.', icon: 'search' },
     { id: 'WIFI_SCAN', name: 'Scan Wi-Fi', desc: 'Réseaux visibles depuis le worker (RSSI, canal).', icon: 'wifi' },
-    { id: 'IDENTIFY', name: 'Identifier', desc: 'Fait clignoter la LED du worker pour le repérer.', icon: 'eye' }
+    { id: 'IDENTIFY', name: 'Identifier', desc: 'Fait clignoter la LED du worker pour le repérer.', icon: 'eye' },
+    { id: 'ADC_READ', name: 'Voltmètre (ADC)', desc: 'Tension moyenne (mV) de chaque broche ADC1 libre du worker.', icon: 'bolt' },
+    { id: 'GPIO_TEST', name: 'Test des broches', desc: 'Tirage interne haut/bas : broches libres, tenues à GND ou à 3V3.', icon: 'pin' },
+    { id: 'ONEWIRE_SCAN', name: 'Scan 1-Wire', desc: 'Identifiants ROM du bus 1-Wire et température des DS18B20.', icon: 'thermo' },
+    { id: 'LOGIC_SAMPLE', name: 'Analyseur logique', desc: 'Capture 1 s à 20 kHz : fréquence et rapport cyclique par broche.', icon: 'activity' },
+    { id: 'PWM_GEN', name: 'Générateur PWM', desc: 'Signal carré 1 kHz à 50 % pendant 10 s sur la broche PWM du worker.', icon: 'wave' },
+    { id: 'SERVO_SWEEP', name: 'Balayage servo', desc: 'Servomoteur 0° → 180° → 0° sur la broche servo du worker.', icon: 'compass' },
+    { id: 'TONE_TEST', name: 'Test buzzer', desc: 'Balayage 200 → 4000 Hz sur la broche buzzer du worker.', icon: 'volume' }
   ];
   A.JOB_TYPES = JOB_TYPES;
   const jobName = (t) => (JOB_TYPES.find((j) => j.id === t) || { name: t }).name;
@@ -982,7 +989,7 @@
     });
   };
   A.actions['fleet-menu'] = () => {
-    const items = [['PING', 'activity', 'Ping de toute la flotte'], ['SYSTEM_TEST', 'check', 'Check-up de toute la flotte'], ['BENCHMARK', 'gauge', 'Benchmark comparatif'], ['I2C_SCAN', 'search', 'Scan I2C partout'], ['WIFI_SCAN', 'wifi', 'Cartographie Wi-Fi (scan partout)'], ['MEM_TEST', 'memory', 'Test mémoire partout'], ['IDENTIFY', 'eye', 'Faire clignoter tous les workers']];
+    const items = [['PING', 'activity', 'Ping de toute la flotte'], ['SYSTEM_TEST', 'check', 'Check-up de toute la flotte'], ['BENCHMARK', 'gauge', 'Benchmark comparatif'], ['I2C_SCAN', 'search', 'Scan I2C partout'], ['WIFI_SCAN', 'wifi', 'Cartographie Wi-Fi (scan partout)'], ['MEM_TEST', 'memory', 'Test mémoire partout'], ['GPIO_TEST', 'pin', 'Test des broches partout'], ['ADC_READ', 'bolt', 'Voltmètre sur toute la flotte'], ['ONEWIRE_SCAN', 'thermo', 'Scan 1-Wire partout (DS18B20)'], ['IDENTIFY', 'eye', 'Faire clignoter tous les workers']];
     const d = drawer('Actions groupées', `<p class="small muted" style="margin-bottom:12px">Un job est créé pour chaque worker en ligne ; suivez la progression dans Jobs.</p><div class="card">${items.map(([t, i, n]) => `<button class="list-item click" style="width:100%;border:0;background:none;text-align:left;cursor:pointer" data-t="${t}"><div class="icon-tile accent">${icon(i)}</div><div class="grow" style="font-weight:600">${n}</div>${icon('chevron')}</button>`).join('')}
       <button class="list-item click" style="width:100%;border:0;background:none;text-align:left;cursor:pointer" data-t="REBOOT" ${S.admin ? '' : 'disabled'}><div class="icon-tile bad">${icon('power')}</div><div class="grow" style="font-weight:600">Redémarrer tous les workers <span class="badge outline">admin</span></div></button></div>`);
     d.body.addEventListener('click', async (e) => {
@@ -1672,34 +1679,63 @@
     return sensorOuts().map((o) => ({ value: `${o.m}:${o.k}`, label: o.label }))
       .concat(spec.vars.map((v) => ({ value: 'var:' + varName(v), label: `Variable ${varName(v)}${v.unit ? ' (' + v.unit + ')' : ''}` })));
   }
-  const ruleSrc = (r) => (r.if.var ? 'var:' + LAB.sanitize(r.if.var) : `${r.if.m}:${r.if.out}`);
+  const ruleSrc = (r) => (r.if.every != null ? 'every' : r.if.var ? 'var:' + LAB.sanitize(r.if.var) : `${r.if.m}:${r.if.out}`);
+  /* Ajouts en un clic : ce qui agit (actionneurs) et ce qui déclenche (capteurs). */
+  const QUICK_ACT = [['led', 'LED'], ['relay', 'Relais'], ['buzzer_active', 'Buzzer'], ['servo_sg90', 'Servo'], ['pump', 'Pompe'], ['fan_pwm', 'Ventilateur'], ['l298n', 'Moteur CC'], ['rgb_led', 'LED RVB']];
+  const QUICK_SENS = [['dht22', 'Température / humidité'], ['button', 'Bouton'], ['ldr', 'Lumière'], ['hcsr04', 'Distance'], ['pir_hcsr501', 'Mouvement'], ['soil_cap', 'Humidité du sol'], ['potentiometer', 'Potentiomètre']];
+  const quickChips = (list) => `<div class="chips">${list.filter(([id]) => LAB.module(id)).map(([id, n]) => `<button class="chip" data-quick="${id}">${icon('plus')}${esc(n)}</button>`).join('')}<button class="chip" data-act="st-add">${icon('search')}Autre…</button></div>`;
+  const ACT_WORD = { on: 'allumer', off: 'éteindre', toggle: 'inverser', set: 'régler à' };
+  function ruleSentence(r) {
+    const a = (t) => (t && t.m != null && spec.modules[t.m] ? `${ACT_WORD[t.act] || t.act}${t.act === 'set' && t.v != null ? ' ' + t.v : ''} ${labelOf(t.m).replace(/^\d+\. /, '')}` : '');
+    if (r.if.every != null) return `Toutes les ${r.if.every} s : ${a(r.then)}${r.else ? ', puis ' + a(r.else) + ' (en alternance)' : ''}.`;
+    const src = (ruleSources().find((o) => o.value === ruleSrc(r)) || {}).label || '?';
+    if (r.if.op === 'map') return `${labelOf(r.then.m).replace(/^\d+\. /, '')} suit ${src}.`;
+    const op = (OPS.find(([k]) => k === r.if.op) || [0, r.if.op])[1];
+    return `Si ${src} ${op} ${r.if.vv ? 'la variable ' + r.if.vv : r.if.v} alors ${a(r.then)}${r.else ? ', sinon ' + a(r.else) : ''}.`;
+  }
   function rulesHtml() {
     const outs = ruleSources(), acts = actuators();
-    if (!outs.length || !acts.length) return `<div class="small muted">${!outs.length ? 'Ajoutez un capteur' : 'Ajoutez un actionneur (relais, LED, servo, buzzer, moteur…)'} pour créer un automatisme : « si la température &lt; 19 °C alors allumer le chauffage ».</div>`;
-    return spec.rules.map((r, idx) => {
-      const isMap = r.if.op === 'map';
+    const head = [];
+    if (!acts.length) head.push(`<div class="studio-quick"><div class="small"><b>1. Ce qui agit</b> : choisis un actionneur à commander.</div>${quickChips(QUICK_ACT)}</div>`);
+    if (!outs.length) head.push(`<div class="studio-quick"><div class="small"><b>${acts.length ? '' : '2. '}Ce qui déclenche</b> : un capteur ou une variable${acts.length ? ' ; sans capteur, « Clignoter / répéter » crée une minuterie' : ''}.</div>${quickChips(QUICK_SENS)}</div>`);
+    if (!acts.length) return head.join('') + `<div class="hint">Exemples : « si la température &gt; 28 °C alors allumer le ventilateur, sinon l'éteindre », « toutes les 1 s, inverser la LED ».</div>`;
+    const srcOpts = (r) => `<option value="every" ${ruleSrc(r) === 'every' ? 'selected' : ''}>Minuterie (toutes les N secondes)</option>${outs.map((o) => `<option value="${esc(o.value)}" ${ruleSrc(r) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}`;
+    return head.join('') + spec.rules.map((r, idx) => {
+      const isMap = r.if.op === 'map', isEvery = r.if.every != null;
       const dst = acts.find((a) => a.i === r.then.m);
       return `<div class="rule"><div class="row between"><b class="small">Règle ${idx + 1}</b><button class="btn sm icon ghost" data-rule-del="${idx}" aria-label="Supprimer">${icon('trash')}</button></div>
-        <div class="rule-line"><span class="rule-kw">Si</span><select class="select sm" data-r="${idx}" data-f="src">${outs.map((o) => `<option value="${esc(o.value)}" ${ruleSrc(r) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
-        <div class="rule-line"><span class="rule-kw"></span><select class="select sm" data-r="${idx}" data-f="op">${OPS.filter(([k]) => k !== 'map' || acts.some((a) => a.mod.act.set)).map(([k, n]) => `<option value="${k}" ${r.if.op === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        <div class="rule-sum small">${esc(ruleSentence(r))}</div>
+        <div class="rule-line"><span class="rule-kw">${isEvery ? 'Quand' : 'Si'}</span><select class="select sm" data-r="${idx}" data-f="src">${srcOpts(r)}</select></div>
+        ${isEvery ? `<div class="rule-line"><span class="rule-kw"></span><span class="small">toutes les</span><input class="input sm" type="number" step="0.1" min="0.2" data-r="${idx}" data-f="every" value="${esc(r.if.every)}" style="max-width:90px"><span class="small">s</span></div>
+          <div class="rule-line"><span class="rule-kw">Faire</span>${actSelect(r.then, 'then', idx)}</div><div class="rule-line"><span class="rule-kw">Puis</span>${actSelect(r.else, 'else', idx)}</div>
+          <div class="hint">Avec « Puis », les deux actions alternent (ex. allumer / éteindre = clignoter).</div>`
+        : `<div class="rule-line"><span class="rule-kw"></span><select class="select sm" data-r="${idx}" data-f="op">${OPS.filter(([k]) => k !== 'map' || acts.some((a) => a.mod.act.set)).map(([k, n]) => `<option value="${k}" ${r.if.op === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
           ${isMap ? `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="in0" value="${esc((r.if.in || [0, 100])[0])}" title="début de plage"><span class="small">→</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="in1" value="${esc((r.if.in || [0, 100])[1])}" title="fin de plage">`
             : `${spec.vars.length ? `<select class="select sm" data-r="${idx}" data-f="vv" title="seuil fixe ou variable" style="max-width:150px"><option value="">valeur</option>${spec.vars.map((v) => `<option value="${esc(varName(v))}" ${r.if.vv && LAB.sanitize(r.if.vv) === varName(v) ? 'selected' : ''}>variable ${esc(varName(v))}</option>`).join('')}</select>` : ''}${r.if.vv ? '' : `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="v" value="${esc(r.if.v)}" title="seuil">`}<input class="input sm" type="number" step="any" min="0" data-r="${idx}" data-f="hyst" value="${esc(r.if.hyst || 0)}" title="hystérésis (évite les oscillations)" style="max-width:90px">`}</div>
         ${isMap ? `<div class="rule-line"><span class="rule-kw">Alors</span><select class="select sm" data-r="${idx}" data-f="then.m">${acts.filter((a) => a.mod.act.set).map((a) => `<option value="${a.i}" ${r.then.m === a.i ? 'selected' : ''}>${esc(labelOf(a.i))}</option>`).join('')}</select></div>
           <div class="rule-line"><span class="rule-kw"></span><span class="small">de</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out0" value="${esc((r.then.out || [0, 100])[0])}"><span class="small">à</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out1" value="${esc((r.then.out || [0, 100])[1])}"><span class="small muted">${esc(dst && dst.mod.act.set ? dst.mod.act.set.unit : '')}</span></div>`
           : `<div class="rule-line"><span class="rule-kw">Alors</span>${actSelect(r.then, 'then', idx)}</div><div class="rule-line"><span class="rule-kw">Sinon</span>${actSelect(r.else, 'else', idx)}</div>`}
-        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.vv ? 'la variable ' + r.if.vv : r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}
+        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.vv ? 'la variable ' + r.if.vv : r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}`}
       </div>`;
-    }).join('') + `<button class="btn sm" data-rule-add>${icon('plus')}Ajouter une règle</button>`;
+    }).join('') + (spec.rules.length ? '' : `<div class="small muted">Aucune règle pour l'instant. « Nouvelle règle » crée ${outs.length ? '« si mesure &gt; seuil alors allumer, sinon éteindre »' : 'un clignotement toutes les 1 s'}, modifiable ensuite.</div>`)
+      + `<div class="row wrap"><button class="btn sm primary" data-rule-add>${icon('plus')}Nouvelle règle</button><button class="btn sm" data-rule-add="every">${icon('clock')}Clignoter / répéter</button></div>`;
   }
-  function addRule() {
+  function addRule(kind) {
     const outs = ruleSources(), acts = actuators();
-    if (!outs.length || !acts.length) return;
-    const r = { if: { op: '>', v: 25, hyst: 0.5 }, then: { m: acts[0].i, act: 'on' } };
+    if (!acts.length) return;
+    const a = acts[0], hasOn = !!a.mod.act.on;
+    if (kind === 'every' || !outs.length) {
+      spec.rules.push({ if: { every: 1 }, then: { m: a.i, act: hasOn ? 'on' : 'set', v: hasOn ? undefined : a.mod.act.set.max }, else: { m: a.i, act: hasOn ? 'off' : 'set', v: hasOn ? undefined : a.mod.act.set.min } });
+      return;
+    }
+    const r = { if: { op: '>', v: 25, hyst: 0.5 }, then: { m: a.i, act: 'on' } };
     setRuleField(r, 'src', outs[0].value);
-    spec.rules.push(Object.assign(r, { then: { m: acts[0].i, act: 'on' }, else: { m: acts[0].i, act: 'off' } }));
+    spec.rules.push(Object.assign(r, { then: { m: a.i, act: 'on' }, else: { m: a.i, act: 'off' } }));
   }
   function setRuleField(r, f, v) {
     if (f === 'src') {
+      if (v === 'every') { r.if = { every: 1 }; if (r.then.act === 'set' && r.then.out) { r.then = { m: r.then.m, act: 'on' }; r.else = { m: r.then.m, act: 'off' }; } return; }
+      if (r.if.every != null) r.if = { op: '>', v: 25, hyst: 0.5 };
       if (v.startsWith('var:')) { r.if.var = v.slice(4); delete r.if.m; delete r.if.out; }
       else { const [m, k] = v.split(':'); r.if.m = Number(m); r.if.out = k; delete r.if.var; }
     }
@@ -1709,6 +1745,7 @@
       if (v === 'map') { const a = actuators().find((x) => x.mod.act.set); r.if.in = r.if.in || [0, 100]; r.then = { m: a ? a.i : r.then.m, act: 'set', out: a ? [a.mod.act.set.min, a.mod.act.set.max] : [0, 100] }; delete r.else; }
       else if (!r.else && r.then.act === 'set' && r.then.out) { r.then = { m: r.then.m, act: 'on' }; r.else = { m: r.then.m, act: 'off' }; }
     }
+    else if (f === 'every') r.if.every = Math.max(0.2, Number(v) || 1);
     else if (f === 'v' || f === 'hyst') r.if[f] = v === '' ? 0 : Number(v);
     else if (f === 'in0' || f === 'in1') { r.if.in = r.if.in || [0, 100]; r.if.in[f === 'in0' ? 0 : 1] = Number(v); }
     else if (f === 'out0' || f === 'out1') { r.then.out = r.then.out || [0, 100]; r.then.out[f === 'out0' ? 0 : 1] = Number(v); }
@@ -1727,9 +1764,9 @@
   function remapRules(mapFn) {
     spec.vars.forEach((v) => { if (v.from) { const m = mapFn(v.from.m); if (m < 0) delete v.from; else v.from.m = m; } });
     spec.rules = spec.rules.map((r) => {
-      const a = r.if.var ? 0 : mapFn(r.if.m), b = mapFn(r.then.m);
+      const a = r.if.var || r.if.every != null ? 0 : mapFn(r.if.m), b = mapFn(r.then.m);
       if (a < 0 || b < 0) return null;
-      if (!r.if.var) r.if.m = a;
+      if (!r.if.var && r.if.every == null) r.if.m = a;
       r.then.m = b;
       if (r.else) { const c = mapFn(r.else.m); if (c < 0) delete r.else; else r.else.m = c; }
       return r;
@@ -1787,8 +1824,8 @@
                   <div class="small muted">${esc(mod.desc || '')}</div>${(mod.notes || []).length ? `<ul class="small" style="margin:0;padding-left:18px;color:var(--text-2)">${mod.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>` : ''}</div>`;
             }).join('') : `<div class="empty" style="padding:18px">${icon('box')}<div class="small">Ajoutez des capteurs, afficheurs et actionneurs.<br>Les broches sont choisies automatiquement, sans conflit.</div></div>`}
           </div></div>
+          <div class="card studio-rules"><div class="card-h"><div class="grow"><h2>Conditions et actions <span class="badge">${spec.rules.length}</span></h2><div class="card-sub">si… alors… sinon… · minuteries</div></div>${actuators().length ? `<button class="btn sm primary" data-rule-add>${icon('plus')}Nouvelle règle</button>` : ''}</div><div class="card-b stack" style="gap:10px" id="st-rules">${rulesHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Variables <span class="badge">${spec.vars.length}</span></h2></div><div class="card-b stack" style="gap:10px" id="st-vars">${varsHtml()}</div></div>
-          <div class="card"><div class="card-h"><h2 class="grow">Automatismes</h2></div><div class="card-b stack" style="gap:10px" id="st-rules">${rulesHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Connectivité</h2></div><div class="card-b stack" style="gap:12px">
             <label class="switch"><input type="checkbox" data-opt="web" ${o.web || o.app ? 'checked' : ''} ${o.app ? 'disabled' : ''}><span class="track"></span>Page web locale (mesures + commandes)</label>
             <label class="switch"><input type="checkbox" data-opt="app" ${o.app ? 'checked' : ''}><span class="track"></span>Pilotage par application (APK, page web : actionneurs et variables)</label>
@@ -1803,7 +1840,7 @@
           ${err ? `<div class="banner warn">${icon('alert')}<div>${esc(err)}</div></div>` : ''}
           ${res ? res.warnings.map((w) => `<div class="banner warn" style="margin:0">${icon('alert')}<div>${esc(w)}</div></div>`).join('') : ''}
           <div class="card"><div class="card-h"><div class="grow"><h2 class="ellipsis">${esc(spec.title)}</h2><div class="card-sub">${res ? `${res.code.split('\n').length} lignes · ${res.libs.length} bibliothèque(s) · ${res.power.total_mA} mA` : ''}</div></div>
-            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm primary" data-act="st-flash" title="Le Pi compile, le S3 flashe un worker et vérifie le moniteur">${icon('zap')}Flasher</button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
+            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm primary" data-act="st-flash" title="Le Pi compile, le S3 flashe un worker et vérifie le moniteur">${icon('zap')}Flasher</button><button class="btn sm" data-act="st-apk" title="Crée l'application Android qui lit et commande ce montage">${icon('phone')}Créer l'APK</button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
             <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['app', 'Application'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
         </div></div>`;
       A.studioResult = res;
@@ -1895,7 +1932,8 @@
         const i = Number(t.dataset.mup);
         if (i > 0) { const x = spec.modules[i]; spec.modules[i] = spec.modules[i - 1]; spec.modules[i - 1] = x; remapRules((m) => (m === i ? i - 1 : m === i - 1 ? i : m)); open = i - 1; saveSpec(); draw(); }
       } else if (t.dataset.mopen != null && !e.target.closest('button')) { const i = Number(t.dataset.mopen); open = open === i ? -1 : i; draw(); }
-      else if (t.hasAttribute('data-rule-add')) { addRule(); saveSpec(); draw(); }
+      else if (t.hasAttribute('data-rule-add')) { addRule(t.dataset.ruleAdd); saveSpec(); draw(); }
+      else if (t.dataset.quick) { spec.modules.push({ id: t.dataset.quick }); saveSpec(); toast(LAB.module(t.dataset.quick).name + ' ajouté', 'ok', 1600); draw(); }
       else if (t.dataset.ruleDel != null) { spec.rules.splice(Number(t.dataset.ruleDel), 1); saveSpec(); draw(); }
       else if (t.hasAttribute('data-var-add')) { addVar(); saveSpec(); draw(); }
       else if (t.dataset.varDel != null) {
@@ -2793,6 +2831,96 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
   });
   A.commands.push({ title: 'Tester la liaison S3 ↔ Pi', group: 'Page', icon: 'wifi', run: () => A.go('link') });
 })();
+/* ---- 44_boards.js ---- */
+/* Cartes branchées : inventaire en direct de tout ce que le box voit.
+ *   - le MASTER ESP32-S3 (version, microSD, carte branchée sur son port USB hôte) ;
+ *   - les workers sur son Wi-Fi (puce, mémoire, signal, firmware) ;
+ *   - le Raspberry Pi (agent, cartes série branchées sur ses ports USB, liaison avec le S3).
+ * Patricia affiche le même bilan quand on lui demande « quelles cartes sont branchées ? ». */
+(function () {
+  'use strict';
+  const A = window.APP;
+  const { $, esc, icon, api, toast, S } = A;
+  const mb = (n) => (n ? Math.round(n / 1048576) + ' Mo' : '—');
+  const gb = (n) => (n ? (n / 1e9).toFixed(1) + ' Go' : '—');
+  const sig = (r) => (r == null || r === 0 ? '' : r > -60 ? 'excellent' : r > -70 ? 'bon' : r > -80 ? 'faible' : 'très faible');
+
+  A.boardsReport = async function () {
+    const rep = { at: Date.now(), master: null, usb: null, workers: [], pi: null, piUsb: [], link: null, errors: [] };
+    try { const si = await api('/api/system/info'); rep.master = si; rep.usb = si.usb || null; } catch (e) { rep.errors.push('MASTER injoignable : ' + e.message); }
+    let st = S.state;
+    try { st = await api('/api/state'); } catch (e) { /* état en cache */ }
+    const ws = ((st && st.workers) || []).slice().sort((a, b) => a.id - b.id);
+    rep.capacity = (st && st.worker_capacity) || 10;
+    rep.workers = await Promise.all(ws.map(async (w) => {
+      const x = { id: w.id, label: w.label, state: w.state, ip: w.ip, rssi: w.rssi, version: w.version, job: w.job, heap: w.heap };
+      if (w.state === 'OFFLINE') return x;
+      try { const i = await api('/api/worker/info?id=' + encodeURIComponent(w.id)); Object.assign(x, { chip: i.chip, flash: i.flash_size, psram: i.psram, cpu: i.cpu_mhz, mac: i.mac }); }
+      catch (e) { x.err = 'ne répond pas'; }
+      return x;
+    }));
+    if (A.piRequest && A.piToken && A.piToken()) {
+      try { rep.pi = await A.piRequest('/api/v1/health'); } catch (e) { rep.errors.push('Pi : ' + e.message); }
+      if (rep.pi) {
+        try { rep.piUsb = (await A.piRequest('/api/v1/usb')).items || []; } catch (e) { rep.piUsb = []; }
+        try { rep.link = await A.piRequest('/api/v1/link'); } catch (e) { rep.link = null; }
+      }
+    }
+    return rep;
+  };
+
+  A.boardsHtml = function (rep, compact) {
+    const on = rep.workers.filter((w) => w.state !== 'OFFLINE');
+    const row = (ok, title, sub, badge) => `<div class="bd-row"><span class="bd-dot ${ok === true ? 'ok' : ok === false ? 'bad' : 'warn'}"></span><div class="grow" style="min-width:0"><b>${title}</b><div class="small muted ellipsis">${sub || ''}</div></div>${badge || ''}</div>`;
+    const m = rep.master;
+    const parts = [];
+    parts.push(row(!!m, 'MASTER ESP32-S3', m ? `v${esc(m.version || '?')} · ${esc(m.board_variant || '')} · microSD ${gb(m.sd_free)} libres / ${gb(m.sd_total)}` : esc(rep.errors[0] || 'injoignable')));
+    parts.push(row(rep.usb ? !!rep.usb.connected : null, 'USB du S3', rep.usb ? (rep.usb.connected ? `${esc(rep.usb.chip || 'carte')} (${esc(rep.usb.vid_pid || '')}) · ${rep.usb.baud} bauds${rep.usb.flashing ? ' · flash en cours' : ''}` : 'aucune carte branchée') : 'inconnu'));
+    const wl = rep.workers.map((w) => row(w.state === 'OFFLINE' ? false : w.err ? null : true, `W${w.id}${w.label ? ' · ' + esc(w.label) : ''}`,
+      w.state === 'OFFLINE' ? 'éteint ou hors de portée' : [esc(w.chip || 'puce ?'), w.flash ? 'flash ' + mb(w.flash) : '', w.psram ? 'PSRAM ' + mb(w.psram) : '', w.rssi ? `${w.rssi} dBm (${sig(w.rssi)})` : '', w.ip ? esc(w.ip) : '', w.version ? 'fw ' + esc(w.version) : '', w.err || ''].filter(Boolean).join(' · '),
+      `<span class="badge ${w.state === 'OFFLINE' ? '' : w.state === 'READY' || w.state === 'IDLE' ? 'ok' : 'info'}">${esc(w.state || '?')}</span>`));
+    const pi = rep.pi;
+    const piRows = [row(pi ? true : null, 'Raspberry Pi 4', pi ? `agent ${esc(pi.version || '')} · ${esc(pi.host_arch || '')} · ${pi.arduino_cli && pi.arduino_cli !== 'absent' ? 'compilateur prêt' : 'compilateur absent'}` : 'non configuré ou injoignable (Compagnon Pi)')];
+    if (pi) {
+      piRows.push(row(rep.piUsb.length ? true : null, 'USB du Pi', rep.piUsb.length ? rep.piUsb.map((d) => `${esc(d.name)} (${esc(d.port)})`).join(' · ') : 'aucune carte série branchée'));
+      const l = rep.link;
+      if (l && l.samples) piRows.push(row(!!l.up, 'Liaison Pi ↔ S3', `${l.rtt_ms != null ? l.rtt_ms + ' ms' : '—'} · perte ${l.loss_pct} % · gigue ${l.jitter_ms} ms`));
+    }
+    if (compact) return `<div class="bd-list">${parts.join('')}${wl.join('') || row(null, 'Workers', 'aucun worker vu')}${piRows.join('')}</div><div class="hint">${on.length}/${rep.capacity} worker(s) en ligne · ${new Date(rep.at).toLocaleTimeString()}</div>`;
+    return `<div class="grid g-2">
+      <section class="card"><div class="card-h"><h2 class="grow">MASTER</h2></div><div class="card-b bd-list">${parts.join('')}</div></section>
+      <section class="card"><div class="card-h"><h2 class="grow">Raspberry Pi</h2></div><div class="card-b bd-list">${piRows.join('')}</div></section>
+      <section class="card span-2"><div class="card-h"><h2 class="grow">Workers sur le Wi-Fi du S3</h2><span class="badge ${on.length ? 'ok' : ''}">${on.length}/${rep.capacity} en ligne</span></div><div class="card-b bd-list">${wl.join('') || '<div class="small muted">Aucun worker vu. Allume un ESP32 avec le firmware worker : il rejoint le Wi-Fi du S3 tout seul.</div>'}</div></section></div>`;
+  };
+
+  async function load(el) {
+    const box = $('#bd-body', el); if (!box) return;
+    try { const rep = await A.boardsReport(); if (box.isConnected) box.innerHTML = A.boardsHtml(rep, false); }
+    catch (e) { box.innerHTML = `<div class="banner warn">${icon('alert')}<div>${esc(e.message)}</div></div>`; }
+  }
+
+  A.page({
+    id: 'boards', title: 'Cartes branchées', icon: 'cpu', group: 'sys',
+    desc: 'Tout ce que le box voit : MASTER, workers en Wi-Fi, cartes USB, Raspberry Pi',
+    render(el) {
+      el.innerHTML = `<div class="stack"><div class="hero"><div><div class="eyebrow">NEXUS · INVENTAIRE</div><h1>Cartes branchées</h1>
+        <p>Le MASTER, chaque worker sur son Wi-Fi, les cartes branchées en USB sur le S3 et sur le Pi, et la liaison entre eux. Mis à jour toutes les 10 s.</p></div>
+        <div class="row wrap"><button class="btn" id="bd-now">${icon('refresh')}Actualiser</button><button class="btn primary" id="bd-check">${icon('target')}Check-up de tous les workers</button></div></div>
+        <div id="bd-body"><div class="card pad muted">Inventaire…</div></div></div>`;
+      $('#bd-now', el).onclick = () => load(el);
+      $('#bd-check', el).onclick = async () => {
+        const on = ((S.state && S.state.workers) || []).filter((w) => w.state !== 'OFFLINE');
+        if (!on.length) return toast('Aucun worker en ligne', 'warn');
+        let n = 0;
+        for (const w of on) { try { await A.post('/api/job', { type: 'SYSTEM_TEST', worker: w.id, priority: 60 }); n++; } catch (e) { /* worker occupé */ } }
+        toast(`${n} check-up(s) lancé(s) : résultats dans Jobs`, 'ok');
+      };
+      load(el);
+      const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); return; } load(el); }, 10000);
+    }
+  });
+  A.commands.push({ title: 'Cartes branchées (inventaire)', group: 'Page', icon: 'cpu', run: () => A.go('boards') });
+})();
 /* ---- 46_flash.js ---- */
 /* Flash & montages : page « USB & Flash » (Arduino, ESP32, ESP32-S3, ESP32-C3 par câble) avec moniteur de flash,
  * flash d'un worker par Wi-Fi avec moniteur, aperçu du montage de chaque firmware, onglets Moniteur et GPIO
@@ -3356,7 +3484,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     return { text, state };
   };
 
-  /* opts : { spec } (projet du Studio) ou { id } (projet de la bibliothèque), title, worker (facultatif) */
+  /* opts : { spec } (projet du Studio) ou { id } (projet de la bibliothèque), title, worker (facultatif), auto (enchaîne sans clic) */
   A.flashPipeline = async function (opts) {
     const lib = opts.id && A.projectById ? A.projectById(opts.id) : null;
     const baseSpec = opts.spec ? JSON.parse(JSON.stringify(opts.spec)) : lib && lib.spec ? JSON.parse(JSON.stringify(lib.spec)) : null;
@@ -3372,7 +3500,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       <ol class="fp-steps"><li data-s="1" class="on">Worker</li><li data-s="2">Montage</li><li data-s="3">Firmware</li><li data-s="4">Flash</li><li data-s="5">Vérification</li></ol>
       <div class="field"><label>Worker</label><select class="select" id="fp-w">${workers.map((w) => `<option value="${w.id}" ${String(w.id) === worker ? 'selected' : ''}>W${w.id}${w.label ? ' · ' + esc(w.label) : ''} · ${esc(w.state)}</option>`).join('') || '<option value="">Aucun worker en ligne</option>'}</select><div class="hint" id="fp-chip"></div></div>
       <div id="fp-montage"></div>
-      <label class="switch"><input type="checkbox" id="fp-ready"><span class="track"></span>Le montage est câblé comme sur le schéma</label>
+      <label class="switch"><input type="checkbox" id="fp-ready" ${opts.auto ? 'checked' : ''}><span class="track"></span>Le montage est câblé comme sur le schéma</label>
       <div id="fp-src" class="card pad small"></div>
       <button class="btn primary lg" id="fp-go" disabled>${icon('zap')}Compiler, flasher et vérifier</button>
       <div class="card" id="fp-run" hidden><div class="card-b stack" style="gap:10px">
@@ -3495,7 +3623,8 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     $('#fp-w', d.body).onchange = prepare;
     $('#fp-ready', d.body).onchange = (e) => { goBtn.disabled = !source || !e.target.checked; if (e.target.checked) step(3); };
     goBtn.onclick = run;
-    prepare();
+    // opts.auto : lancé par Patricia en mode « agir directement » → enchaîne dès que le firmware a une source
+    prepare().then(() => { if (opts.auto && !cancelled && source) { step(3); run(); } });
   };
 
   A.commands.push({ title: 'Flasher le projet du Studio sur un worker', group: 'Action', icon: 'zap', run: () => A.actions['st-flash'] && A.actions['st-flash']() });
@@ -3900,7 +4029,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
   const P = (A.Patricia = {});
   const SESSION = store.get('patricia.session', null) || ('s' + Date.now().toString(36));
   store.set('patricia.session', SESSION);
-  const prefs = Object.assign({ speak: false, handsfree: false, voice: '', rate: 0.92, style: 'scientifique' }, store.get('patricia.prefs', {}));
+  const prefs = Object.assign({ speak: false, handsfree: false, voice: '', rate: 0.95, style: 'scientifique', direct: true }, store.get('patricia.prefs', {}));
   const savePrefs = () => store.set('patricia.prefs', prefs);
   let piOk = null, voiceCaps = { stt: false, tts: false };
 
@@ -3919,7 +4048,15 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
 
   function labContext() {
     const st = A.S.state || {};
-    return { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label, ip: w.ip, job: w.job })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+    const ctx = { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label, ip: w.ip, job: w.job, rssi: w.rssi, version: w.version })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+    const spec = store.get('studio.spec', null);   // projet ouvert dans le Studio : « flash », « compile », « crée l'APK » le visent
+    if (spec && (spec.modules || []).length) {
+      let warnings = [];
+      try { warnings = window.LAB.generate(spec).warnings || []; } catch (e) { warnings = [e.message]; }
+      const clean = JSON.parse(JSON.stringify(spec)); if (clean.options) delete clean.options.wifi_pass;
+      ctx.studio = { spec: clean, warnings: warnings.slice(0, 12) };
+    }
+    return ctx;
   }
 
   /* ------------------------------------------------------------ texte riche */
@@ -4003,28 +4140,157 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       }
       this.stopFn = finish;
     },
-    speak(text) {
-      text = String(text || '').replace(/[•#*`]/g, ' ').slice(0, 600);
-      if (!text.trim()) return Promise.resolve();
-      const pitch = prefs.style === 'complice' ? 1.12 : 1.03;
-      if (window.NexusNative && window.NexusNative.speakWith) { window.NexusNative.speakWith(text, prefs.rate, pitch); return new Promise((r) => setTimeout(r, Math.min(20000, 66 * text.length / prefs.rate))); }
-      if (window.NexusNative && window.NexusNative.speak) { window.NexusNative.speak(text); return new Promise((r) => setTimeout(r, Math.min(15000, 60 * text.length))); }
-      if (window.speechSynthesis) {
-        return new Promise((res) => {
-          const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'fr-FR'; u.rate = prefs.rate; u.pitch = pitch;
-          const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
-          const v = vs.find((x) => x.name === prefs.voice) || vs.find((x) => /female|amelie|audrey|julie|denise|hortense|google/i.test(x.name)) || vs[0];
-          if (v) u.voice = v;
-          u.onend = res; u.onerror = res;
-          speechSynthesis.cancel(); speechSynthesis.speak(u);
-        });
+    /* ---- synthèse : la voix la plus naturelle disponible ----
+     * Classement des voix françaises : 3 = neuronales (Edge « Natural/Online », Apple « Premium/Enhanced »),
+     * 2 = Google (Chrome, Android), 1 = voix locales classiques, 0 = eSpeak (très robotique). Voix féminine préférée
+     * (une voix d'homme ne passe devant une voix de femme que si elle est d'une classe nettement plus naturelle).
+     * Hauteur 1.0 partout (monter la hauteur rend la voix métallique) ; le style « complice » parle juste un peu plus lentement.
+     * Le texte est nettoyé (markdown, émojis, code, liens, unités en mots) puis lu phrase par phrase (< 200 caractères) :
+     * intonation plus naturelle et pas de coupure de Chrome après ~15 s. */
+    FEMALE: /denise|eloise|vivienne|brigitte|c[eé]leste|coralie|jacqueline|jos[eé]phine|yvette|sylvie|charline|ariane|am[eé]lie|audrey|aur[eé]lie|julie|hortense|marie|virginie|l[eé]a\b|chantal|female|femme|google/i,
+    MALE: /henri|r[eé]my|alain|claude|j[eé]r[oô]me|maurice|\byves\b|antoine|\bjean\b|thierry|g[eé]rard|fabrice|thomas|nicolas|\bdaniel\b|\bpaul\b|\bmale\b|homme/i,
+    tier(name) { return /espeak|mbrola/i.test(name) ? 0 : /natural|neural|online|premium|enhanced|wavenet/i.test(name) ? 3 : /google/i.test(name) ? 2 : 1; },
+    score(v) { const n = v.name || ''; return this.tier(n) * 10 + (this.FEMALE.test(n) ? 3 : this.MALE.test(n) ? -12 : 0) + (/^fr[-_]FR/i.test(v.lang) ? 1 : 0); },
+    webVoices() { try { return window.speechSynthesis ? speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang)).sort((a, b) => this.score(b) - this.score(a)) : []; } catch (e) { return []; } },
+    /* getVoices() est vide au premier appel dans Chrome : on attend « voiceschanged » (1,5 s au plus). */
+    voicesReady() {
+      if (!window.speechSynthesis) return Promise.resolve([]);
+      if (speechSynthesis.getVoices().length) return Promise.resolve(this.webVoices());
+      return new Promise((res) => {
+        const done = () => { clearTimeout(t); try { speechSynthesis.removeEventListener('voiceschanged', done); } catch (e) { /* ignoré */ } res(this.webVoices()); };
+        const t = setTimeout(done, 1500);
+        try { speechSynthesis.addEventListener('voiceschanged', done); } catch (e) { /* vieux navigateur : le délai suffit */ }
+      });
+    },
+    /* Voix du téléphone (APK NEXUS récente), déjà classées par Android : [{name, label}]. */
+    nativeVoices() { try { return window.NexusNative && window.NexusNative.voices ? JSON.parse(window.NexusNative.voices() || '[]') : []; } catch (e) { return []; } },
+    hasNative() { const N = window.NexusNative; return !!(N && (N.speakWith || N.speak)); },
+    /* Moteur à utiliser : { kind: 'piper' | 'native' | 'web' | null, voice }. Automatique = meilleure voix naturelle du
+     * navigateur (Natural/Online/Google), sinon Piper sur le Pi, sinon la meilleure voix locale. */
+    pick(list, noPiper) {
+      if (prefs.voice === 'piper' && !noPiper) return { kind: 'piper' };
+      if (this.hasNative()) return { kind: 'native' };
+      const vs = list || this.webVoices();
+      const v = (prefs.voice && vs.find((x) => x.name === prefs.voice)) || vs[0];
+      if (v && (v.name === prefs.voice || this.tier(v.name) >= 2)) return { kind: 'web', voice: v };
+      if (voiceCaps.tts && !noPiper) return { kind: 'piper' };
+      return { kind: window.speechSynthesis ? 'web' : null, voice: v };
+    },
+    describe() {
+      const e = this.pick();
+      if (e.kind === 'piper') return 'Piper sur le Pi (siwis, hors ligne)';
+      if (e.kind === 'native') return 'voix Android' + (prefs.voice ? ' · ' + prefs.voice : ' (meilleure voix française du téléphone)');
+      if (e.kind === 'web') return e.voice ? e.voice.name + (this.tier(e.voice.name) >= 2 ? ' (naturelle)' : ' (voix locale)') : 'voix par défaut du navigateur';
+      return 'aucune voix disponible ici';
+    },
+    /* Texte → phrases dites : sans markdown, émojis, blocs de code ni liens ; symboles et unités en mots. */
+    spoken(text) {
+      let t = String(text || '')
+        .replace(/```[\s\S]*?```/g, ' (le code est affiché à l\'écran). ')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/https?:\/\/\S+/g, ' le lien affiché ')
+        .replace(/#library\?p=[a-z0-9_]+/gi, ' ')
+        .replace(/→|->|⇒|=>/g, ' vers ').replace(/←|<-/g, ' depuis ').replace(/≈|~/g, ' environ ').replace(/±/g, ' plus ou moins ')
+        .replace(/≥|>=/g, ' au moins ').replace(/≤|<=/g, ' au plus ').replace(/&/g, ' et ')
+        .replace(/°\s?C\b/g, ' degrés').replace(/°/g, ' degrés').replace(/\s?%/g, ' pour cent')
+        .replace(/\bW(\d+)\b/g, 'worker $1')
+        .replace(/\b(\d)V(\d)\b/g, '$1,$2 volts')
+        .replace(/(\d)\s?mA\b/g, '$1 milliampères').replace(/(\d)\s?mV\b/g, '$1 millivolts')
+        .replace(/(\d)\s?V\b/g, '$1 volts').replace(/(\d)\s?A\b/g, '$1 ampères')
+        .replace(/(\d)\s?kΩ/g, '$1 kilo-ohms').replace(/(\d)\s?Ω/g, '$1 ohms')
+        .replace(/(\d)\s?ms\b/g, '$1 millisecondes').replace(/(\d)\s?MHz\b/g, '$1 mégahertz').replace(/(\d)\s?kHz\b/g, '$1 kilohertz')
+        .replace(/(\d)\s?Ko\b/g, '$1 kilo-octets').replace(/(\d)\s?Mo\b/g, '$1 mégaoctets').replace(/(\d)\s?Go\b/g, '$1 gigaoctets')
+        .replace(/(^|[^\d.])(\d+)\.(\d+)(?![.\d])/g, '$1$2,$3')
+        .replace(/[*_#>|`•]+/g, ' ')
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{21FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, ' ');
+      t = t.split(/\n+/).map((l) => l.replace(/^[\s-]+|\s+$/g, '')).filter(Boolean).map((l) => (/[.!?…:;,]$/.test(l) ? l : l + '.')).join(' ');
+      return t.replace(/([.!?…])(\s*\.)+/g, '$1').replace(/\s+/g, ' ').trim().slice(0, 1500);
+    },
+    chunks(text, max) {
+      max = max || 190;
+      const out = []; let cur = '';
+      text.replace(/([.!?…;:])\s+/g, '$1\n').split('\n').forEach((s) => {
+        s = s.trim();
+        while (s.length > max) {
+          let cut = s.lastIndexOf(', ', max); if (cut < max / 3) cut = s.lastIndexOf(' ', max); if (cut < 1) cut = max;
+          if (cur) { out.push(cur); cur = ''; }
+          out.push(s.slice(0, cut + 1).trim()); s = s.slice(cut + 1).trim();
+        }
+        if (!s) return;
+        if (cur && cur.length + 1 + s.length > max) { out.push(cur); cur = s; } else cur = cur ? cur + ' ' + s : s;
+      });
+      if (cur) out.push(cur);
+      return out;
+    },
+    speaking: 0,
+    audio: null, audioEnd: null,
+    /* Coupe la parole en cours (navigateur, téléphone ou Pi). */
+    hush() {
+      this.speaking++;
+      try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { /* ignoré */ }
+      if (this.audio) { this.audio.pause(); this.audio = null; }
+      if (this.audioEnd) this.audioEnd();
+      try { if (window.NexusNative && window.NexusNative.stopSpeaking) window.NexusNative.stopSpeaking(); } catch (e) { /* ignoré */ }
+      if (window.__nexusSpoken) window.__nexusSpoken();
+    },
+    /* Lit le texte et se résout quand Patricia a fini de parler. */
+    async speak(text) {
+      text = this.spoken(text);
+      if (!text) return;
+      const id = ++this.speaking;
+      const rate = Math.max(0.5, Math.min(1.6, prefs.rate * (prefs.style === 'complice' ? 0.92 : 1)));
+      const list = this.hasNative() || prefs.voice === 'piper' ? null : await this.voicesReady();
+      if (id !== this.speaking) return;
+      let e = this.pick(list);
+      if (e.kind === 'piper') {
+        try { return await this.piper(text, rate, id); } catch (err) { if (id !== this.speaking) return; e = this.pick(list, true); }
       }
-      if (voiceCaps.tts) {
-        return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text, speed: 1 / prefs.rate }) })
-          .then((r) => r.blob()).then((b) => new Promise((res) => { const a = new Audio(URL.createObjectURL(b)); a.onended = res; a.onerror = res; a.play().catch(res); }));
-      }
-      return Promise.resolve();
+      if (e.kind === 'native') return this.nativeSay(text, rate);
+      if (e.kind === 'web') return this.webSay(this.chunks(text), rate, e.voice, id);
+    },
+    nativeSay(text, rate) {
+      const N = window.NexusNative;
+      if (window.__nexusSpoken) window.__nexusSpoken();
+      return new Promise((res) => {
+        // fin signalée par l'APK (__nexusSpoken) ; délai de secours pour les anciennes APK
+        const t = setTimeout(done, Math.min(90000, 75 * text.length / rate) + 800);
+        function done() { clearTimeout(t); if (window.__nexusSpoken === done) window.__nexusSpoken = null; res(); }
+        window.__nexusSpoken = done;
+        const name = prefs.voice && prefs.voice !== 'piper' ? prefs.voice : '';
+        if (N.speakAs && name) N.speakAs(text, rate, 1.0, name);
+        else if (N.speakWith) N.speakWith(text, rate, 1.0);
+        else N.speak(text);
+      });
+    },
+    webSay(parts, rate, voice, id) {
+      try { speechSynthesis.cancel(); } catch (e) { /* ignoré */ }
+      return new Promise((res) => {
+        let i = 0;
+        const next = () => {
+          if (id !== this.speaking || i >= parts.length) return res();
+          const u = new SpeechSynthesisUtterance(parts[i++]);
+          u.lang = voice ? voice.lang : 'fr-FR'; if (voice) u.voice = voice;
+          u.rate = rate; u.pitch = 1;
+          let fired = false;
+          const go = () => { if (fired) return; fired = true; clearTimeout(t); next(); };
+          const t = setTimeout(go, 4000 + 120 * u.text.length / rate);   // Chrome oublie parfois « onend »
+          u.onend = go; u.onerror = go;
+          speechSynthesis.speak(u);
+        };
+        next();
+      });
+    },
+    /* Voix du Pi : Piper découpe en phrases et marque une courte pause entre elles ; « rate » suit le curseur Débit. */
+    piper(text, rate, id) {
+      return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text, rate }) })
+        .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+        .then((b) => new Promise((res) => {
+          if (id !== this.speaking) return res();
+          const url = URL.createObjectURL(b), a = new Audio(url);
+          const end = () => { if (this.audioEnd === end) { this.audioEnd = null; this.audio = null; } URL.revokeObjectURL(url); res(); };
+          this.audio = a; this.audioEnd = end;
+          a.onended = end; a.onerror = end; a.play().catch(end);
+        }));
     }
   });
   function encodeWav(chunks, inRate, outRate) {
@@ -4052,6 +4318,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       case 'generate': return `<div class="pa-card" data-gen="${i}"><div class="pa-card-h">${icon('code')}${esc(c.title || 'Projet')} · ${esc(c.board)}</div><div class="pa-gen-body small muted">Génération…</div></div>`;
       case 'fleet': return `<div class="pa-card"><div class="pa-card-h">${icon('car')}Flotte</div><div class="row wrap"><a class="btn sm" href="#vehicles">${icon('radar')}Ouvrir l'écran Flotte</a><button class="btn sm danger" data-estop>${icon('stop')}ARRÊT</button></div></div>`;
       case 'lab': { const st = A.S.state || {}; const ws = st.workers || []; return `<div class="pa-card"><div class="pa-card-h">${icon('cpu')}Workers</div><div class="pa-workers">${ws.map((w) => `<span class="pa-w ${w.state === 'OFFLINE' ? 'off' : ''}" title="${esc(w.state)}">W${w.id}<small>${esc(w.state || '')}</small></span>`).join('') || '<span class="muted small">Aucun</span>'}</div></div>`; }
+      case 'boards': return `<div class="pa-card" data-boards><div class="pa-card-h">${icon('cpu')}<span class="grow">Cartes branchées</span><a class="btn sm ghost" href="#boards">${icon('chevron')}Détails</a></div><div class="pa-boards-body small muted">Inventaire…</div></div>`;
       case 'pi_projects': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('sd')}Sur la microSD du Pi</div><div class="chips">${c.items.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : '';
       default: return '';
     }
@@ -4092,13 +4359,14 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     return `<div class="pa-action" data-aid="${esc(a.id)}"><div class="grow"><div class="small"><b>${esc(a.summary)}</b></div><div class="hint">${a.executor === 'ui' ? 'Exécuté par le MASTER S3' : 'Exécuté par le Pi'}${a.risk && a.risk !== 'aucun' ? ` · risque ${esc(a.risk)}` : ''}</div></div>
       <button class="btn sm" data-cancel>Annuler</button><button class="btn sm ${a.risk === 'élevé' ? 'danger' : 'primary'}" data-confirm>${a.needs_confirm ? 'Confirmer' : 'Faire'}</button></div>`;
   }
+  const autoRun = (a) => prefs.direct && a.auto;
   async function runAction(el, a, log) {
     const row = el.closest('.pa-action');
     const status = (t, cls) => { row.innerHTML = `<div class="small ${cls || ''}">${t}</div>`; };
     let res;
     try { res = await piJSON(`/api/v1/patricia/actions/${a.id}/confirm`, {}, 300000); }
     catch (e) { status(esc(e.message), 'bad-text'); return; }
-    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); if (a.kind === 'github_push' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.files} fichier(s) · ${res.result.created ? 'dépôt créé' : 'mis à jour'}</div>`); return; }
+    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); if (a.kind === 'github_create' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.created ? 'dépôt créé' : 'existait déjà'}</div>`); if (a.kind === 'apply_fix' && res.result) row.insertAdjacentHTML('beforeend', `<div class="small">${(res.result.applied || []).length} correction(s) appliquée(s)${(res.result.changed_files || []).length ? ' dans ' + res.result.changed_files.map(esc).join(', ') : ''} · sauvegarde : <code>${esc(res.result.backup || '')}</code></div>`); if (/^fs_/.test(a.kind) && res.result) row.insertAdjacentHTML('beforeend', `<div class="small muted">${esc(res.result.trash ? 'Corbeille : ' + res.result.trash : res.result.path + (res.result.bytes != null ? ' · ' + res.result.bytes + ' octets' : ''))}</div>`); if (a.kind === 'github_push' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.files} fichier(s) · ${res.result.created ? 'dépôt créé' : 'mis à jour'}</div>`); return; }
     const p = res.params || a.params;
     try {
       if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
@@ -4106,6 +4374,8 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       else if (a.kind === 'apk') { await apkFlow(p, row, a); }
       else if (a.kind === 'save_project') { const card = log.querySelector('[data-gen]'); status('Enregistrement…'); const c = card && P._cards[card.dataset.gen]; if (c) { const res2 = window.LAB.generate({ board: c.board, title: c.title, modules: c.modules.map((id) => ({ id })) }); const id = await saveToPi(c, res2); status(id ? `${icon('check')} Enregistré : ${esc(id)}` : 'Échec'); report(a.id, !!id, { id }); } }
       else if (a.kind === 'flash') { await flashFlow(p, row, a, log); }
+      else if (a.kind === 'flash_studio') { status(`${icon('zap')} Flash de « ${esc(p.title)} » sur le worker ${esc(p.worker)} : suis les étapes dans la fenêtre ouverte.`); A.flashPipeline({ spec: p.spec, title: p.title, worker: p.worker, auto: true }); report(a.id, true, { worker: p.worker }); }
+      else if (a.kind === 'build_studio') { await buildStudioFlow(p, row, a, log); }
       else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
     } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
   }
@@ -4113,7 +4383,8 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
   async function apkFlow(p, row, a) {
     if (!A.AppStudio) throw new Error('Studio APK non chargé');
     row.innerHTML = '<div class="small">Préparation de l\'application…</div>';
-    const spec = { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
+    const fromCat = p.catalog && A.projectById ? A.projectById(p.catalog) : null;
+    const spec = p.spec || (fromCat && fromCat.spec) || { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
     const design = A.AppStudio.fromSpec(spec, p.title);
     design.id = A.AppStudio.slug(p.project || p.title);
     row.innerHTML = '<div class="small">Le Pi assemble et signe l\'APK…</div>';
@@ -4125,6 +4396,16 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       <div class="small" style="margin-top:6px;word-break:break-all">${esc(res.apk_url)}</div>
       <div class="small">Appli web : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">ouvrir</a> · <a href="#apkstudio?p=${encodeURIComponent(p.project)}">personnaliser dans le Studio APK</a></div></div></div></div>`;
     report(a.id, true, { apk: res.apk_url, sha256: res.sha256 });
+  }
+  /* Projet du Studio : enregistré sur le Pi (code généré + fiche), puis compilé ; une erreur part à Patricia. */
+  async function buildStudioFlow(p, row, a, log) {
+    const res = window.LAB.generate(p.spec);
+    const id = A.norm(p.title || 'projet').replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'projet';
+    row.innerHTML = '<div class="small">Enregistrement sur le Pi…</div>';
+    await A.piSaveProject(id, { [id + '.ino']: res.code, 'project.json': JSON.stringify({ title: p.title, board: p.board, spec: p.spec, outs: res.outs, wiring: res.wiring, created_by: 'Patricia' }, null, 2) });
+    const q = await piJSON('/api/v1/build', { project_id: id, board: p.board || res.board, priority: 70 });
+    const j = await watchBuild(q.id, row, log);
+    report(a.id, !!(j && j.status === 'success'), { project: id, job: q.id });
   }
   async function report(aid, ok, details, serial) {
     try { return await piJSON(`/api/v1/patricia/actions/${aid}/report`, { ok, details, serial_log: serial || '' }); } catch (e) { return null; }
@@ -4211,10 +4492,12 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     const mode = [r.mode === 'ia' ? 'IA' : r.mode === 'local' ? 'hors ligne' : r.mode, r.notice].filter(Boolean).join(' · ');
     m.innerHTML = `<div>${rich(r.answer)}</div>${cards}${acts}${fu}${sugg}<span class="mode">${esc(mode)}</span>`;
     $$('[data-gen]', m).forEach((box) => renderGenerate(box, P._cards[box.dataset.gen]));
+    $$('[data-boards]', m).forEach((box) => { if (A.boardsReport) A.boardsReport().then((rep) => { $('.pa-boards-body', box).className = 'pa-boards-body'; $('.pa-boards-body', box).innerHTML = A.boardsHtml(rep, true); }).catch((e) => { $('.pa-boards-body', box).textContent = e.message; }); });
     (r.actions || []).forEach((a) => {
       const row = m.querySelector(`[data-aid="${a.id}"]`);
       row.querySelector('[data-confirm]').onclick = (e) => runAction(e.target, a, log);
       row.querySelector('[data-cancel]').onclick = () => { piJSON(`/api/v1/patricia/actions/${a.id}/cancel`, {}).catch(() => {}); row.innerHTML = '<div class="small muted">Annulé.</div>'; };
+      if (autoRun(a)) setTimeout(() => runAction(row.querySelector('[data-confirm]'), a, log), 50);   // réglage « Agir directement »
     });
     if (r.project) P.project = r.project;
     log.scrollTop = log.scrollHeight;
@@ -4234,6 +4517,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
     let r;
     const context = labContext();
+    try { const si = await A.api('/api/system/info'); if (si && si.usb) context.usb = si.usb; } catch (e) { /* MASTER injoignable */ }
     try { const f = await A.api('/api/feeds'); context.feeds = (Array.isArray(f) ? f : f.feeds || []).slice(0, 80).map((x) => ({ device: x.source || x.device, key: x.key, value: x.value, unit: x.unit, ip: x.ip, age_ms: x.age_ms })); } catch (e) { /* MASTER injoignable */ }
     try { r = await piJSON('/api/v1/patricia/chat', { q, session: SESSION, context }, 150000); piOk = true; }
     catch (e) { piOk = false; r = await localAnswer(q); }
@@ -4272,9 +4556,12 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
         <li>${icon('alert')}Trouver la cause d'une erreur de compilation, de flash ou du moniteur série.</li>
         <li>${icon('zap')}Compiler sur le Pi, flasher un worker et vérifier qu'il fonctionne.</li>
         <li>${icon('car')}Piloter jusqu'à 9 voitures avec anticollision ; « stop » arrête tout.</li>
-        <li>${icon('phone')}Préparer l'application Android de ton projet.</li></ul>
-        <p class="hint" style="margin-top:8px">Toute action sur le matériel te demande une confirmation. L'arrêt d'urgence, lui, est immédiat.</p></div>
-        <div class="card pad small"><h3 style="margin-bottom:8px">Essaie</h3><div class="chips" id="pa-try">${['Je veux faire une serre connectée avec un ESP32-S3', 'Comment brancher un HC-SR04 ?', 'Note que la pompe consomme 300 mA', 'On reprend', 'État du labo', 'Toutes les voitures en ligne'].map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div></div></div></div>`;
+        <li>${icon('phone')}Créer l'application Android de ton projet, avec lien et QR.</li>
+        <li>${icon('folder')}Créer et ranger tes dossiers et fichiers, et les envoyer sur GitHub.</li>
+        <li>${icon('search')}Analyser ton code et corriger les erreurs (copie de sauvegarde gardée).</li>
+        <li>${icon('cpu')}Faire le bilan des cartes branchées en Wi-Fi et en USB.</li></ul>
+        <p class="hint" style="margin-top:8px">« Flash » et « compile » partent directement ou après validation, selon Patricia → Réglages. L'arrêt d'urgence est immédiat.</p></div>
+        <div class="card pad small"><h3 style="margin-bottom:8px">Essaie</h3><div class="chips" id="pa-try">${['Je veux faire une serre connectée avec un ESP32-S3', 'Quelles cartes sont branchées ?', 'Flash', 'Fais-moi une APK pour la serre', 'Analyse mon projet', 'Crée un dossier essais', 'Qui es-tu ?'].map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div></div></div></div>`;
     const log = (P.log = $('#pa-log', el));
     micBtn = $('#pa-mic', el); inputEl = $('#pa-in', el);
     const send = () => { const v = inputEl.value; inputEl.value = ''; inputEl.style.height = ''; P.ask(v); };
@@ -4351,7 +4638,6 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
 
   /* ------------------------------------------------------------ réglages */
   async function settingsTab(el) {
-    const voices = (window.speechSynthesis ? speechSynthesis.getVoices() : []).filter((v) => /^fr/i.test(v.lang));
     el.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2>Cerveau de Patricia</h2></div><div class="card-b stack">
       <div class="seg" id="ps-preset"><button data-p="local">Hors ligne (règles)</button><button data-p="ollama">IA locale sur le Pi</button><button data-p="online">IA en ligne</button></div>
       <label class="field">Adresse « chat/completions » (vue depuis le Pi)<input class="input" id="ps-ep" placeholder="http://127.0.0.1:11434/v1/chat/completions"></label>
@@ -4362,14 +4648,18 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       <div class="card"><div class="card-h"><h2>Voix</h2></div><div class="card-b stack small">
       <div>Micro : <b>${Voice.native() ? 'natif Android (APK NEXUS)' : Voice.web() ? 'reconnaissance du navigateur' : Voice.rec() ? 'Vosk sur le Pi' : 'indisponible ici'}</b></div>
       ${Voice.available() ? '' : `<div class="banner warn">${icon('alert')}<div>${esc(Voice.why())}</div></div>`}
-      <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b>${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
+      <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b id="ps-piper">${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
       <label class="switch"><input type="checkbox" id="ps-speak" ${prefs.speak ? 'checked' : ''}><span class="track"></span>Voix activée (sinon Patricia écrit seulement)</label>
       <label class="field">Débit de la voix : <b id="ps-rate-v">${Math.round(prefs.rate * 100)} %</b><input type="range" id="ps-rate" min="0.7" max="1.2" step="0.02" value="${prefs.rate}"></label>
-      <label class="field">Voix de lecture<select class="input" id="ps-voice"><option value="">Automatique</option>${voices.map((v) => `<option ${v.name === prefs.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
-      <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div>
+      <label class="field">Voix<select class="input" id="ps-voice"><option value="">Automatique (la plus naturelle)</option></select></label>
+      <div class="row"><button class="btn sm" id="ps-test">${icon('volume')}Écouter</button><span class="muted" id="ps-voice-now"></span></div>
+      <div class="hint">Les voix les plus humaines : « Natural » d'Edge sur PC, la voix Google sur Android ou Chrome, Piper (siwis) hors ligne sur le Pi.</div></div></div>
       <div class="card"><div class="card-h"><h2>Personnalité</h2></div><div class="card-b stack small">
       <div class="seg" id="ps-style"><button data-st="scientifique" class="${prefs.style !== 'complice' ? 'on' : ''}">Scientifique</button><button data-st="complice" class="${prefs.style === 'complice' ? 'on' : ''}">Complice</button></div>
       <div class="hint"><b>Scientifique</b> (par défaut) : pédagogue et neutre, elle explique pas à pas et te corrige. <b>Complice</b> : même rigueur, mais taquine et chaleureuse ; elle te pose de petites questions et redevient sérieuse dès qu'il s'agit de sécurité.</div></div></div>
+      <div class="card"><div class="card-h"><h2 class="grow">Quand je dis « flash » ou « compile »</h2></div><div class="card-b stack small">
+      <div class="seg" id="ps-direct"><button data-d="1" class="${prefs.direct ? 'on' : ''}">Patricia agit directement</button><button data-d="0" class="${prefs.direct ? '' : 'on'}">Patricia me demande de valider</button></div>
+      <p class="hint">Agir directement : flash, compilation, APK, check-up, nouveaux dossiers et fichiers partent tout de suite. Restent toujours à valider : envoi sur GitHub, suppression ou remplacement d'un fichier, correction de ton code, déplacement des voitures.</p></div></div>
       <div class="card"><div class="card-h"><h2 class="grow">GitHub</h2><span class="badge" id="ps-gh-state">…</span></div><div class="card-b stack small">
       <div class="muted">Dis « envoie la serre sur GitHub » : Patricia crée le dépôt s'il n'existe pas et y dépose le projet, après ta confirmation. Le Pi a besoin d'Internet (Wi-Fi amont du S3).</div>
       <label class="field">Jeton GitHub (fine-grained : Administration + Contents en écriture)<input class="input" id="ps-gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
@@ -4382,9 +4672,25 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     catch (e) { $('#ps-state', el).textContent = 'Pi injoignable : ' + e.message; }
     $('#ps-preset', el).onclick = (e) => { const b = e.target.closest('[data-p]'); if (!b) return; const p = presets[b.dataset.p]; $('#ps-ep', el).value = p.ep; $('#ps-model', el).value = p.model; $$('#ps-preset button', el).forEach((x) => x.classList.toggle('on', x === b)); };
     $('#ps-save', el).onclick = async () => { try { const r = await piJSON('/api/v1/assistant/config', { endpoint: $('#ps-ep', el).value.trim(), model: $('#ps-model', el).value.trim(), key: $('#ps-key', el).value }); $('#ps-key', el).value = ''; $('#ps-state', el).textContent = r.endpoint ? 'IA enregistrée' : 'Mode hors ligne'; toast('Réglages de Patricia enregistrés', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
-    $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); };
-    $('#ps-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak && window.speechSynthesis) speechSynthesis.cancel(); };
+    /* Liste des voix : celles du téléphone (APK) ou du navigateur, la plus naturelle d'abord, plus Piper si le Pi l'a. */
+    const voiceNow = () => { const n = $('#ps-voice-now', el); if (n) n.textContent = 'Voix utilisée : ' + Voice.describe(); };
+    const fillVoices = async () => {
+      try { voiceCaps = Object.assign({}, voiceCaps, await pi('/api/v1/patricia/voice')); } catch (e) { /* Pi absent : pas de Piper */ }
+      const sel = $('#ps-voice', el); if (!sel) return;
+      const nat = Voice.nativeVoices();
+      const list = nat.length ? nat.map((v) => ({ name: v.name, label: v.label || v.name }))
+        : (await Voice.voicesReady()).map((v) => ({ name: v.name, label: v.name + ' (' + v.lang + (Voice.tier(v.name) >= 2 ? ', naturelle' : Voice.tier(v.name) ? '' : ', robotique') + ')' }));
+      const opts = [{ name: '', label: 'Automatique (la plus naturelle)' }].concat(list, voiceCaps.tts || prefs.voice === 'piper' ? [{ name: 'piper', label: 'Voix du Pi (Piper, hors ligne)' }] : []);
+      if (prefs.voice && !opts.some((o) => o.name === prefs.voice)) opts.push({ name: prefs.voice, label: prefs.voice + ' (absente ici → automatique)' });
+      sel.innerHTML = opts.map((o) => `<option value="${esc(o.name)}" ${o.name === prefs.voice ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
+      const pb = $('#ps-piper', el); if (pb) pb.textContent = voiceCaps.tts ? 'installé' : 'absent';
+      voiceNow();
+    };
+    fillVoices();
+    $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); voiceNow(); };
+    $('#ps-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak) Voice.hush(); };
     $('#ps-rate', el).oninput = (e) => { prefs.rate = Number(e.target.value); $('#ps-rate-v', el).textContent = Math.round(prefs.rate * 100) + ' %'; savePrefs(); };
+    $('#ps-direct', el).onclick = (e) => { const b = e.target.closest('[data-d]'); if (!b) return; prefs.direct = b.dataset.d === '1'; savePrefs(); $$('#ps-direct button', el).forEach((x) => x.classList.toggle('on', x === b)); toast(prefs.direct ? 'Patricia agit directement' : 'Patricia demande de valider', 'ok'); };
     $('#ps-style', el).onclick = async (e) => {
       const b = e.target.closest('[data-st]'); if (!b) return;
       prefs.style = b.dataset.st; savePrefs();
@@ -4396,7 +4702,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     pi('/api/v1/patricia/github').then(ghShow).catch(() => { $('#ps-gh-state', el).textContent = 'Pi injoignable'; });
     $('#ps-gh-save', el).onclick = async () => { try { const tok = $('#ps-gh-token', el).value.trim(); ghShow(await piJSON('/api/v1/patricia/github', Object.assign({ owner: $('#ps-gh-owner', el).value.trim(), private: $('#ps-gh-private', el).checked }, tok ? { token: tok } : {}), 30000)); $('#ps-gh-token', el).value = ''; toast('GitHub enregistré', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
     $('#ps-gh-del', el).onclick = async () => { try { ghShow(await piJSON('/api/v1/patricia/github', { delete: true })); toast('Jeton GitHub oublié', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
-    $('#ps-test', el).onclick = () => Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
+    $('#ps-test', el).onclick = () => { Voice.hush(); Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?'); };
   }
 
   /* ------------------------------------------------------------ enregistrement */
@@ -4591,7 +4897,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     set: { label: 'Mettre une variable à', fields: [['var', 'Variable', 'var'], ['value', 'Valeur ou calcul ({x} + 1)', 'text']] },
     toggle: { label: 'Inverser une variable (0 ↔ 1)', fields: [['var', 'Variable', 'var']] },
     http: { label: 'Envoyer une requête à un appareil', fields: [['method', 'Méthode', 'select:GET=GET|POST=POST'], ['url', 'Adresse ({variables} permises)', 'text'], ['body', 'Corps (POST)', 'text']] },
-    job: { label: 'Lancer un job du MASTER', fields: [['type', 'Job', 'select:PING=Ping|SYSTEM_TEST=Check-up|I2C_SCAN=Scan I2C|WIFI_SCAN=Scan Wi-Fi|IDENTIFY=Faire clignoter|BENCHMARK=Benchmark'], ['worker', 'Worker (0 = auto)', 'number']] },
+    job: { label: 'Lancer un job du MASTER', fields: [['type', 'Job', 'select:PING=Ping|SYSTEM_TEST=Check-up|I2C_SCAN=Scan I2C|WIFI_SCAN=Scan Wi-Fi|IDENTIFY=Faire clignoter|BENCHMARK=Benchmark|ADC_READ=Voltmètre|GPIO_TEST=Test des broches|ONEWIRE_SCAN=Scan 1-Wire|LOGIC_SAMPLE=Analyseur logique|PWM_GEN=Générateur PWM|SERVO_SWEEP=Balayage servo|TONE_TEST=Test buzzer'], ['worker', 'Worker (0 = auto)', 'number']] },
     goto: { label: 'Aller à l\'écran', fields: [['screen', 'Écran', 'screen']] },
     speak: { label: 'Dire à voix haute', fields: [['text', 'Texte ({variables} permises)', 'text']] },
     listen: { label: 'Écouter la voix dans une variable', fields: [['var', 'Variable', 'var']] },
@@ -5994,6 +6300,13 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
     I2C_SCAN: () => ['I2C_SCAN : 0x3C 0x76', 'I2C_SCAN : aucun périphérique', 'I2C_SCAN : 0x23 0x68'][Math.floor(rnd(0, 3))],
     WIFI_SCAN: () => `WIFI_SCAN : ${Math.round(rnd(4, 12))} réseaux`,
     IDENTIFY: () => 'IDENTIFY : LED clignotée 5 s',
+    ADC_READ: () => `ADC mV N=6 32:${Math.round(rnd(1640, 1660))} 33:${Math.round(rnd(0, 12))} 34:${Math.round(rnd(3280, 3310))} 35:${Math.round(rnd(140, 900))} 36:0 39:0`,
+    GPIO_TEST: () => ['GPIO_TEST PINS=17 FREE=15 GND=0 3V3=2 | 3V3: 21 22', 'GPIO_TEST PINS=17 FREE=17 GND=0 3V3=0', 'GPIO_TEST PINS=17 FREE=14 GND=1 3V3=2 | GND: 15 | 3V3: 21 22'][Math.floor(rnd(0, 3))],
+    PWM_GEN: () => 'PWM GPIO=13 FREQ=1000Hz REAL=1000Hz DUTY=50% MS=10000',
+    SERVO_SWEEP: () => 'SERVO GPIO=27 SWEEP=0-180-0 STEP=5deg PULSE=500-2500us',
+    TONE_TEST: () => 'TONE GPIO=14 SWEEP=200-4000Hz STEPS=20',
+    ONEWIRE_SCAN: () => ['ONEWIRE GPIO=32 FOUND=0', `ONEWIRE GPIO=32 FOUND=2 : 28FF641E8316034B=${rnd(20, 23).toFixed(1)}C 28AA1B3C05000012=${rnd(18, 21).toFixed(1)}C`][Math.floor(rnd(0, 2))],
+    LOGIC_SAMPLE: () => `LOGIC RATE=20000Hz MS=1000 33:${Math.round(rnd(995, 1005))}Hz/50% 34:L 35:H 36:${Math.round(rnd(48, 52))}Hz/12%`,
     CHECKUP: () => 'SYSTEM_TEST OK'
   };
 
@@ -6193,7 +6506,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compila
       }
       if (p === '/api/usb/serial') { if (b.baud) fl.baud = Number(b.baud); if (b.data) serialAdd('> ' + b.data.replace(/\r?\n$/, '') + '\nOK\n'); return ok({ ok: true }); }
       if (p === '/api/avr/flash') return new Promise((res) => setTimeout(() => res({ ok: true, message: `${String(b.path).split('/').pop()} : 14 322 octets écrits et vérifiés (${b.profile})` }), 1800));
-      if (p === '/api/agent/chat') { const qq = String(b.q || '').toLowerCase(); const st = state(); const acts = []; if (/check|benchmark|ping|scan i2c|identifie/.test(qq)) { const t = /benchmark/.test(qq) ? 'BENCHMARK' : /ping/.test(qq) ? 'PING' : /i2c/.test(qq) ? 'I2C_SCAN' : /identifie/.test(qq) ? 'IDENTIFY' : 'SYSTEM_TEST'; workers.filter((w) => w.state === 'READY').forEach((w) => newJob(t, w.id, 60)); acts.push(`${t} lancé sur 4 worker(s)`); } return ok({ answer: `ESP32 LAB 6.0.0 : ${st.workers.filter((w) => w.state !== 'OFFLINE').length}/10 workers en ligne, jobs en file ${st.jobs.queued}, en cours ${st.jobs.running} ; microSD OK ; Internet connecté ; ambiance ${master.temp} °C.`, mode: 'local', actions: acts }); }
+      if (p === '/api/agent/chat') { const qq = String(b.q || '').toLowerCase(); const st = state(); const acts = []; if (/check|benchmark|ping|scan i2c|identifie|voltm|tensions|test gpio|1-wire|onewire|ds18b20|analyseur logique/.test(qq)) { const t = /check/.test(qq) ? 'SYSTEM_TEST' : /benchmark/.test(qq) ? 'BENCHMARK' : /ping/.test(qq) ? 'PING' : /i2c/.test(qq) ? 'I2C_SCAN' : /identifie/.test(qq) ? 'IDENTIFY' : /voltm|tensions/.test(qq) ? 'ADC_READ' : /gpio/.test(qq) ? 'GPIO_TEST' : /1-wire|onewire|ds18b20/.test(qq) ? 'ONEWIRE_SCAN' : /analyseur logique/.test(qq) ? 'LOGIC_SAMPLE' : 'SYSTEM_TEST'; workers.filter((w) => w.state === 'READY').forEach((w) => newJob(t, w.id, 60)); acts.push(`${t} lancé sur 4 worker(s)`); } return ok({ answer: `ESP32 LAB 6.0.0 : ${st.workers.filter((w) => w.state !== 'OFFLINE').length}/10 workers en ligne, jobs en file ${st.jobs.queued}, en cours ${st.jobs.running} ; microSD OK ; Internet connecté ; ambiance ${master.temp} °C.`, mode: 'local', actions: acts }); }
       if (p === '/api/admin/config' && method === 'GET') return ok({ ok: true, ap_ssid: 'ESP32-LAB', ap_channel: 6, sta_ssid: 'Livebox-7A2C', hostname: 'esp32-lab', whatsapp_phone: '', webhook_url: '', ai_endpoint: '', ai_model: 'gpt-4o-mini', search_endpoint: '', update_manifest: '', github_repo: 'Prince223889/ESP32-box', ntp_server: 'pool.ntp.org', timezone: 'CET-1CEST,M3.5.0,M10.5.0/3', control_path: '/x-control-3f9a1c2e', board_variant: 'YD-ESP32-S3 N16R8', rgb_gpio: 48, dht_gpio: 4, dht_type: 11, auto_updates: false, captive_portal: true, sta_pass_set: true, whatsapp_configured: false, ai_key_set: false });
       if (p === '/api/admin/config') return ok({ ok: true, restart: false });
       if (p === '/api/update/check') return ok({ available: true, source: 'github', repo: 'Prince223889/ESP32-box', version: '6.2.0', notes: 'Démonstration : nouvelle Release GitHub.\n- Wireshark du Labo\n- Flash ESP32 par câble', assets: 'worker_esp32.bin|https://github.com/Prince223889/ESP32-box/releases/download/v6.2.0/worker_esp32.bin;worker_esp32s3.bin|https://github.com/Prince223889/ESP32-box/releases/download/v6.2.0/worker_esp32s3.bin' });

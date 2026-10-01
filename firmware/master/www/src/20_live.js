@@ -12,7 +12,14 @@
     { id: 'MEM_TEST', name: 'Test mémoire', desc: 'Allocation et motif sur la RAM (et PSRAM).', icon: 'memory' },
     { id: 'I2C_SCAN', name: 'Scan I2C', desc: 'Liste les adresses présentes sur le bus I2C du worker.', icon: 'search' },
     { id: 'WIFI_SCAN', name: 'Scan Wi-Fi', desc: 'Réseaux visibles depuis le worker (RSSI, canal).', icon: 'wifi' },
-    { id: 'IDENTIFY', name: 'Identifier', desc: 'Fait clignoter la LED du worker pour le repérer.', icon: 'eye' }
+    { id: 'IDENTIFY', name: 'Identifier', desc: 'Fait clignoter la LED du worker pour le repérer.', icon: 'eye' },
+    { id: 'ADC_READ', name: 'Voltmètre (ADC)', desc: 'Tension moyenne (mV) de chaque broche ADC1 libre du worker.', icon: 'bolt' },
+    { id: 'GPIO_TEST', name: 'Test des broches', desc: 'Tirage interne haut/bas : broches libres, tenues à GND ou à 3V3.', icon: 'pin' },
+    { id: 'ONEWIRE_SCAN', name: 'Scan 1-Wire', desc: 'Identifiants ROM du bus 1-Wire et température des DS18B20.', icon: 'thermo' },
+    { id: 'LOGIC_SAMPLE', name: 'Analyseur logique', desc: 'Capture 1 s à 20 kHz : fréquence et rapport cyclique par broche.', icon: 'activity' },
+    { id: 'PWM_GEN', name: 'Générateur PWM', desc: 'Signal carré 1 kHz à 50 % pendant 10 s sur la broche PWM du worker.', icon: 'wave' },
+    { id: 'SERVO_SWEEP', name: 'Balayage servo', desc: 'Servomoteur 0° → 180° → 0° sur la broche servo du worker.', icon: 'compass' },
+    { id: 'TONE_TEST', name: 'Test buzzer', desc: 'Balayage 200 → 4000 Hz sur la broche buzzer du worker.', icon: 'volume' }
   ];
   A.JOB_TYPES = JOB_TYPES;
   const jobName = (t) => (JOB_TYPES.find((j) => j.id === t) || { name: t }).name;
@@ -225,7 +232,7 @@
     });
   };
   A.actions['fleet-menu'] = () => {
-    const items = [['PING', 'activity', 'Ping de toute la flotte'], ['SYSTEM_TEST', 'check', 'Check-up de toute la flotte'], ['BENCHMARK', 'gauge', 'Benchmark comparatif'], ['I2C_SCAN', 'search', 'Scan I2C partout'], ['WIFI_SCAN', 'wifi', 'Cartographie Wi-Fi (scan partout)'], ['MEM_TEST', 'memory', 'Test mémoire partout'], ['IDENTIFY', 'eye', 'Faire clignoter tous les workers']];
+    const items = [['PING', 'activity', 'Ping de toute la flotte'], ['SYSTEM_TEST', 'check', 'Check-up de toute la flotte'], ['BENCHMARK', 'gauge', 'Benchmark comparatif'], ['I2C_SCAN', 'search', 'Scan I2C partout'], ['WIFI_SCAN', 'wifi', 'Cartographie Wi-Fi (scan partout)'], ['MEM_TEST', 'memory', 'Test mémoire partout'], ['GPIO_TEST', 'pin', 'Test des broches partout'], ['ADC_READ', 'bolt', 'Voltmètre sur toute la flotte'], ['ONEWIRE_SCAN', 'thermo', 'Scan 1-Wire partout (DS18B20)'], ['IDENTIFY', 'eye', 'Faire clignoter tous les workers']];
     const d = drawer('Actions groupées', `<p class="small muted" style="margin-bottom:12px">Un job est créé pour chaque worker en ligne ; suivez la progression dans Jobs.</p><div class="card">${items.map(([t, i, n]) => `<button class="list-item click" style="width:100%;border:0;background:none;text-align:left;cursor:pointer" data-t="${t}"><div class="icon-tile accent">${icon(i)}</div><div class="grow" style="font-weight:600">${n}</div>${icon('chevron')}</button>`).join('')}
       <button class="list-item click" style="width:100%;border:0;background:none;text-align:left;cursor:pointer" data-t="REBOOT" ${S.admin ? '' : 'disabled'}><div class="icon-tile bad">${icon('power')}</div><div class="grow" style="font-weight:600">Redémarrer tous les workers <span class="badge outline">admin</span></div></button></div>`);
     d.body.addEventListener('click', async (e) => {

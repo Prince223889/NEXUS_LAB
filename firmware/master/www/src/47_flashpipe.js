@@ -60,7 +60,7 @@
     return { text, state };
   };
 
-  /* opts : { spec } (projet du Studio) ou { id } (projet de la bibliothèque), title, worker (facultatif) */
+  /* opts : { spec } (projet du Studio) ou { id } (projet de la bibliothèque), title, worker (facultatif), auto (enchaîne sans clic) */
   A.flashPipeline = async function (opts) {
     const lib = opts.id && A.projectById ? A.projectById(opts.id) : null;
     const baseSpec = opts.spec ? JSON.parse(JSON.stringify(opts.spec)) : lib && lib.spec ? JSON.parse(JSON.stringify(lib.spec)) : null;
@@ -76,7 +76,7 @@
       <ol class="fp-steps"><li data-s="1" class="on">Worker</li><li data-s="2">Montage</li><li data-s="3">Firmware</li><li data-s="4">Flash</li><li data-s="5">Vérification</li></ol>
       <div class="field"><label>Worker</label><select class="select" id="fp-w">${workers.map((w) => `<option value="${w.id}" ${String(w.id) === worker ? 'selected' : ''}>W${w.id}${w.label ? ' · ' + esc(w.label) : ''} · ${esc(w.state)}</option>`).join('') || '<option value="">Aucun worker en ligne</option>'}</select><div class="hint" id="fp-chip"></div></div>
       <div id="fp-montage"></div>
-      <label class="switch"><input type="checkbox" id="fp-ready"><span class="track"></span>Le montage est câblé comme sur le schéma</label>
+      <label class="switch"><input type="checkbox" id="fp-ready" ${opts.auto ? 'checked' : ''}><span class="track"></span>Le montage est câblé comme sur le schéma</label>
       <div id="fp-src" class="card pad small"></div>
       <button class="btn primary lg" id="fp-go" disabled>${icon('zap')}Compiler, flasher et vérifier</button>
       <div class="card" id="fp-run" hidden><div class="card-b stack" style="gap:10px">
@@ -199,7 +199,8 @@
     $('#fp-w', d.body).onchange = prepare;
     $('#fp-ready', d.body).onchange = (e) => { goBtn.disabled = !source || !e.target.checked; if (e.target.checked) step(3); };
     goBtn.onclick = run;
-    prepare();
+    // opts.auto : lancé par Patricia en mode « agir directement » → enchaîne dès que le firmware a une source
+    prepare().then(() => { if (opts.auto && !cancelled && source) { step(3); run(); } });
   };
 
   A.commands.push({ title: 'Flasher le projet du Studio sur un worker', group: 'Action', icon: 'zap', run: () => A.actions['st-flash'] && A.actions['st-flash']() });

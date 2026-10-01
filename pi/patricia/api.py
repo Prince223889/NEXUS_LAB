@@ -21,7 +21,7 @@
   POST /api/v1/patricia/wipe                  {what: conversations|notes|facts|followups}
   GET  /api/v1/patricia/voice                 capacités vocales du Pi
   POST /api/v1/patricia/stt                   corps = WAV 16 bits mono → {text}
-  POST /api/v1/patricia/tts                   {text} → audio/wav
+  POST /api/v1/patricia/tts                   {text, rate?} → audio/wav (rate : débit de l'interface, 0.95 = normal)
   GET  /api/v1/fleet                          état de la flotte
   POST /api/v1/fleet/register                 {vid, x, y, heading}
   POST /api/v1/fleet/remove                   {vid}
@@ -152,11 +152,12 @@ def _post(h, path, b, engine, fleet_service) -> bool:
     elif path == "/api/v1/patricia/wipe":
         h.sendj(200, {"removed": mem.wipe(str(b.get("what", "")))})
     elif path == "/api/v1/patricia/tts":
-        try:
-            speed = float(b["speed"]) if b.get("speed") not in (None, "") else None
-        except (TypeError, ValueError):
-            speed = None
-        audio = voice.synthesize(str(b.get("text", "")), speed)
+        def num(k):
+            try:
+                return float(b[k]) if b.get(k) not in (None, "") else None
+            except (TypeError, ValueError):
+                return None
+        audio = voice.synthesize(str(b.get("text", "")), num("speed"), num("rate"))
         h.send_response(200)
         h.send_header("Content-Type", "audio/wav")
         h.send_header("Content-Length", str(len(audio)))

@@ -58,11 +58,14 @@ if [[ $WANT_VOICE -eq 1 ]]; then
   if [[ ! -d vosk-model-small-fr-0.22 ]]; then curl -fL -o fr.zip https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip && unzip -q fr.zip && rm fr.zip; fi
   ARCH="$(uname -m)"; [[ "$ARCH" == "aarch64" ]] || echo "Architecture $ARCH : adapte l'archive Piper si besoin."
   if [[ ! -x piper/piper ]]; then curl -fL -o piper.tgz "https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_${ARCH}.tar.gz" && tar xzf piper.tgz && rm piper.tgz; fi
+  # Voix de Patricia : « siwis » (femme, français de France, la plus naturelle des voix Piper FR).
+  # Alternative : fr_FR-upmc-medium (deux locuteurs, dont une voix féminine) (…/fr/fr_FR/upmc/medium/) puis NEXUS_PIPER_VOICE=/opt/nexus/voice/fr_FR-upmc-medium.onnx
+  # Débit : NEXUS_PIPER_SPEED (1.08 par défaut, plus grand = plus lent) ; pause entre phrases : NEXUS_PIPER_PAUSE (0.25 s).
   for f in fr_FR-siwis-medium.onnx fr_FR-siwis-medium.onnx.json; do
     [[ -f "$f" ]] || curl -fL -o "$f" "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/fr/fr_FR/siwis/medium/$f"
   done
   sed -i 's|^ExecStart=/usr/bin/python3 |ExecStart=/opt/nexus/venv/bin/python3 |' /etc/systemd/system/nexus-agent.service
-  echo "Bonjour, je suis Patricia." | ./piper/piper --model fr_FR-siwis-medium.onnx --output_file /tmp/patricia-test.wav && echo "Synthèse vocale OK (/tmp/patricia-test.wav)."
+  echo "Bonjour, je suis Patricia." | ./piper/piper --model fr_FR-siwis-medium.onnx --length_scale 1.08 --sentence_silence 0.25 --output_file /tmp/patricia-test.wav && echo "Synthèse vocale OK (/tmp/patricia-test.wav)."
 fi
 
 if [[ $WANT_FLEET -eq 1 ]]; then

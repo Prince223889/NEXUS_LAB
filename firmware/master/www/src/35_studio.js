@@ -107,34 +107,63 @@
     return sensorOuts().map((o) => ({ value: `${o.m}:${o.k}`, label: o.label }))
       .concat(spec.vars.map((v) => ({ value: 'var:' + varName(v), label: `Variable ${varName(v)}${v.unit ? ' (' + v.unit + ')' : ''}` })));
   }
-  const ruleSrc = (r) => (r.if.var ? 'var:' + LAB.sanitize(r.if.var) : `${r.if.m}:${r.if.out}`);
+  const ruleSrc = (r) => (r.if.every != null ? 'every' : r.if.var ? 'var:' + LAB.sanitize(r.if.var) : `${r.if.m}:${r.if.out}`);
+  /* Ajouts en un clic : ce qui agit (actionneurs) et ce qui déclenche (capteurs). */
+  const QUICK_ACT = [['led', 'LED'], ['relay', 'Relais'], ['buzzer_active', 'Buzzer'], ['servo_sg90', 'Servo'], ['pump', 'Pompe'], ['fan_pwm', 'Ventilateur'], ['l298n', 'Moteur CC'], ['rgb_led', 'LED RVB']];
+  const QUICK_SENS = [['dht22', 'Température / humidité'], ['button', 'Bouton'], ['ldr', 'Lumière'], ['hcsr04', 'Distance'], ['pir_hcsr501', 'Mouvement'], ['soil_cap', 'Humidité du sol'], ['potentiometer', 'Potentiomètre']];
+  const quickChips = (list) => `<div class="chips">${list.filter(([id]) => LAB.module(id)).map(([id, n]) => `<button class="chip" data-quick="${id}">${icon('plus')}${esc(n)}</button>`).join('')}<button class="chip" data-act="st-add">${icon('search')}Autre…</button></div>`;
+  const ACT_WORD = { on: 'allumer', off: 'éteindre', toggle: 'inverser', set: 'régler à' };
+  function ruleSentence(r) {
+    const a = (t) => (t && t.m != null && spec.modules[t.m] ? `${ACT_WORD[t.act] || t.act}${t.act === 'set' && t.v != null ? ' ' + t.v : ''} ${labelOf(t.m).replace(/^\d+\. /, '')}` : '');
+    if (r.if.every != null) return `Toutes les ${r.if.every} s : ${a(r.then)}${r.else ? ', puis ' + a(r.else) + ' (en alternance)' : ''}.`;
+    const src = (ruleSources().find((o) => o.value === ruleSrc(r)) || {}).label || '?';
+    if (r.if.op === 'map') return `${labelOf(r.then.m).replace(/^\d+\. /, '')} suit ${src}.`;
+    const op = (OPS.find(([k]) => k === r.if.op) || [0, r.if.op])[1];
+    return `Si ${src} ${op} ${r.if.vv ? 'la variable ' + r.if.vv : r.if.v} alors ${a(r.then)}${r.else ? ', sinon ' + a(r.else) : ''}.`;
+  }
   function rulesHtml() {
     const outs = ruleSources(), acts = actuators();
-    if (!outs.length || !acts.length) return `<div class="small muted">${!outs.length ? 'Ajoutez un capteur' : 'Ajoutez un actionneur (relais, LED, servo, buzzer, moteur…)'} pour créer un automatisme : « si la température &lt; 19 °C alors allumer le chauffage ».</div>`;
-    return spec.rules.map((r, idx) => {
-      const isMap = r.if.op === 'map';
+    const head = [];
+    if (!acts.length) head.push(`<div class="studio-quick"><div class="small"><b>1. Ce qui agit</b> : choisis un actionneur à commander.</div>${quickChips(QUICK_ACT)}</div>`);
+    if (!outs.length) head.push(`<div class="studio-quick"><div class="small"><b>${acts.length ? '' : '2. '}Ce qui déclenche</b> : un capteur ou une variable${acts.length ? ' ; sans capteur, « Clignoter / répéter » crée une minuterie' : ''}.</div>${quickChips(QUICK_SENS)}</div>`);
+    if (!acts.length) return head.join('') + `<div class="hint">Exemples : « si la température &gt; 28 °C alors allumer le ventilateur, sinon l'éteindre », « toutes les 1 s, inverser la LED ».</div>`;
+    const srcOpts = (r) => `<option value="every" ${ruleSrc(r) === 'every' ? 'selected' : ''}>Minuterie (toutes les N secondes)</option>${outs.map((o) => `<option value="${esc(o.value)}" ${ruleSrc(r) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}`;
+    return head.join('') + spec.rules.map((r, idx) => {
+      const isMap = r.if.op === 'map', isEvery = r.if.every != null;
       const dst = acts.find((a) => a.i === r.then.m);
       return `<div class="rule"><div class="row between"><b class="small">Règle ${idx + 1}</b><button class="btn sm icon ghost" data-rule-del="${idx}" aria-label="Supprimer">${icon('trash')}</button></div>
-        <div class="rule-line"><span class="rule-kw">Si</span><select class="select sm" data-r="${idx}" data-f="src">${outs.map((o) => `<option value="${esc(o.value)}" ${ruleSrc(r) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
-        <div class="rule-line"><span class="rule-kw"></span><select class="select sm" data-r="${idx}" data-f="op">${OPS.filter(([k]) => k !== 'map' || acts.some((a) => a.mod.act.set)).map(([k, n]) => `<option value="${k}" ${r.if.op === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        <div class="rule-sum small">${esc(ruleSentence(r))}</div>
+        <div class="rule-line"><span class="rule-kw">${isEvery ? 'Quand' : 'Si'}</span><select class="select sm" data-r="${idx}" data-f="src">${srcOpts(r)}</select></div>
+        ${isEvery ? `<div class="rule-line"><span class="rule-kw"></span><span class="small">toutes les</span><input class="input sm" type="number" step="0.1" min="0.2" data-r="${idx}" data-f="every" value="${esc(r.if.every)}" style="max-width:90px"><span class="small">s</span></div>
+          <div class="rule-line"><span class="rule-kw">Faire</span>${actSelect(r.then, 'then', idx)}</div><div class="rule-line"><span class="rule-kw">Puis</span>${actSelect(r.else, 'else', idx)}</div>
+          <div class="hint">Avec « Puis », les deux actions alternent (ex. allumer / éteindre = clignoter).</div>`
+        : `<div class="rule-line"><span class="rule-kw"></span><select class="select sm" data-r="${idx}" data-f="op">${OPS.filter(([k]) => k !== 'map' || acts.some((a) => a.mod.act.set)).map(([k, n]) => `<option value="${k}" ${r.if.op === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
           ${isMap ? `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="in0" value="${esc((r.if.in || [0, 100])[0])}" title="début de plage"><span class="small">→</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="in1" value="${esc((r.if.in || [0, 100])[1])}" title="fin de plage">`
             : `${spec.vars.length ? `<select class="select sm" data-r="${idx}" data-f="vv" title="seuil fixe ou variable" style="max-width:150px"><option value="">valeur</option>${spec.vars.map((v) => `<option value="${esc(varName(v))}" ${r.if.vv && LAB.sanitize(r.if.vv) === varName(v) ? 'selected' : ''}>variable ${esc(varName(v))}</option>`).join('')}</select>` : ''}${r.if.vv ? '' : `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="v" value="${esc(r.if.v)}" title="seuil">`}<input class="input sm" type="number" step="any" min="0" data-r="${idx}" data-f="hyst" value="${esc(r.if.hyst || 0)}" title="hystérésis (évite les oscillations)" style="max-width:90px">`}</div>
         ${isMap ? `<div class="rule-line"><span class="rule-kw">Alors</span><select class="select sm" data-r="${idx}" data-f="then.m">${acts.filter((a) => a.mod.act.set).map((a) => `<option value="${a.i}" ${r.then.m === a.i ? 'selected' : ''}>${esc(labelOf(a.i))}</option>`).join('')}</select></div>
           <div class="rule-line"><span class="rule-kw"></span><span class="small">de</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out0" value="${esc((r.then.out || [0, 100])[0])}"><span class="small">à</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out1" value="${esc((r.then.out || [0, 100])[1])}"><span class="small muted">${esc(dst && dst.mod.act.set ? dst.mod.act.set.unit : '')}</span></div>`
           : `<div class="rule-line"><span class="rule-kw">Alors</span>${actSelect(r.then, 'then', idx)}</div><div class="rule-line"><span class="rule-kw">Sinon</span>${actSelect(r.else, 'else', idx)}</div>`}
-        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.vv ? 'la variable ' + r.if.vv : r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}
+        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.vv ? 'la variable ' + r.if.vv : r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}`}
       </div>`;
-    }).join('') + `<button class="btn sm" data-rule-add>${icon('plus')}Ajouter une règle</button>`;
+    }).join('') + (spec.rules.length ? '' : `<div class="small muted">Aucune règle pour l'instant. « Nouvelle règle » crée ${outs.length ? '« si mesure &gt; seuil alors allumer, sinon éteindre »' : 'un clignotement toutes les 1 s'}, modifiable ensuite.</div>`)
+      + `<div class="row wrap"><button class="btn sm primary" data-rule-add>${icon('plus')}Nouvelle règle</button><button class="btn sm" data-rule-add="every">${icon('clock')}Clignoter / répéter</button></div>`;
   }
-  function addRule() {
+  function addRule(kind) {
     const outs = ruleSources(), acts = actuators();
-    if (!outs.length || !acts.length) return;
-    const r = { if: { op: '>', v: 25, hyst: 0.5 }, then: { m: acts[0].i, act: 'on' } };
+    if (!acts.length) return;
+    const a = acts[0], hasOn = !!a.mod.act.on;
+    if (kind === 'every' || !outs.length) {
+      spec.rules.push({ if: { every: 1 }, then: { m: a.i, act: hasOn ? 'on' : 'set', v: hasOn ? undefined : a.mod.act.set.max }, else: { m: a.i, act: hasOn ? 'off' : 'set', v: hasOn ? undefined : a.mod.act.set.min } });
+      return;
+    }
+    const r = { if: { op: '>', v: 25, hyst: 0.5 }, then: { m: a.i, act: 'on' } };
     setRuleField(r, 'src', outs[0].value);
-    spec.rules.push(Object.assign(r, { then: { m: acts[0].i, act: 'on' }, else: { m: acts[0].i, act: 'off' } }));
+    spec.rules.push(Object.assign(r, { then: { m: a.i, act: 'on' }, else: { m: a.i, act: 'off' } }));
   }
   function setRuleField(r, f, v) {
     if (f === 'src') {
+      if (v === 'every') { r.if = { every: 1 }; if (r.then.act === 'set' && r.then.out) { r.then = { m: r.then.m, act: 'on' }; r.else = { m: r.then.m, act: 'off' }; } return; }
+      if (r.if.every != null) r.if = { op: '>', v: 25, hyst: 0.5 };
       if (v.startsWith('var:')) { r.if.var = v.slice(4); delete r.if.m; delete r.if.out; }
       else { const [m, k] = v.split(':'); r.if.m = Number(m); r.if.out = k; delete r.if.var; }
     }
@@ -144,6 +173,7 @@
       if (v === 'map') { const a = actuators().find((x) => x.mod.act.set); r.if.in = r.if.in || [0, 100]; r.then = { m: a ? a.i : r.then.m, act: 'set', out: a ? [a.mod.act.set.min, a.mod.act.set.max] : [0, 100] }; delete r.else; }
       else if (!r.else && r.then.act === 'set' && r.then.out) { r.then = { m: r.then.m, act: 'on' }; r.else = { m: r.then.m, act: 'off' }; }
     }
+    else if (f === 'every') r.if.every = Math.max(0.2, Number(v) || 1);
     else if (f === 'v' || f === 'hyst') r.if[f] = v === '' ? 0 : Number(v);
     else if (f === 'in0' || f === 'in1') { r.if.in = r.if.in || [0, 100]; r.if.in[f === 'in0' ? 0 : 1] = Number(v); }
     else if (f === 'out0' || f === 'out1') { r.then.out = r.then.out || [0, 100]; r.then.out[f === 'out0' ? 0 : 1] = Number(v); }
@@ -162,9 +192,9 @@
   function remapRules(mapFn) {
     spec.vars.forEach((v) => { if (v.from) { const m = mapFn(v.from.m); if (m < 0) delete v.from; else v.from.m = m; } });
     spec.rules = spec.rules.map((r) => {
-      const a = r.if.var ? 0 : mapFn(r.if.m), b = mapFn(r.then.m);
+      const a = r.if.var || r.if.every != null ? 0 : mapFn(r.if.m), b = mapFn(r.then.m);
       if (a < 0 || b < 0) return null;
-      if (!r.if.var) r.if.m = a;
+      if (!r.if.var && r.if.every == null) r.if.m = a;
       r.then.m = b;
       if (r.else) { const c = mapFn(r.else.m); if (c < 0) delete r.else; else r.else.m = c; }
       return r;
@@ -222,8 +252,8 @@
                   <div class="small muted">${esc(mod.desc || '')}</div>${(mod.notes || []).length ? `<ul class="small" style="margin:0;padding-left:18px;color:var(--text-2)">${mod.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>` : ''}</div>`;
             }).join('') : `<div class="empty" style="padding:18px">${icon('box')}<div class="small">Ajoutez des capteurs, afficheurs et actionneurs.<br>Les broches sont choisies automatiquement, sans conflit.</div></div>`}
           </div></div>
+          <div class="card studio-rules"><div class="card-h"><div class="grow"><h2>Conditions et actions <span class="badge">${spec.rules.length}</span></h2><div class="card-sub">si… alors… sinon… · minuteries</div></div>${actuators().length ? `<button class="btn sm primary" data-rule-add>${icon('plus')}Nouvelle règle</button>` : ''}</div><div class="card-b stack" style="gap:10px" id="st-rules">${rulesHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Variables <span class="badge">${spec.vars.length}</span></h2></div><div class="card-b stack" style="gap:10px" id="st-vars">${varsHtml()}</div></div>
-          <div class="card"><div class="card-h"><h2 class="grow">Automatismes</h2></div><div class="card-b stack" style="gap:10px" id="st-rules">${rulesHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Connectivité</h2></div><div class="card-b stack" style="gap:12px">
             <label class="switch"><input type="checkbox" data-opt="web" ${o.web || o.app ? 'checked' : ''} ${o.app ? 'disabled' : ''}><span class="track"></span>Page web locale (mesures + commandes)</label>
             <label class="switch"><input type="checkbox" data-opt="app" ${o.app ? 'checked' : ''}><span class="track"></span>Pilotage par application (APK, page web : actionneurs et variables)</label>
@@ -238,7 +268,7 @@
           ${err ? `<div class="banner warn">${icon('alert')}<div>${esc(err)}</div></div>` : ''}
           ${res ? res.warnings.map((w) => `<div class="banner warn" style="margin:0">${icon('alert')}<div>${esc(w)}</div></div>`).join('') : ''}
           <div class="card"><div class="card-h"><div class="grow"><h2 class="ellipsis">${esc(spec.title)}</h2><div class="card-sub">${res ? `${res.code.split('\n').length} lignes · ${res.libs.length} bibliothèque(s) · ${res.power.total_mA} mA` : ''}</div></div>
-            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm primary" data-act="st-flash" title="Le Pi compile, le S3 flashe un worker et vérifie le moniteur">${icon('zap')}Flasher</button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
+            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm primary" data-act="st-flash" title="Le Pi compile, le S3 flashe un worker et vérifie le moniteur">${icon('zap')}Flasher</button><button class="btn sm" data-act="st-apk" title="Crée l'application Android qui lit et commande ce montage">${icon('phone')}Créer l'APK</button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
             <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['app', 'Application'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
         </div></div>`;
       A.studioResult = res;
@@ -330,7 +360,8 @@
         const i = Number(t.dataset.mup);
         if (i > 0) { const x = spec.modules[i]; spec.modules[i] = spec.modules[i - 1]; spec.modules[i - 1] = x; remapRules((m) => (m === i ? i - 1 : m === i - 1 ? i : m)); open = i - 1; saveSpec(); draw(); }
       } else if (t.dataset.mopen != null && !e.target.closest('button')) { const i = Number(t.dataset.mopen); open = open === i ? -1 : i; draw(); }
-      else if (t.hasAttribute('data-rule-add')) { addRule(); saveSpec(); draw(); }
+      else if (t.hasAttribute('data-rule-add')) { addRule(t.dataset.ruleAdd); saveSpec(); draw(); }
+      else if (t.dataset.quick) { spec.modules.push({ id: t.dataset.quick }); saveSpec(); toast(LAB.module(t.dataset.quick).name + ' ajouté', 'ok', 1600); draw(); }
       else if (t.dataset.ruleDel != null) { spec.rules.splice(Number(t.dataset.ruleDel), 1); saveSpec(); draw(); }
       else if (t.hasAttribute('data-var-add')) { addVar(); saveSpec(); draw(); }
       else if (t.dataset.varDel != null) {

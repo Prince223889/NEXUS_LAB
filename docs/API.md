@@ -59,7 +59,21 @@ Corps des POST : `application/x-www-form-urlencoded` sauf mention **JSON**. 🔒
 
 Rapport de chaque session : `/sd/REPORTS/BENCH/<projet>_<date>.json`. Protocole et format du plan : `PROTOCOLES.md`.
 
-Types de job : `PING`, `SYSTEM_TEST` (alias `CHECKUP`), `BENCHMARK`, `FS_TEST`, `MEM_TEST`, `I2C_SCAN`, `WIFI_SCAN`, `IDENTIFY`.
+Types de job : `PING`, `SYSTEM_TEST` (alias `CHECKUP`), `BENCHMARK`, `FS_TEST`, `MEM_TEST`, `I2C_SCAN`, `WIFI_SCAN`, `IDENTIFY`, et les jobs « matériel » `ADC_READ`, `GPIO_TEST`, `ONEWIRE_SCAN`, `LOGIC_SAMPLE` (lecture seule) et `PWM_GEN`, `SERVO_SWEEP`, `TONE_TEST` (pilotent une broche).
+
+Les jobs ne portent pas de paramètres : broches et réglages sont fixés dans `firmware/worker/config.h` (`WORKER_*_PIN`, fréquences, durées), et le worker refuse toute broche hors de sa liste de broches sûres (résultat `…=PIN_REFUSED`, job en échec). Résultats (`result` du job, 127 caractères max) :
+
+| Job | Rôle | Réglages par défaut | Exemple de résultat |
+|---|---|---|---|
+| `ADC_READ` | voltmètre : moyenne de 16 mesures (mV) sur chaque broche sûre de l'ADC1 (ADC2 inutilisable avec le Wi-Fi) | — | `ADC mV N=6 32:1650 33:0 34:3301 …` |
+| `GPIO_TEST` | tirage interne haut puis bas sur chaque broche sûre (hors LED et entrées seules) : libre, tenue à GND ou à 3V3 ; la broche repart en entrée | — | `GPIO_TEST PINS=17 FREE=15 GND=0 3V3=2 \| 3V3: 21 22` |
+| `ONEWIRE_SCAN` | recherche ROM 1-Wire (sans bibliothèque) puis température des DS18B20/DS1822/DS18S20 ; échec si le bus est à 0 | ESP32 GPIO32, S3 GPIO13, C3 GPIO3 ; 8 composants max | `ONEWIRE GPIO=32 FOUND=1 : 28FF641E8316034B=21.5C` |
+| `LOGIC_SAMPLE` | analyseur logique : fréquence (fronts montants) et rapport cyclique, `H`/`L` si constant | ESP32 GPIO33-36, S3 14/17/18/21, C3 0/1/3/10 ; 20 kHz pendant 1 s | `LOGIC RATE=20000Hz MS=1000 33:1000Hz/50% 34:L` |
+| `PWM_GEN` | générateur de signal carré, broche relâchée ensuite | ESP32 GPIO13, S3 GPIO10, C3 GPIO10 ; 1 kHz, 50 %, 10 s | `PWM GPIO=13 FREQ=1000Hz REAL=1000Hz DUTY=50% MS=10000` |
+| `SERVO_SWEEP` | servomoteur 0° → 180° → 0° (50 Hz, 500-2500 µs, pas de 5° toutes les 50 ms) | ESP32 GPIO27, S3 GPIO11, C3 GPIO10 | `SERVO GPIO=27 SWEEP=0-180-0 STEP=5deg PULSE=500-2500us` |
+| `TONE_TEST` | buzzer passif : 20 paliers de 200 à 4000 Hz, 150 ms chacun | ESP32 GPIO14, S3 GPIO12, C3 GPIO10 | `TONE GPIO=14 SWEEP=200-4000Hz STEPS=20` |
+
+Une broche tenue par `PWM_GEN`, `SERVO_SWEEP`, `TONE_TEST` ou `ONEWIRE_SCAN` est refusée par le panneau GPIO (`409 busy`) jusqu'à la fin du job ; annulation et dépassement de délai relâchent la broche.
 
 ## microSD et projets
 | Méthode | Route | Description |

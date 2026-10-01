@@ -323,7 +323,7 @@ console.log(JSON.stringify(bad));
     man = read(ROOT / "mobile" / "app" / "src" / "main" / "AndroidManifest.xml")
     check('allowBackup="false"' in man and "dataExtractionRules" in man and "networkSecurityConfig" in man, "APK : sauvegardes ou réseau non verrouillés")
     perms = set(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', man))
-    check(perms <= {"INTERNET", "RECORD_AUDIO", "VIBRATE"}, f"APK : permission inattendue {sorted(perms - {'INTERNET', 'RECORD_AUDIO', 'VIBRATE'})}")
+    check(perms <= {"INTERNET", "RECORD_AUDIO", "VIBRATE", "ACCESS_NETWORK_STATE"}, f"APK : permission inattendue {sorted(perms - {'INTERNET', 'RECORD_AUDIO', 'VIBRATE', 'ACCESS_NETWORK_STATE'})}")
     check("copyNexusWww" in read(ROOT / "mobile" / "app" / "build.gradle"), "APK : l'interface n'est plus embarquée")
     check("nexus-apk" in read(ROOT / ".github" / "workflows" / "android.yml"), "fabrication de l'APK sur GitHub absente")
 

@@ -136,6 +136,13 @@
     I2C_SCAN: () => ['I2C_SCAN : 0x3C 0x76', 'I2C_SCAN : aucun périphérique', 'I2C_SCAN : 0x23 0x68'][Math.floor(rnd(0, 3))],
     WIFI_SCAN: () => `WIFI_SCAN : ${Math.round(rnd(4, 12))} réseaux`,
     IDENTIFY: () => 'IDENTIFY : LED clignotée 5 s',
+    ADC_READ: () => `ADC mV N=6 32:${Math.round(rnd(1640, 1660))} 33:${Math.round(rnd(0, 12))} 34:${Math.round(rnd(3280, 3310))} 35:${Math.round(rnd(140, 900))} 36:0 39:0`,
+    GPIO_TEST: () => ['GPIO_TEST PINS=17 FREE=15 GND=0 3V3=2 | 3V3: 21 22', 'GPIO_TEST PINS=17 FREE=17 GND=0 3V3=0', 'GPIO_TEST PINS=17 FREE=14 GND=1 3V3=2 | GND: 15 | 3V3: 21 22'][Math.floor(rnd(0, 3))],
+    PWM_GEN: () => 'PWM GPIO=13 FREQ=1000Hz REAL=1000Hz DUTY=50% MS=10000',
+    SERVO_SWEEP: () => 'SERVO GPIO=27 SWEEP=0-180-0 STEP=5deg PULSE=500-2500us',
+    TONE_TEST: () => 'TONE GPIO=14 SWEEP=200-4000Hz STEPS=20',
+    ONEWIRE_SCAN: () => ['ONEWIRE GPIO=32 FOUND=0', `ONEWIRE GPIO=32 FOUND=2 : 28FF641E8316034B=${rnd(20, 23).toFixed(1)}C 28AA1B3C05000012=${rnd(18, 21).toFixed(1)}C`][Math.floor(rnd(0, 2))],
+    LOGIC_SAMPLE: () => `LOGIC RATE=20000Hz MS=1000 33:${Math.round(rnd(995, 1005))}Hz/50% 34:L 35:H 36:${Math.round(rnd(48, 52))}Hz/12%`,
     CHECKUP: () => 'SYSTEM_TEST OK'
   };
 
@@ -335,7 +342,7 @@
       }
       if (p === '/api/usb/serial') { if (b.baud) fl.baud = Number(b.baud); if (b.data) serialAdd('> ' + b.data.replace(/\r?\n$/, '') + '\nOK\n'); return ok({ ok: true }); }
       if (p === '/api/avr/flash') return new Promise((res) => setTimeout(() => res({ ok: true, message: `${String(b.path).split('/').pop()} : 14 322 octets écrits et vérifiés (${b.profile})` }), 1800));
-      if (p === '/api/agent/chat') { const qq = String(b.q || '').toLowerCase(); const st = state(); const acts = []; if (/check|benchmark|ping|scan i2c|identifie/.test(qq)) { const t = /benchmark/.test(qq) ? 'BENCHMARK' : /ping/.test(qq) ? 'PING' : /i2c/.test(qq) ? 'I2C_SCAN' : /identifie/.test(qq) ? 'IDENTIFY' : 'SYSTEM_TEST'; workers.filter((w) => w.state === 'READY').forEach((w) => newJob(t, w.id, 60)); acts.push(`${t} lancé sur 4 worker(s)`); } return ok({ answer: `ESP32 LAB 6.0.0 : ${st.workers.filter((w) => w.state !== 'OFFLINE').length}/10 workers en ligne, jobs en file ${st.jobs.queued}, en cours ${st.jobs.running} ; microSD OK ; Internet connecté ; ambiance ${master.temp} °C.`, mode: 'local', actions: acts }); }
+      if (p === '/api/agent/chat') { const qq = String(b.q || '').toLowerCase(); const st = state(); const acts = []; if (/check|benchmark|ping|scan i2c|identifie|voltm|tensions|test gpio|1-wire|onewire|ds18b20|analyseur logique/.test(qq)) { const t = /check/.test(qq) ? 'SYSTEM_TEST' : /benchmark/.test(qq) ? 'BENCHMARK' : /ping/.test(qq) ? 'PING' : /i2c/.test(qq) ? 'I2C_SCAN' : /identifie/.test(qq) ? 'IDENTIFY' : /voltm|tensions/.test(qq) ? 'ADC_READ' : /gpio/.test(qq) ? 'GPIO_TEST' : /1-wire|onewire|ds18b20/.test(qq) ? 'ONEWIRE_SCAN' : /analyseur logique/.test(qq) ? 'LOGIC_SAMPLE' : 'SYSTEM_TEST'; workers.filter((w) => w.state === 'READY').forEach((w) => newJob(t, w.id, 60)); acts.push(`${t} lancé sur 4 worker(s)`); } return ok({ answer: `ESP32 LAB 6.0.0 : ${st.workers.filter((w) => w.state !== 'OFFLINE').length}/10 workers en ligne, jobs en file ${st.jobs.queued}, en cours ${st.jobs.running} ; microSD OK ; Internet connecté ; ambiance ${master.temp} °C.`, mode: 'local', actions: acts }); }
       if (p === '/api/admin/config' && method === 'GET') return ok({ ok: true, ap_ssid: 'ESP32-LAB', ap_channel: 6, sta_ssid: 'Livebox-7A2C', hostname: 'esp32-lab', whatsapp_phone: '', webhook_url: '', ai_endpoint: '', ai_model: 'gpt-4o-mini', search_endpoint: '', update_manifest: '', github_repo: 'Prince223889/ESP32-box', ntp_server: 'pool.ntp.org', timezone: 'CET-1CEST,M3.5.0,M10.5.0/3', control_path: '/x-control-3f9a1c2e', board_variant: 'YD-ESP32-S3 N16R8', rgb_gpio: 48, dht_gpio: 4, dht_type: 11, auto_updates: false, captive_portal: true, sta_pass_set: true, whatsapp_configured: false, ai_key_set: false });
       if (p === '/api/admin/config') return ok({ ok: true, restart: false });
       if (p === '/api/update/check') return ok({ available: true, source: 'github', repo: 'Prince223889/ESP32-box', version: '6.2.0', notes: 'Démonstration : nouvelle Release GitHub.\n- Wireshark du Labo\n- Flash ESP32 par câble', assets: 'worker_esp32.bin|https://github.com/Prince223889/ESP32-box/releases/download/v6.2.0/worker_esp32.bin;worker_esp32s3.bin|https://github.com/Prince223889/ESP32-box/releases/download/v6.2.0/worker_esp32s3.bin' });

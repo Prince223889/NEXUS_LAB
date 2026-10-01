@@ -483,6 +483,9 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .rule { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
 .rule-line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .rule-line .select, .rule-line .input { width: auto; flex: 1; min-width: 90px; }
+.rule-sum { padding: 6px 10px; border-radius: 8px; background: var(--accent-soft, rgba(99,102,241,.1)); color: var(--text); font-weight: 550; }
+.studio-quick { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: 10px; }
+.studio-rules { border-color: var(--accent, var(--line)); }
 .rule-kw { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; width: 38px; flex: none; }
 .rule.var-row .rule-kw { width: 54px; }
 .pick-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; }
@@ -805,3 +808,10 @@ body.pa-listening .pa-orb { animation: pa-spin 1.6s linear infinite, pa-pulse 1s
 .fp-steps li.done { color: var(--ok); }
 .fp-steps li.done::before { content: '✓'; background: var(--ok); color: #fff; }
 .fp .meter { height: 10px; }
+
+/* Cartes branchées */
+.bd-list { display: grid; gap: 6px; }
+.bd-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.bd-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--warn, #d97706); }
+.bd-dot.ok { background: var(--ok, #16a34a); }
+.bd-dot.bad { background: var(--text-3, #94a3b8); }

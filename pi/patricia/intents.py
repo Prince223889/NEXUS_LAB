@@ -15,7 +15,10 @@ BOARD_WORDS = [("esp32s3", r"\b(s3|esp32[- ]?s3)\b"), ("esp32c3", r"\b(c3|esp32[
 JOB_WORDS = [("SYSTEM_TEST", r"check[- ]?up|bilan|diagnostic (des|du) worker|test systeme"), ("BENCHMARK", r"benchmark|perf"),
              ("MEM_TEST", r"test (de la )?memoire"), ("FS_TEST", r"test (du )?(systeme de )?fichiers"),
              ("WIFI_SCAN", r"scan(ne|ner)? (le )?wi-?fi|reseaux wi-?fi"), ("IDENTIFY", r"identifi|clignot|repere"),
-             ("PING", r"\bping\b")]
+             ("I2C_SCAN", r"scan(ne|ner)? (le bus )?i2c|bus i2c"), ("ADC_READ", r"voltm|mesure(r)? (les )?tensions|tensions? des broches"),
+             ("GPIO_TEST", r"test(e|er)? (des |les )?(broches|gpio)|test gpio"), ("ONEWIRE_SCAN", r"1-?wire|onewire|ds18b20"),
+             ("LOGIC_SAMPLE", r"analyseur logique|echantillonn"), ("PWM_GEN", r"generateur|signal pwm|genere (un )?(signal|pwm)"),
+             ("SERVO_SWEEP", r"servo"), ("TONE_TEST", r"buzzer|bip"), ("PING", r"\bping\b")]
 DIRS = {"avance": (1, 0), "recule": (-1, 0), "gauche": (0.4, -1), "droite": (0.4, 1)}
 
 
@@ -51,6 +54,37 @@ def board_in(ft: str) -> str | None:
     return None
 
 
+IDENTITY = re.compile(r"\b(qui es[- ]?tu|qui est[- ]?tu|t.es qui|tu es qui|qui tu es|c.est quoi ton nom|comment tu t.appelles?|ton nom|presente[- ]toi|"
+                      r"tu es (ma|mon) (copine|amie|cherie|femme|chef|assistante)|tu es quoi pour moi|qu.est[- ]ce que tu es|qu.est[- ]ce que je suis pour toi|"
+                      r"on est quoi (tous les deux|nous deux)|tu m.aimes)\b")
+BOARDS_Q = re.compile(r"\b(quel(le)?s? (cartes?|workers?|esp32s?|appareils?|modules?|peripheriques?)\b.*\b(branche|connecte|en ligne|detecte|presente?|allume)e?s?"
+                      r"|qu.est[- ]ce qui est (branche|connecte)|ce qui est (branche|connecte)|cartes? (branchees?|connectees?)|qui est (branche|connecte|en ligne))")
+NAME = r"[«\"']?([\w][\w .+/-]{0,120}?)[»\"']?"
+
+
+def files_intent(raw: str, ft: str) -> "Intent | None":
+    """Dossiers et fichiers de l'espace de travail : créer, écrire, lire, lister, supprimer."""
+    if not re.search(r"\b(dossiers?|repertoires?|fichiers?)\b", ft):
+        return None
+    m = re.search(r"\b(?:cree|creer|creez|fais|nouveau|ajoute)\b\s+(?:moi\s+)?(?:un |le |une )?(?:nouveau )?(?:dossier|repertoire)\s+(?:appele |nomme |qui s.appelle |pour )?" + NAME + r"(?:\s+dans\s+" + NAME + r")?\s*[.!?]?$", ft)
+    if m:
+        return Intent("files", 0.9, {"op": "mkdir", "name": m.group(1).strip(), "parent": (m.group(2) or "").strip()})
+    m = re.search(r"\b(?:cr[ée]{2}[rz]?|[ée]cris|[ée]crire|ajoute|fais)\b\s+(?:moi\s+)?(?:un |le |une )?(?:nouveau )?fichier\s+(?:appele |nomme )?([\w][\w.+/-]{0,120})(?:\s+dans\s+(?:le dossier\s+)?([\w][\w.+/-]{0,80}))?(?:\s*(?::|avec|contenant|qui contient)\s*(.*))?$", raw, re.I | re.S)
+    if m and re.search(r"\b(cree|creer|ecris|ajoute|fais)", ft):
+        return Intent("files", 0.9, {"op": "write", "name": m.group(1).strip(), "parent": (m.group(2) or "").strip(), "content": (m.group(3) or "").strip().lstrip(":").strip()})
+    m = re.search(r"\b(?:supprime|supprimer|efface|effacer|jette|mets a la corbeille)\b\s+(?:le |la |les )?(?:dossier|fichier|repertoire)\s+" + NAME + r"\s*[.!?]?$", ft)
+    if m:
+        return Intent("files", 0.9, {"op": "delete", "name": m.group(1).strip()})
+    m = re.search(r"\b(?:lis|lire|ouvre|affiche|montre)(?:[- ]moi)?\s+(?:le )?fichier\s+" + NAME + r"\s*[.!?]?$", ft)
+    if m:
+        return Intent("files", 0.9, {"op": "read", "name": m.group(1).strip()})
+    m = re.search(r"\b(?:liste|montre|affiche|quels sont|qu.y a[- ]t[- ]il dans|ouvre)\b.*\b(?:fichiers|dossiers|dossier)\b(?:\s+(?:de|du|dans)\s+(?:(?:le )?dossier\s+)?" + NAME + r")?\s*[.!?]?$", ft)
+    if m:
+        name = (m.group(1) or "").strip()
+        return Intent("files", 0.85, {"op": "list", "name": "" if name in ("mes", "les", "moi") else name})
+    return None
+
+
 LOG_MARKERS = re.compile(r"(error:|fatal error|Guru Meditation|Brownout|rst:0x|Backtrace:|Failed to connect|E \(\d+\)|\[E\]\[|panic|invalid header|Task watchdog|exit status \d)", re.I)
 
 
@@ -67,6 +101,16 @@ def detect(text: str) -> Intent:
         return Intent("greet", 0.95)
     if re.fullmatch(r"(merci|super|parfait|top|genial|cool|ok merci)( patricia)?[ !.,]*", ft):
         return Intent("thanks", 0.9)
+    if IDENTITY.search(ft):
+        return Intent("identity", 0.95, {"text": raw, "relation": bool(re.search(r"\b(pour moi|ma copine|mon amie|ma cherie|ma femme|amoureuse|on est quoi|tu m.aimes)\b", ft))})
+    if BOARDS_Q.search(ft) or (re.search(r"\bcheck[- ]?up\b|\bbilan\b|\binventaire\b", ft) and re.search(r"\b(cartes?|tout|materiel|branche|connecte|usb)\b", ft)):
+        return Intent("boards", 0.9, {"checkup": bool(re.search(r"check[- ]?up|bilan|teste|test", ft))})
+    f = files_intent(raw, ft)
+    if f:
+        return f
+    if re.search(r"\b(analyse|analyser|verifie|verifier|controle|corrige|corriger|repare|reparer|debug(ue)?|relis)[rz]?\b.*\b(projet|projets|code|programme|croquis|sketch|erreurs?)\b", ft) \
+            and not re.search(r"\b(marche|fonctionne|moniteur|serie)\b", ft):
+        return Intent("analyze", 0.9, {"text": raw, "fix": bool(re.search(r"\b(corrige|corriger|repare|reparer|applique)", ft))})
     if re.search(r"\b(que sais[- ]tu faire|tu peux faire quoi|aide[- ]moi a comprendre ce que tu|tes capacites|comment tu marches|aide$|^aide)\b", ft):
         return Intent("help", 0.9)
 
@@ -75,6 +119,10 @@ def detect(text: str) -> Intent:
         return Intent("note_add", 0.95, {"text": m.group(1).strip()})
     if re.search(r"\b(mes notes|les notes|montre.* notes|liste.* notes)\b", ft):
         return Intent("note_list", 0.9)
+    m = re.search(r"\b(?:cree|creer|creez|fais|ouvre|nouveau)\b[^.]*?\b(?:depot|repo|repository)\b(?:\s+(?:github|git ?hub))?(?:\s+(?:appele|nomme|qui s.appelle))?\s*[«\"']?([a-z0-9][\w.-]{1,99})?", ft)
+    if m and not re.search(r"\b(envoie|envoyer|pousse|pousser|push|mets|mettre|publie|depose|upload|pour|avec|projet)\b", ft):
+        name = m.group(1) if m.group(1) and m.group(1) not in ("github", "sur", "pour", "avec", "de", "du", "prive", "public", "git") else ""
+        return Intent("github_create", 0.9, {"repo": name, "public": bool(re.search(r"\bpublic\b", ft)), "private": bool(re.search(r"\bprive\b", ft))})
     if re.search(r"\bgit ?hub\b", ft) and re.search(r"\b(envoie|envoyer|envoi|pousse|pousser|push|publie|publier|mets|mettre|sauvegarde|sauvegarder|cree|creer|depose|deposer|upload)", ft):
         m = re.search(r"(?:depot|repo|repository)\s+(?:github\s+)?(?:appele|nomme|qui s.appelle)?\s*[«\"']?([a-z0-9][\w.-]{1,99})", ft)
         name = m.group(1) if m and m.group(1) not in ("github", "sur", "pour", "avec", "de", "du", "prive", "public") else ""
@@ -93,15 +141,21 @@ def detect(text: str) -> Intent:
         return Intent("recall", 0.85, {"query": raw})
 
     wids = workers_in(ft)
-    if re.search(r"\b(flash|flashe|flasher|televerse|televerser|charge|installe|programme)\b", ft) and (wids or "worker" in ft or "voiture" in ft):
+    strong = re.search(r"\b(flash|flashe|flasher|flashes|flashez|televerse|televerser|upload)\b", ft)
+    if (strong or re.search(r"\b(charge|installe|programme)\b", ft) and (wids or "worker" in ft or "voiture" in ft)) \
+            and not re.search(r"\b(c.est quoi|qu.est[- ]ce que|comment (on|faire|fonctionne)|explique)\b", ft):
         m = re.search(r"(?:avec|le projet|projet|programme)\s+(?:le |la |l.|du |de la )?([\w -]{3,60}?)(?:\s+(?:sur|dans|pour)\b|$|[.?!])", ft)
-        return Intent("flash", 0.9, {"workers": wids, "project": (m.group(1).strip() if m else ""), "board": board_in(ft)})
+        proj = m.group(1).strip() if m else ""
+        if re.fullmatch(r"(en cours|actuel|ouvert|du studio|studio|courant|mon projet|ce projet)", proj) or proj.startswith("le worker"):
+            proj = ""
+        return Intent("flash", 0.9, {"workers": wids, "project": proj, "board": board_in(ft)})
     if re.search(r"\b(verifie|controle|regarde)\b.*\b(marche|fonctionne|moniteur|serie|flash)", ft):
         return Intent("verify", 0.8, {"workers": wids})
     if re.search(r"\b(compile|compiler|build)\b", ft):
-        m = re.search(r"(?:compile[r]?|build)\s+(?:le projet |le |la |l.)?([\w-]{3,60})", ft)
-        return Intent("build", 0.85, {"project": m.group(1) if m else "", "board": board_in(ft)})
-    if re.search(r"\b(apk|application android|appli(cation)? (mobile|telephone))\b", ft):
+        m = re.search(r"(?:compile[rz]?|build)\s+(?:moi\s+)?(?:le projet |le |la |l.|mon projet )?([\w-]{3,60})", ft)
+        proj = m.group(1) if m and m.group(1) not in ("projet", "programme", "code", "tout", "pour", "sur", "avec", "maintenant", "studio", "ca") else ""
+        return Intent("build", 0.85, {"project": proj, "board": board_in(ft)})
+    if re.search(r"\b(apk|application android|appli(cation)? (mobile|telephone|android|pour (mon |le )?telephone))\b", ft):
         return Intent("apk", 0.85, {"text": raw})
 
     drive_word = re.search(r"\b(avance|recule|tourne|pilote|conduis|deplace|va|vas|envoie|ramene|gare|garer)\b", ft)
@@ -130,7 +184,7 @@ def detect(text: str) -> Intent:
         return Intent("fleet_status", 0.85)
 
     for job, pat in JOB_WORDS:
-        if re.search(r"\b(lance|fais|demarre|execute|faire)\b", ft) and re.search(pat, ft):
+        if re.search(r"\b(lance|fais|demarre|execute|faire|teste|tester|scanne)\b", ft) and re.search(pat, ft):
             return Intent("job", 0.9, {"job": job, "workers": wids})
     if re.search(r"\b(etat|statut|status|comment va|resume) (du |de la |des )?(labo|laboratoire|box|workers?|flotte|systeme)\b", ft) or ft in ("etat", "statut"):
         return Intent("status", 0.9)

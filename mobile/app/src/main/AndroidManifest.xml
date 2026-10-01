@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Applications du Studio APK : retour haptique du bouton « Vibrer ». -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Patricia : savoir si Internet répond vraiment avant d'utiliser une voix « réseau » (plus naturelle). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <queries>
         <intent><action android:name="android.speech.RecognitionService" /></intent>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>

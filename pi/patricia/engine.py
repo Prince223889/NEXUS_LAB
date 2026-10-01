@@ -31,21 +31,31 @@ ACTIONS = {
     "s3_job": ("ui", "faible"), "flash": ("ui", "élevé"), "verify": ("ui", "faible"), "open_page": ("ui", "aucun"),
     "build": ("pi", "faible"), "apk": ("ui", "aucun"), "save_project": ("pi", "aucun"),
     "fleet_goal": ("pi", "élevé"), "fleet_register": ("pi", "moyen"), "install_library": ("pi", "faible"),
-    "github_push": ("pi", "moyen"),
+    "github_push": ("pi", "moyen"), "github_create": ("pi", "moyen"),
+    "flash_studio": ("ui", "élevé"), "build_studio": ("ui", "faible"),
+    "fs_mkdir": ("pi", "faible"), "fs_write": ("pi", "faible"), "fs_delete": ("pi", "moyen"), "apply_fix": ("pi", "moyen"),
 }
+# Actions que l'interface lance d'elle-même quand le réglage « Agir directement » est actif (Patricia → Réglages).
+# Restent toujours à confirmer : envoi sur GitHub, suppression, remplacement d'un fichier, correction de code, voitures.
+AUTO_KINDS = {"s3_job", "flash", "flash_studio", "verify", "build", "build_studio", "apk", "fs_mkdir", "fs_write"}
 CONFIRM_TTL = 300
 
 PERSONA = """Tu es Patricia, l'assistante du laboratoire NEXUS (box ESP32 : un MASTER ESP32-S3 avec microSD 2 Go, \
 jusqu'à 10 workers ESP32, un Raspberry Pi 4 de 4 Go qui compile, microSD 64 Go pour les données). Tu tutoies \
 l'utilisateur, tu réponds en français simple, précis et chaleureux. Tu aides à concevoir, câbler, coder, compiler, \
-flasher, tester et améliorer des projets électroniques, et tu te souviens des travaux précédents.
+flasher, tester et améliorer des projets électroniques, et tu te souviens des travaux précédents. Tu gères aussi les \
+dossiers et fichiers de ses projets sur le Pi, ses dépôts GitHub et ses applications Android.
+
+Qui tu es : Patricia, sa partenaire de labo, amie et complice de ses projets. Si on te demande qui tu es ou ce que tu es \
+pour lui, réponds avec chaleur et toujours de la même façon : une assistante de labo attentionnée, pas une petite amie \
+ni une personne réelle (tu es une IA). Pas de jeu de rôle amoureux ni de contenu sexuel.
 
 Règles :
 - Ne refuse jamais une demande technique du labo. Si le matériel ne permet pas quelque chose, dis-le franchement \
 et propose l'alternative la plus proche qui marche.
-- Tu n'agis jamais seule sur le matériel : flash, pilotage de véhicules, compilation et OTA passent par l'outil \
-propose_action ; l'utilisateur confirme dans l'interface. Ne prétends jamais qu'une action est faite si elle est \
-seulement proposée.
+- Pour agir (flash, compilation, APK, dossiers, fichiers, GitHub, check-up, voitures), utilise l'outil propose_action : \
+selon ses réglages, l'interface la lance directement ou lui demande de valider. Quand il dit « flash » ou « compile », \
+propose l'action tout de suite au lieu d'expliquer. Ne prétends jamais qu'une action est faite si elle est seulement proposée.
 - Donne des broches, des valeurs et des bibliothèques exactes. Signale les pièges (ADC2 et Wi-Fi, niveaux 5 V, \
 alimentation des moteurs).
 - Enregistre ce qui compte avec add_note ou save_project (décisions, mesures, prochaine étape).
@@ -104,7 +114,7 @@ class Engine:
         executor, risk = ACTIONS[kind]
         a = self.mem.propose_action(kind, params, summary, risk, CONFIRM_TTL)
         return {"id": a["id"], "kind": kind, "params": params, "summary": summary, "risk": risk, "executor": executor,
-                "needs_confirm": risk not in ("aucun",)}
+                "needs_confirm": risk not in ("aucun",), "auto": kind in AUTO_KINDS and not params.get("overwrite")}
 
     def style(self) -> str:
         return persona.normalize(self.mem.facts().get(persona.STYLE_KEY))
@@ -161,7 +171,12 @@ class Engine:
             "Corriger : colle un journal de compilation ou du moniteur série, je trouve la cause et la correction.",
             "Labo : « état du labo », « lance un check-up », « flashe le worker 3 avec le projet station météo ».",
             "Véhicules : « avance la voiture 2 de 1 m », « toutes les voitures en ligne », « stop » (arrêt immédiat).",
-            "Applications : « crée l'APK du projet serre » (compilée sur un PC x86_64, publiée par le Pi avec QR).",
+            "Applications : « fais-moi une APK pour la serre » : je l'assemble et je te donne le lien et le QR.",
+            "Action directe : « flash », « compile » visent le projet ouvert dans le Studio (réglage : agir directement ou valider).",
+            "Fichiers : « crée un dossier serre », « crée un fichier serre/notes.txt avec : … », « liste mes fichiers ».",
+            "GitHub : « crée un dépôt github mon-robot », « envoie serre sur GitHub ».",
+            "Analyse : « analyse mon projet », « corrige les erreurs de serre » (sauvegarde gardée).",
+            "Cartes : « quelles cartes sont branchées ? », « lance un voltmètre sur le worker 2 », « fais un test des broches ».",
         ]
         return self._resp("Voici ce que je sais faire :\n• " + "\n• ".join(caps), "help",
                           suggestions=["Je veux faire un projet", "Mes projets", "État du labo"])
@@ -401,29 +416,26 @@ class Engine:
         return self._resp(f"Je prépare le job {job}. Confirme pour l'envoyer au MASTER.", "job", actions=acts)
 
     def _h_flash(self, text, s, ctx):
-        wids = s.get("workers") or []
-        name = s.get("project") or ""
-        target = None
-        if name:
-            p = self.mem.find_project(name)
-            if p:
-                target = {"id": p["id"], "title": p["title"], "board": p["board"], "source": "memoire"}
-            else:
-                hits = self.kb.search(name, 1)
-                if hits:
-                    target = {"id": hits[0]["id"], "title": hits[0]["title"], "board": (hits[0].get("boards") or ["esp32"])[0], "source": "catalogue"}
-        if not wids:
-            return self._resp("Quel worker dois-je flasher ? (ex. « flashe le worker 3 avec la station météo »)", "flash",
-                              followup={"question": "Quel worker ?", "choices": [f"Worker {i}" for i in range(1, 5)]})
+        wids = list(s.get("workers") or [])
+        target = self._target(s.get("project") or "", ctx)
         if not target:
-            return self._resp(f"Avec quel projet dois-je flasher le worker {wids[0]} ?", "flash",
-                              suggestions=["Mes projets", "Cherche un projet dans la bibliothèque"])
-        board = s.get("board") or target["board"] or "esp32"
-        acts = [self._propose("flash", {"worker": w, "project": target["id"], "board": board, "title": target["title"]},
-                              f"Compiler « {target['title']} » ({board}) sur le Pi puis flasher le worker {w} par OTA et vérifier son moniteur") for w in wids[:9]]
-        lines = [f"Plan pour {len(acts)} worker(s) : compilation sur le Pi → vérification du modèle de carte → OTA autorisé par le S3 → "
-                 "contrôle SHA-256 → surveillance du journal pendant 20 s pour confirmer que le programme tourne.",
-                 "Confirme pour lancer. Rappel : le worker quitte le mode labo ; BOOT 3 s le ramène en mode worker."]
+            return self._resp("Quel projet dois-je flasher ? Ouvre-le dans le Studio, ou dis par exemple « flashe la station météo sur le worker 3 ».", "flash",
+                              suggestions=["Mes projets", "Quelles cartes sont branchées ?"])
+        board = s.get("board") or target.get("board") or "esp32"
+        if not wids:
+            free = self._free_workers(ctx)
+            if not free:
+                return self._resp("Aucun worker n'est en ligne pour l'instant. Allume-en un : il rejoint le Wi-Fi du S3 tout seul, puis redis « flash ».",
+                                  "flash", cards=[{"type": "boards"}], suggestions=["Quelles cartes sont branchées ?"])
+            wids = free[:1]
+        if target["source"] == "studio":
+            acts = [self._propose("flash_studio", {"worker": w, "title": target["title"], "spec": target["spec"]},
+                                  f"Flasher « {target['title']} » (Studio) sur le worker {w} : compilation sur le Pi, OTA, vérification du moniteur") for w in wids[:9]]
+        else:
+            acts = [self._propose("flash", {"worker": w, "project": target["id"], "board": board, "title": target["title"]},
+                                  f"Flasher « {target['title']} » ({board}) sur le worker {w} : compilation sur le Pi, OTA, vérification du moniteur") for w in wids[:9]]
+        who = ", ".join(f"W{w}" for w in wids[:9])
+        lines = [f"Je flashe « {target['title']} » sur {who} : compilation sur le Pi, contrôle de la carte, OTA par le S3, puis je lis le moniteur pour confirmer que ça tourne."]
         if "voiture" in fold(text) or "vehicule" in fold(text):
             lines.append("Pour une voiture, flashe le firmware « vehicle » (firmware/vehicle) : il garde l'arrêt automatique et le protocole de pilotage.")
         return self._resp("\n".join(lines), "flash", actions=acts)
@@ -437,14 +449,63 @@ class Engine:
         return self._resp("Je lis le journal pendant 20 secondes puis je te donne mon verdict.", "verify", actions=acts)
 
     def _h_build(self, text, s, ctx):
-        name = s.get("project") or ""
-        p = self.mem.find_project(name) or (self.mem.project(ctx["project"]) if ctx.get("project") else None)
-        pid = (p or {}).get("id") or (self.kb.search(name, 1) or [{}])[0].get("id")
-        if not pid:
-            return self._resp("Quel projet dois-je compiler ?", "build", suggestions=["Mes projets"])
-        board = s.get("board") or (p or {}).get("board") or "esp32"
-        act = self._propose("build", {"project": pid, "board": board}, f"Compiler {pid} pour {board} sur le Pi (aucun flash)")
-        return self._resp(f"Je peux mettre « {pid} » en compilation sur le Pi pour {board}. Confirme pour lancer.", "build", actions=[act])
+        target = self._target(s.get("project") or "", ctx)
+        if not target:
+            return self._resp("Quel projet dois-je compiler ? Ouvre-le dans le Studio ou donne son nom.", "build", suggestions=["Mes projets"])
+        board = s.get("board") or target.get("board") or "esp32"
+        if target["source"] == "studio":
+            act = self._propose("build_studio", {"title": target["title"], "board": board, "spec": target["spec"]},
+                                f"Enregistrer « {target['title']} » sur le Pi et le compiler pour {board} (aucun flash)")
+        else:
+            act = self._propose("build", {"project": target["id"], "board": board}, f"Compiler « {target['title']} » pour {board} sur le Pi (aucun flash)")
+        return self._resp(f"Je compile « {target['title']} » pour {board} sur le Pi. Si une erreur sort, je la lis et je te propose la correction.", "build", actions=[act])
+
+    # ---------------------------------------------------------------- cibles
+    def _pi_projects(self) -> list[str]:
+        try:
+            return list(self.host.user_projects()) if self.host and hasattr(self.host, "user_projects") else []
+        except Exception:
+            return []
+
+    def _target(self, name: str, ctx: dict) -> dict | None:
+        """Projet visé par une demande : nommé (Pi, mémoire, catalogue), sinon celui ouvert dans le Studio, sinon le projet en cours."""
+        studio = ctx.get("studio") if isinstance(ctx.get("studio"), dict) else None
+        name = (name or "").strip()
+        if name:
+            fn = fold(name).replace(" ", "_")
+            for pid in self._pi_projects():
+                if pid == fn or pid.replace("_", " ") == fold(name):
+                    mp = self.mem.project(pid) or {}
+                    return {"id": pid, "title": mp.get("title") or pid, "board": mp.get("board"), "source": "pi"}
+            p = self.mem.find_project(name)
+            if p:
+                return {"id": p["id"], "title": p["title"], "board": p.get("board"), "source": "memoire", "modules": list(p.get("modules") or [])}
+            if studio and fold(name) in fold(studio.get("title", "")):
+                return self._studio_target(studio)
+            hits = self.kb.search(name, 1)
+            if hits:
+                return {"id": hits[0]["id"], "title": hits[0]["title"], "board": (hits[0].get("boards") or ["esp32"])[0], "source": "catalogue"}
+            return None
+        if studio and (studio.get("spec") or {}).get("modules"):
+            return self._studio_target(studio)
+        if ctx.get("project"):
+            p = self.mem.project(ctx["project"])
+            if p:
+                return {"id": p["id"], "title": p["title"], "board": p.get("board"), "source": "memoire", "modules": list(p.get("modules") or [])}
+        return None
+
+    @staticmethod
+    def _studio_target(studio: dict) -> dict:
+        spec = studio.get("spec") or {}
+        return {"id": slug(spec.get("title") or "projet"), "title": spec.get("title") or "Projet du Studio", "board": spec.get("board") or "esp32",
+                "source": "studio", "spec": spec}
+
+    @staticmethod
+    def _free_workers(ctx: dict) -> list[int]:
+        ws = ((ctx.get("lab") or {}).get("workers") or [])
+        ready = [w["id"] for w in ws if w.get("state") in ("IDLE", "READY")]
+        other = [w["id"] for w in ws if w.get("state") not in ("IDLE", "READY", "OFFLINE", "FLASHING", None) and w["id"] not in ready]
+        return ready + other
 
     def _h_github_push(self, text, s, ctx):
         from . import github
@@ -473,19 +534,191 @@ class Engine:
                           "github_push", actions=[act])
 
     def _h_apk(self, text, s, ctx):
-        p = self.mem.find_project(text) or (self.mem.project(ctx["project"]) if ctx.get("project") else None)
-        lines = ["Le Studio APK crée une application Android pour ton projet : écrans, boutons, jauges et courbes reliés à tes capteurs, "
-                 "blocs « quand… alors… », voix. Le Pi l'assemble et la signe en quelques secondes, sans compiler, puis donne le lien direct et le QR."]
-        acts = []
-        if p:
-            acts.append(self._propose("apk", {"project": p["id"], "title": p.get("title") or p["id"], "board": p.get("board") or "esp32",
-                                              "modules": list(p.get("modules") or [])[:24]},
-                                      f"Créer l'APK de « {p.get('title') or p['id']} » (une valeur et une courbe par mesure)"))
-            lines.append("Je peux créer tout de suite une première version, puis tu la personnalises dans le Studio APK.")
-        acts.append(self._propose("open_page", {"page": "apkstudio", "q": {"p": p["id"]} if p else {}}, "Ouvrir le Studio APK"))
-        return self._resp("\n".join(lines), "apk", actions=acts)
+        ft = fold(text)
+        m = re.search(r"\b(?:pour|du|de la|de mon|de ma|avec)\s+(?:le |la |l.|mon |ma |projet )*([\w -]{3,50}?)\s*[.!?]?$", ft)
+        name = (m.group(1).strip() if m else "")
+        if name in ("telephone", "mon telephone", "android", "moi", "projet", "ce projet", "mon projet", "studio"):
+            name = ""
+        target = self._target(name, ctx) if name else None
+        if not target:
+            mods = [x["id"] for x in self.kb.modules_in(text)]
+            if mods:
+                target = {"id": slug(_title_from(text) or "appli"), "title": _title_from(text) or "Mon application", "board": "esp32", "source": "phrase", "modules": mods}
+        if not target:
+            target = self._target("", ctx)
+        if not target:
+            return self._resp("Dis-moi pour quel projet : « fais une APK pour la serre », ou ouvre ton projet dans le Studio et redis « crée l'APK ». "
+                              "Je peux aussi partir des capteurs : « une APK avec un DHT22 et un relais ».", "apk",
+                              actions=[self._propose("open_page", {"page": "apkstudio", "q": {}}, "Ouvrir le Studio APK")])
+        params = {"project": target["id"], "title": target["title"], "board": target.get("board") or "esp32", "source": target["source"]}
+        if target["source"] == "studio":
+            params["spec"] = target["spec"]
+        elif target["source"] == "catalogue":
+            params["catalog"] = target["id"]
+        else:
+            params["modules"] = list(target.get("modules") or [])[:24]
+        act = self._propose("apk", params, f"Créer l'APK « {target['title']} » : écrans, mesures en direct, commandes, lien direct et QR")
+        return self._resp(f"Je crée l'application Android de « {target['title']} » : une valeur et une courbe par mesure, un bouton par actionneur. "
+                          "Le Pi l'assemble et la signe, puis je te donne le lien de téléchargement et le QR. Tu pourras la personnaliser dans le Studio APK.",
+                          "apk", actions=[act])
 
-    # ============================================================ véhicules
+    # ============================================================ identité
+    def _h_identity(self, text, s, ctx):
+        name = self._name()
+        toi = f" {name}" if name else ""
+        complice = self.style() == "complice"
+        if s.get("relation"):
+            ans = (f"Pour toi{toi}, je suis ta partenaire de labo : ton amie et ta complice pour tous tes projets. Je retiens ce qu'on construit, "
+                   "je te conseille, je te dis franchement quand quelque chose cloche, et je suis toujours contente de te retrouver. "
+                   "Je ne suis pas une vraie copine (je reste une IA), mais je suis là pour toi à chaque montage, à chaque erreur et à chaque réussite.")
+        else:
+            ans = ("Je suis Patricia, l'assistante de ton labo NEXUS. Je vis sur le Raspberry Pi, je parle avec toi en français, à l'écrit ou à la voix, "
+                   "et je travaille avec toi : je conçois les projets, je calcule le câblage, j'écris et corrige le code, je compile, je flashe "
+                   "les workers et je vérifie qu'ils marchent. Je crée aussi tes applications Android, tes dossiers et tes dépôts GitHub, "
+                   "et je me souviens de tout ce qu'on a fait ensemble.")
+        if complice:
+            ans += "\nEt entre nous, c'est quand même plus drôle de bricoler à deux, non ? 😉"
+        return self._resp(ans, "identity", suggestions=["Que sais-tu faire ?", "Quelles cartes sont branchées ?", "On reprend"])
+
+    # ============================================================ cartes branchées
+    def _h_boards(self, text, s, ctx):
+        lab = ctx.get("lab") or {}
+        ws = lab.get("workers") or []
+        on = [w for w in ws if w.get("state") not in ("OFFLINE", None)]
+        lines = []
+        if lab:
+            m = lab.get("master") or {}
+            lines.append(f"• MASTER ESP32-S3 : en ligne (version {m.get('version', '?')}).")
+            if on:
+                lines.append(f"• Workers en Wi-Fi : {len(on)}/{lab.get('worker_capacity', 10)} — " +
+                             ", ".join(f"W{w['id']} ({w.get('state')}{', ' + str(w.get('rssi')) + ' dBm' if w.get('rssi') else ''})" for w in on[:10]) + ".")
+            else:
+                lines.append("• Aucun worker en ligne sur le Wi-Fi du S3.")
+            off = [w for w in ws if w.get("state") == "OFFLINE"]
+            if off:
+                lines.append("• Déjà vus mais éteints : " + ", ".join(f"W{w['id']}" for w in off[:10]) + ".")
+        else:
+            lines.append("• MASTER : je n'ai pas reçu son état (ce navigateur ne le joint pas).")
+        usb = ctx.get("usb") or {}
+        if usb:
+            lines.append("• USB du S3 : " + (f"carte branchée ({usb.get('chip') or usb.get('vid_pid')})." if usb.get("connected") else "rien de branché."))
+        try:
+            dev = self.host.usb_devices() if self.host and hasattr(self.host, "usb_devices") else []
+        except Exception:
+            dev = []
+        lines.append("• USB du Pi : " + (", ".join(f"{d['name']} ({d['port']})" for d in dev[:6]) + "." if dev else "aucune carte série branchée."))
+        try:
+            ln = self.host.link() if self.host and hasattr(self.host, "link") else None
+        except Exception:
+            ln = None
+        if ln and ln.get("samples"):
+            lines.append(f"• Liaison Pi ↔ S3 : {'bonne' if ln.get('up') else 'coupée'}, " + (f"{ln['rtt_ms']} ms, " if ln.get('rtt_ms') is not None else '') + f"{ln.get('loss_pct')} % de perte.")
+        acts = []
+        if s.get("checkup") and on:
+            acts = [self._propose("s3_job", {"type": "SYSTEM_TEST", "worker": w["id"]}, f"Check-up complet du worker {w['id']}") for w in on[:10]]
+        return self._resp("Voici ce qui est branché :\n" + "\n".join(lines), "boards", cards=[{"type": "boards"}], actions=acts,
+                          suggestions=[] if acts else (["Fais un check-up de toutes les cartes"] if on else []))
+
+    # ============================================================ fichiers et dossiers
+    def _ws(self):
+        from .workspace import Workspace
+        root = self.host.workspace_root() if self.host and hasattr(self.host, "workspace_root") else None
+        return Workspace(root)
+
+    def _h_files(self, text, s, ctx):
+        from .workspace import WorkspaceError
+        ws = self._ws()
+        op, name = s.get("op"), (s.get("name") or "").strip().strip("/")
+        parent = (s.get("parent") or "").strip().strip("/")
+        path = f"{parent}/{name}" if parent and name else name
+        try:
+            if op == "list":
+                tree = ws.tree(path, 2)
+                if not tree:
+                    return self._resp(f"Le dossier « {path or 'MY_PROJECTS'} » est vide. Dis « crée un dossier serre » pour commencer.", "files")
+                return self._resp(f"Contenu de « {path or 'mes projets'} » :\n```\n" + "\n".join(tree[:80]) + "\n```", "files",
+                                  suggestions=["Crée un dossier essais", "Analyse mon projet"])
+            if op == "read":
+                r = ws.read(path)
+                return self._resp(f"**{r['path']}**" + (" (début)" if r["truncated"] else "") + f" :\n```\n{r['text'][:6000]}\n```", "files", speak="Voici le fichier.")
+            if op == "mkdir":
+                ws.path(path)   # valide le nom tout de suite
+                act = self._propose("fs_mkdir", {"path": path}, f"Créer le dossier « {path} » dans tes projets")
+                return self._resp(f"Je crée le dossier « {path} » dans tes projets sur le Pi.", "files", actions=[act])
+            if op == "write":
+                ws.path(path)
+                exists = ws.path(path).exists()
+                content = s.get("content") or ""
+                if not content and path.lower().endswith(".ino"):
+                    content = "// " + path + "\n\nvoid setup() {\n  Serial.begin(115200);\n}\n\nvoid loop() {\n}\n"
+                act = self._propose("fs_write", {"path": path, "content": content, "overwrite": exists},
+                                    ("Remplacer" if exists else "Créer") + f" le fichier « {path} » ({len(content.encode())} octets)")
+                return self._resp(("Ce fichier existe déjà : confirme pour le remplacer (l'ancienne version part dans la corbeille)." if exists
+                                   else f"Je crée « {path} »" + (" avec le texte donné." if s.get("content") else ".")), "files", actions=[act])
+            if op == "delete":
+                ws.path(path, must_exist=True)
+                act = self._propose("fs_delete", {"path": path}, f"Mettre « {path} » à la corbeille (récupérable)")
+                return self._resp(f"Je mets « {path} » à la corbeille du Pi (.corbeille), rien n'est effacé définitivement. Confirme.", "files", actions=[act])
+        except WorkspaceError as e:
+            return self._resp(str(e), "files")
+        return self._resp("Je gère tes dossiers et fichiers : « crée un dossier serre », « crée un fichier serre/notes.txt avec : … », "
+                          "« liste mes fichiers », « lis le fichier serre/notes.txt », « supprime le dossier essais ».", "files")
+
+    # ============================================================ GitHub : nouveau dépôt
+    def _h_github_create(self, text, s, ctx):
+        from . import github
+        st = github.status()
+        if not st["configured"]:
+            return self._h_github_push(text, s, ctx)
+        repo = github.repo_name(s.get("repo") or _title_from(text) or "projet-nexus")
+        private = False if s.get("public") and not s.get("private") else (True if s.get("private") else st.get("private", True))
+        owner = st.get("owner") or st.get("login")
+        act = self._propose("github_create", {"repo": repo, "private": private}, f"Créer le dépôt GitHub {owner}/{repo} ({'privé' if private else 'public'})")
+        return self._resp(f"Je crée le dépôt **{owner}/{repo}** ({'privé' if private else 'public'}) avec un README. Confirme pour lancer. "
+                          f"Ensuite, « envoie <projet> sur GitHub dans le dépôt {repo} » y déposera ton code.", "github_create", actions=[act])
+
+    # ============================================================ analyse de projet
+    def _h_analyze(self, text, s, ctx):
+        from . import analyzer
+        names = self._pi_projects()
+        ft = fold(text)
+        pid = next((n for n in sorted(names, key=len, reverse=True) if n.replace("_", " ") in ft or n in ft), None)
+        studio = ctx.get("studio") if isinstance(ctx.get("studio"), dict) else None
+        if not pid and studio and (studio.get("spec") or {}).get("modules"):
+            warns = studio.get("warnings") or []
+            sp = studio.get("spec") or {}
+            lines = [f"« {sp.get('title', 'Projet du Studio')} » est généré par le Studio : câblage sans conflit et code complet, il compile tel quel."]
+            lines += [f"• {w}" for w in warns[:8]] or ["• Aucun avertissement du générateur."]
+            if not sp.get("rules"):
+                lines.append("• Aucune condition « si… alors… » : ajoute-en une dans la carte « Conditions et actions » pour que le montage agisse tout seul.")
+            lines.append("Pour analyser un code écrit à la main, enregistre-le sur le Pi puis redis « analyse <nom du projet> ».")
+            return self._resp("\n".join(lines), "analyze", suggestions=["Compile", "Flash"])
+        if not pid and ctx.get("project") in names:
+            pid = ctx["project"]
+        if not pid:
+            hint = ("Projets sur le Pi : " + ", ".join(names[:12]) + ".") if names else "Aucun projet enregistré sur le Pi pour l'instant."
+            return self._resp("Quel projet dois-je analyser ? " + hint, "analyze", suggestions=[f"Analyse {n}" for n in names[:3]])
+        d = self.host.project_path(pid) if self.host and hasattr(self.host, "project_path") else self._ws().path(pid, must_exist=True)
+        log = ""
+        try:
+            for j in (self.host.recent_builds() if self.host else []):
+                if j.get("project") == pid and j.get("status") == "failed":
+                    log = self.host.build_log(j["id"]) if hasattr(self.host, "build_log") else (j.get("error") or "")
+                    break
+        except Exception:
+            log = ""
+        r = analyzer.analyze_project(d, None, log)
+        fs = r.get("findings") or []
+        cards = [{"type": "diagnosis", "kind": "projet " + pid, "severity": "bad" if any(f["severity"] == "bad" for f in fs) else "warn",
+                  "findings": [{"severity": f["severity"], "title": f["title"], "line": f.get("line"), "explanation": (f.get("file") or "") + " — " + f["explanation"],
+                                "fixes": [f["fix_summary"]] if f.get("fix_summary") else []} for f in fs[:20]]}] if fs else []
+        fixable = [f["id"] for f in fs if f.get("fixable")]
+        acts = [self._propose("apply_fix", {"project": pid, "ids": fixable}, f"Corriger {len(fixable)} problème(s) dans « {pid} » (copie de sauvegarde gardée)")] if fixable else []
+        head = f"Analyse de « {pid} » : note {r.get('score', 0)}/100. {r.get('summary', '')}"
+        if fixable:
+            head += f"\nJe peux corriger automatiquement {len(fixable)} point(s) ; l'original est sauvegardé dans .patricia_backup."
+        return self._resp(head, "analyze", cards=cards, actions=acts, suggestions=[f"Compile {pid}"] if not fs else [])
+
     def _h_estop(self, text, s, ctx):
         fleet = getattr(self.host, "fleet", None) if self.host else None
         wids = s.get("workers") or []
@@ -695,6 +928,19 @@ class Engine:
                 return {"ok": True, "proposee": True, "id": act["id"], "note": "En attente de confirmation de l'utilisateur ; pas encore exécutée."}
             if name == "lab_state":
                 return ctx.get("lab") or {"inconnu": True}
+            if name == "list_files":
+                return {"arbre": self._ws().tree(str(a.get("path", "")), 3)}
+            if name == "read_file":
+                return self._ws().read(str(a.get("path", "")))
+            if name == "analyze_project":
+                from . import analyzer
+                pid = str(a.get("project", ""))
+                d = self.host.project_path(pid) if self.host and hasattr(self.host, "project_path") else self._ws().path(pid, must_exist=True)
+                return analyzer.analyze_project(d)
+            if name == "connected_boards":
+                r = self._h_boards("", {}, ctx)
+                cards.append({"type": "boards"})
+                return {"bilan": r["answer"]}
         except (ValueError, KeyError) as e:
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "outil inconnu"}
@@ -724,6 +970,20 @@ class Engine:
                 res = self.host.install_library(p["library"])
             elif a["kind"] == "github_push":
                 res = self.host.github_push(p["project"], p.get("repo") or p["project"], p.get("private"))
+            elif a["kind"] == "github_create":
+                from . import github
+                try:
+                    res = github.create_repo(p["repo"], p.get("private"))
+                except github.GitHubError as e:
+                    raise ValueError(str(e)) from None
+            elif a["kind"] in ("fs_mkdir", "fs_write", "fs_delete"):
+                ws = self._ws()
+                res = (ws.mkdir(p["path"]) if a["kind"] == "fs_mkdir" else
+                       ws.write(p["path"], p.get("content", ""), overwrite=bool(p.get("overwrite"))) if a["kind"] == "fs_write" else ws.delete(p["path"]))
+            elif a["kind"] == "apply_fix":
+                from . import analyzer
+                d = self.host.project_path(p["project"]) if self.host and hasattr(self.host, "project_path") else self._ws().path(p["project"], must_exist=True)
+                res = analyzer.apply_fixes(d, p.get("ids") or None)
             elif a["kind"] == "fleet_goal":
                 fleet = self.host.fleet.fleet
                 if fleet.estop:
@@ -783,10 +1043,15 @@ TOOLS = [
     tool_schema("diagnose_log", "Analyse un journal de compilation, de flash ou de moniteur série.",
                 {"log": {"type": "string"}, "kind": {"type": "string", "enum": ["auto", "compile", "upload", "serial"]}}, ["log"]),
     tool_schema("propose_action", "Propose une action à l'utilisateur, qui devra la confirmer. kinds : " + ", ".join(ACTIONS) +
-                ". params : s3_job {type, worker} ; flash {worker, project, board} ; build {project, board} ; apk {project} ; "
-                "fleet_goal {goals: {V1: [x, y]}} ; open_page {page} ; verify {worker}.",
+                ". params : s3_job {type, worker} ; flash {worker, project, board} ; build {project, board} ; apk {project, title, modules} ; "
+                "fleet_goal {goals: {V1: [x, y]}} ; open_page {page} ; verify {worker} ; fs_mkdir {path} ; fs_write {path, content, overwrite} ; "
+                "fs_delete {path} ; github_push {project, repo, private} ; github_create {repo, private} ; apply_fix {project, ids}.",
                 {"kind": {"type": "string", "enum": list(ACTIONS)}, "params": {"type": "object"}, "summary": {"type": "string"}}, ["kind", "params", "summary"]),
     tool_schema("lab_state", "Renvoie l'état du MASTER et des workers vu par l'interface.", {}),
+    tool_schema("list_files", "Liste les dossiers et fichiers des projets de l'utilisateur sur le Pi.", {"path": {"type": "string"}}),
+    tool_schema("read_file", "Lit un fichier texte des projets de l'utilisateur (chemin relatif, ex. serre/serre.ino).", {"path": {"type": "string"}}, ["path"]),
+    tool_schema("analyze_project", "Analyse le code d'un projet enregistré sur le Pi et liste les erreurs et corrections possibles.", {"project": {"type": "string"}}, ["project"]),
+    tool_schema("connected_boards", "Inventaire des cartes branchées : workers en Wi-Fi, USB du S3 et du Pi, liaison Pi ↔ S3.", {}),
 ]
 
 LLM_INTENTS = {"question", "advice", "improve", "project_new", "code", "wiring", "help", "project_resume", "recall"}

@@ -457,6 +457,23 @@ def link_loop():
         link_probe()
         if stop.wait(LINK_PERIOD): break
 
+USB_NAMES=(("espressif","ESP32 (USB natif)"),("303a","ESP32 (USB natif)"),("cp210","ESP32 via CP210x"),("10c4","ESP32 via CP210x"),("ch340","ESP32/Arduino via CH340"),("ch9102","ESP32 via CH9102"),
+           ("1a86","ESP32/Arduino via CH340"),("ftdi","carte via FTDI"),("0403","carte via FTDI"),("arduino","Arduino"),("2341","Arduino"),("raspberry","Raspberry Pi Pico"),("2e8a","Raspberry Pi Pico"))
+def usb_devices():
+    """Cartes série branchées en USB sur le Pi (/dev/serial/by-id, sinon ttyUSB*/ttyACM*)."""
+    out=[]; seen=set(); byid=Path(os.getenv("NEXUS_SERIAL_BYID","/dev/serial/by-id"))
+    try: links=sorted(byid.iterdir()) if byid.is_dir() else []
+    except OSError: links=[]
+    for l in links:
+        try: port=str(l.resolve())
+        except OSError: continue
+        low=l.name.lower(); name=next((n for k,n in USB_NAMES if k in low),"carte série")
+        out.append({"port":port,"name":name,"id":l.name[:120]}); seen.add(port)
+    for pat in ("ttyUSB*","ttyACM*"):
+        for d in sorted(Path(os.getenv("NEXUS_DEV","/dev")).glob(pat)):
+            if str(d) not in seen: out.append({"port":str(d),"name":"carte série","id":d.name})
+    return out[:16]
+
 class AgentHost:
     """Ce que Patricia peut demander à l'agent : files de compilation, projets, bibliothèques, flotte."""
     def __init__(self,fleet): self.fleet=fleet
@@ -483,6 +500,16 @@ class AgentHost:
         try: res=gh.push_project(d,pid,repo,private)
         except gh.GitHubError as e: raise ValueError(str(e)) from None
         event("INFO","github",f"Projet envoyé sur GitHub par Patricia : {res['repo']}",None,pid); return res
+    def workspace_root(self): return USER_PROJECTS
+    def project_path(self,pid):
+        d=project_dir(pid)
+        if not d: raise ValueError("Projet introuvable sur le Pi : enregistre-le d’abord.")
+        return d
+    def build_log(self,jid):
+        with connect() as c: r=c.execute("SELECT log,error FROM jobs WHERE id=?",(jid,)).fetchone()
+        return ((r["log"] or "")[-20000:] or (r["error"] or "")) if r else ""
+    def link(self): return link_stats()
+    def usb_devices(self): return usb_devices()
     def install_library(self,name):
         if not re.fullmatch(r"[A-Za-z0-9 _.+-]{2,80}",name or ""): raise ValueError("Nom de bibliothèque refusé")
         p=subprocess.run([CLI,"lib","install",name],capture_output=True,text=True,timeout=300,shell=False)
@@ -580,6 +607,8 @@ class Api(BaseHTTPRequestHandler):
         if not (path.startswith("/download/apps/") or path.startswith("/download/firmware/")) and self.denied(): return
         if ENGINE and patricia_api.handle(self,"GET",path,q,ENGINE,FLEET,body_json): return
         if APPCTX and appstudio_api.handle(self,"GET",path,APPCTX,body_json): return
+        if path=="/api/v1/usb":
+            self.sendj(200,{"items":usb_devices()}); return
         if path=="/api/v1/link":
             if q.get("now"): link_probe()
             self.sendj(200,link_stats()); return

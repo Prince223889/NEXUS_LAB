@@ -54,7 +54,7 @@ public final class MainActivity extends Activity {
     web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){Uri u=r.getUrl();if("file".equals(u.getScheme()))return false;try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}});
     web.setWebChromeClient(new WebChromeClient());
     web.addJavascriptInterface(new NativeBridge(),"NexusNative");
-    tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null)tts.setLanguage(Locale.FRANCE);});
+    initTts();
     web.loadUrl("file:///android_asset/player/index.html");
   }
   private void httpCall(String id,String method,String url,String body){
@@ -77,7 +77,7 @@ public final class MainActivity extends Activity {
     web.setDownloadListener((u,a,d,m,z)->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(u)));}catch(Exception ignored){}});
     // Patricia : micro et voix natifs d'Android (les navigateurs refusent le micro sur http://192.168.4.1).
     web.addJavascriptInterface(new NativeBridge(),"NexusNative");
-    tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null)tts.setLanguage(Locale.FRANCE);});
+    initTts();
     outbox=new Outbox(this);
     loadMaster();
   }
@@ -93,7 +93,12 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void vibrate(int ms){handler.post(()->{try{android.os.Vibrator v=(android.os.Vibrator)getSystemService(VIBRATOR_SERVICE);if(v!=null)v.vibrate(Math.max(10,Math.min(ms,2000)));}catch(Exception ignored){}});}
     @JavascriptInterface public void toast(String text){handler.post(()->Toast.makeText(MainActivity.this,text==null?"":text,Toast.LENGTH_SHORT).show());}
     @JavascriptInterface public void barColor(String hex){handler.post(()->{try{int c=Color.parseColor(hex);getWindow().setStatusBarColor(c);getWindow().setNavigationBarColor(c);}catch(Exception ignored){}});}
-    @JavascriptInterface public void speakWith(String text,float rate,float pitch){handler.post(()->{if(tts==null||text==null)return;tts.setSpeechRate(Math.max(0.5f,Math.min(1.6f,rate)));tts.setPitch(Math.max(0.7f,Math.min(1.4f,pitch)));try{for(android.speech.tts.Voice v:tts.getVoices()){if(v.getLocale()!=null&&"fr".equals(v.getLocale().getLanguage())&&v.getName().toLowerCase(Locale.ROOT).contains("female")){tts.setVoice(v);break;}}}catch(RuntimeException e){}tts.speak(text.length()>3500?text.substring(0,3500):text,TextToSpeech.QUEUE_FLUSH,null,"patricia");});}
+    @JavascriptInterface public void speakWith(String text,float rate,float pitch){handler.post(()->say(text,rate,pitch,null));}
+    /* Même chose avec une voix précise (nom renvoyé par voices()) ; inconnue ou indisponible = meilleure voix française. */
+    @JavascriptInterface public void speakAs(String text,float rate,float pitch,String voice){handler.post(()->say(text,rate,pitch,voice));}
+    @JavascriptInterface public void stopSpeaking(){handler.post(()->{if(tts!=null)tts.stop();});}
+    /* Voix françaises installées, la plus naturelle d'abord : [{name,label,quality,network}]. */
+    @JavascriptInterface public String voices(){return frenchVoices();}
     /* Mode téléphone : boîte d'envoi chiffrée, lisible seulement par la copie embarquée et par l'adresse du box. */
     @JavascriptInterface public String phone(){return offlineMode?"offline":"";}
     @JavascriptInterface public String outboxList(){if(!trusted()||outbox==null)return "[]";return outbox.list().toString();}
@@ -101,7 +106,85 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void outboxDone(String ids){if(!trusted()||outbox==null)return;try{outbox.remove(new JSONArray(ids));}catch(Exception ignored){}}
     @JavascriptInterface public String boxUrl(){return trusted()?masterUrl():"";}
     @JavascriptInterface public void openBox(){handler.post(()->{stopBoxWatch();offlineMode=false;web.loadUrl(masterUrl());});}
-    @JavascriptInterface public void speak(String text){handler.post(()->{if(tts!=null&&text!=null)tts.speak(text.length()>3500?text.substring(0,3500):text,TextToSpeech.QUEUE_FLUSH,null,"patricia");});}
+    @JavascriptInterface public void speak(String text){handler.post(()->say(text,1f,1f,null));}
+  }
+  /* Synthèse : la voix française la plus naturelle du téléphone. Les voix « réseau » de Google sont les plus humaines
+   * (utilisées seulement si Internet répond vraiment, pas sur le Wi-Fi du MASTER sans Internet) ; sinon la meilleure voix
+   * hors ligne (qualité VERY_HIGH/HIGH). Hauteur 1.0 : une voix montée dans les aigus sonne métallique. Le texte est
+   * découpé en phrases mises en file (QUEUE_ADD) pour une intonation naturelle ; JS est prévenu à la fin (__nexusSpoken). */
+  private volatile int ttsSeq=0; private String sayText=null,sayVoice=null; private float sayRate=1f; private boolean netFailed=false; private long netFailedAt=0;
+  private void initTts(){
+    tts=new TextToSpeech(this,status->{if(status!=TextToSpeech.SUCCESS||tts==null)return;tts.setLanguage(Locale.FRANCE);
+      tts.setOnUtteranceProgressListener(new android.speech.tts.UtteranceProgressListener(){
+        @Override public void onStart(String id){}
+        @Override public void onDone(String id){if(last(id))spoken();}
+        @Override public void onStop(String id,boolean interrupted){if(last(id))spoken();}
+        @Override @SuppressWarnings("deprecation") public void onError(String id){onError(id,-1);}
+        @Override public void onError(String id,int code){handler.post(()->{
+          android.speech.tts.Voice v=tts==null?null:tts.getVoice();
+          // voix réseau tombée en route : on rejoue le texte avec une voix hors ligne (10 minutes sans réseau ensuite)
+          if(v!=null&&v.isNetworkConnectionRequired()&&sayText!=null&&id!=null&&id.startsWith("patricia-"+ttsSeq+"-")&&!netFailed){netFailed=true;netFailedAt=System.currentTimeMillis();say(sayText,sayRate,1f,sayVoice);}
+          else if(last(id))spoken();});}
+      });});
+  }
+  private boolean last(String id){return ("patricia-"+ttsSeq+"-end").equals(id);}   // fin de la dernière phrase du texte en cours
+  private void spoken(){handler.post(()->{if(web!=null)web.evaluateJavascript("window.__nexusSpoken&&window.__nexusSpoken()",null);});}
+  private boolean internet(){
+    try{android.net.ConnectivityManager cm=(android.net.ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);if(cm==null)return false;
+      for(android.net.Network n:cm.getAllNetworks()){android.net.NetworkCapabilities c=cm.getNetworkCapabilities(n);if(c!=null&&c.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED))return true;}
+    }catch(RuntimeException ignored){}
+    return false;
+  }
+  private static boolean female(String n){return n.contains("female")||n.contains("femme")||n.matches(".*(-x-(fra|frc|vlf)-|smtf|#female|denise|eloise|amelie|audrey|aurelie|julie|marie|virginie|hortense).*");}
+  private static boolean male(String n){return n.matches(".*(-x-(frb|frd)-|smtm|#male|\\bmale\\b|thomas|henri|nicolas|daniel).*");}
+  private int voiceScore(android.speech.tts.Voice v,boolean net){
+    if(v.getLocale()==null||!"fr".equals(v.getLocale().getLanguage()))return Integer.MIN_VALUE;
+    java.util.Set<String> f=v.getFeatures();if(f!=null&&f.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED))return Integer.MIN_VALUE;
+    if(v.isNetworkConnectionRequired()&&!net)return Integer.MIN_VALUE;
+    String n=v.getName().toLowerCase(Locale.ROOT);
+    int s=v.getQuality();                                   // 100 (très basse) … 500 (très haute)
+    if(v.isNetworkConnectionRequired())s+=60;               // voix réseau = les plus humaines
+    if(female(n))s+=80;else if(male(n))s-=80;               // Patricia est une voix de femme
+    if("FR".equals(v.getLocale().getCountry()))s+=20;
+    return s;
+  }
+  private boolean netAllowed(){if(netFailed&&System.currentTimeMillis()-netFailedAt>600000)netFailed=false;return !netFailed&&internet();}
+  private android.speech.tts.Voice bestVoice(String wanted){
+    if(tts==null)return null;java.util.Set<android.speech.tts.Voice> all;
+    try{all=tts.getVoices();}catch(RuntimeException e){return null;}
+    if(all==null)return null;boolean net=netAllowed();android.speech.tts.Voice best=null;int bs=Integer.MIN_VALUE;
+    for(android.speech.tts.Voice v:all){int s=voiceScore(v,net);if(s==Integer.MIN_VALUE)continue;if(wanted!=null&&wanted.equals(v.getName()))return v;if(s>bs){bs=s;best=v;}}
+    return best;
+  }
+  private String frenchVoices(){
+    JSONArray out=new JSONArray();if(tts==null)return "[]";
+    try{java.util.List<android.speech.tts.Voice> l=new ArrayList<>();boolean net=internet();
+      for(android.speech.tts.Voice v:tts.getVoices())if(voiceScore(v,true)!=Integer.MIN_VALUE)l.add(v);
+      java.util.Collections.sort(l,(a,b)->voiceScore(b,true)-voiceScore(a,true));
+      for(android.speech.tts.Voice v:l){String n=v.getName().toLowerCase(Locale.ROOT);
+        out.put(new JSONObject().put("name",v.getName()).put("quality",v.getQuality()).put("network",v.isNetworkConnectionRequired())
+          .put("label",v.getName()+" ("+v.getLocale().getDisplayCountry(Locale.FRANCE)+(female(n)?", féminine":male(n)?", masculine":"")+(v.isNetworkConnectionRequired()?", en ligne"+(net?"":" — indisponible"):", hors ligne")+")"));}
+    }catch(Exception ignored){}
+    return out.toString();
+  }
+  /* Phrases de 220 caractères au plus (coupées aux virgules ou aux espaces si besoin). */
+  private static java.util.List<String> sentences(String text){
+    java.util.List<String> out=new ArrayList<>();StringBuilder cur=new StringBuilder();
+    for(String s:text.replaceAll("([.!?…;:])\\s+","$1\n").split("\n")){s=s.trim();
+      while(s.length()>220){int cut=s.lastIndexOf(", ",220);if(cut<70)cut=s.lastIndexOf(' ',220);if(cut<1)cut=220;if(cur.length()>0){out.add(cur.toString());cur.setLength(0);}out.add(s.substring(0,cut+1).trim());s=s.substring(cut+1).trim();}
+      if(s.isEmpty())continue;if(cur.length()>0&&cur.length()+1+s.length()>220){out.add(cur.toString());cur.setLength(0);}if(cur.length()>0)cur.append(' ');cur.append(s);}
+    if(cur.length()>0)out.add(cur.toString());
+    return out;
+  }
+  private void say(String text,float rate,float pitch,String voice){
+    if(tts==null||text==null||text.trim().isEmpty()){spoken();return;}
+    String t=text.length()>3500?text.substring(0,3500):text;int seq=++ttsSeq;
+    sayText=t;sayRate=rate;sayVoice=voice;
+    android.speech.tts.Voice v=bestVoice(voice==null||voice.isEmpty()?null:voice);
+    try{if(v!=null)tts.setVoice(v);else tts.setLanguage(Locale.FRANCE);}catch(RuntimeException ignored){}
+    tts.setSpeechRate(Math.max(0.5f,Math.min(1.6f,rate)));tts.setPitch(Math.max(0.8f,Math.min(1.2f,pitch)));
+    java.util.List<String> parts=sentences(t);
+    for(int i=0;i<parts.size();i++)tts.speak(parts.get(i),i==0?TextToSpeech.QUEUE_FLUSH:TextToSpeech.QUEUE_ADD,null,"patricia-"+seq+"-"+(i==parts.size()-1?"end":String.valueOf(i)));
   }
   private void voiceResult(boolean ok,String text){if(web!=null)web.evaluateJavascript("window.__nexusVoice&&window.__nexusVoice("+ok+","+JSONObject.quote(text==null?"":text)+")",null);}
   private void startListening(String lang){

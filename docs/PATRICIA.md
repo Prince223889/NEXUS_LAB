@@ -24,8 +24,19 @@ Toute action matérielle (flash, job, déplacement, installation) est une **prop
 - **APK NEXUS** (Android) : micro et synthèse natifs du téléphone, hors ligne si le pack français est installé. Autorisation micro demandée au premier appui.
 - **Navigateur** : la reconnaissance vocale du navigateur n'existe qu'en HTTPS ; sur `http://192.168.4.1` Patricia enregistre le micro et l'envoie au Pi (Vosk) si `--voice` est installé.
 - Appui long sur le bouton flottant = parler directement. Mode « mains libres » dans l'écran Patricia.
-- **Réglages → Voix activée** : décoché, Patricia ne parle plus et répond seulement par écrit. Le curseur « Débit » ralentit ou accélère la voix (0,92 par défaut, un peu plus lent que la normale). Elle choisit une voix féminine française quand le téléphone ou le navigateur en propose une.
-- Sur le Pi (Piper), `NEXUS_PIPER_SPEED` règle la lenteur de base (1,15 par défaut ; plus grand = plus lent).
+- **Réglages → Voix activée** : décoché, Patricia ne parle plus et répond seulement par écrit. Le curseur « Débit » ralentit ou accélère la voix (0,95 par défaut, un débit posé ; le style « complice » parle encore un peu plus doucement).
+- **Réglages → Voix** : « Automatique » prend la voix la plus naturelle disponible, sinon tu choisis dans la liste (voix du téléphone ou du navigateur, la plus naturelle en tête, plus « Voix du Pi (Piper, hors ligne) » si Piper est installé). Bouton **Écouter** pour comparer.
+- Sur le Pi (Piper), `NEXUS_PIPER_SPEED` règle la lenteur de base (1,08 par défaut ; plus grand = plus lent) et `NEXUS_PIPER_PAUSE` la pause entre deux phrases (0,25 s).
+
+### Une voix naturelle
+
+Patricia ne fabrique pas sa voix : elle utilise la meilleure voix française du moteur disponible, de préférence féminine, à hauteur normale (une voix montée dans les aigus sonne métallique). Avant de parler, elle enlève le markdown, les émojis, le code et les liens, dit les unités en mots (« 45 degrés », « 3,3 volts », « worker 3 ») et lit phrase par phrase avec de courtes pauses.
+
+- **PC** : Microsoft Edge et ses voix « Natural » (Denise, Eloise, Vivienne…) — les plus humaines, mais elles passent par Internet.
+- **Android / Chrome** : la voix Google française (paramètres Android → Synthèse vocale → moteur Google, données « Français (France) » ; une voix « réseau » est utilisée quand Internet répond, sinon la meilleure voix installée hors ligne).
+- **Hors ligne sur le Pi** : Piper avec la voix siwis (`sudo bash pi/setup_patricia.sh --voice`), choisie automatiquement quand le navigateur n'a pas de voix naturelle.
+
+Honnêtement : les voix hors ligne (Piper, voix locales du téléphone) sont bonnes mais pas parfaites — une intonation parfois plate ou un mot technique mal prononcé. Les anciennes voix Windows (Hortense, Paul) et eSpeak sous Linux restent robotiques : préfère Edge, Chrome ou Piper.
 
 ## Personnalité
 
@@ -45,6 +56,30 @@ Le style est gardé dans sa mémoire (fait « style de patricia »). Même en mo
 3. Dis ou écris : « envoie la serre sur GitHub », « crée un dépôt github pour station_meteo », « pousse mon projet sur GitHub en public ».
 
 Patricia propose l'envoi et attend ta confirmation. Elle crée ensuite le dépôt s'il n'existe pas et y dépose en un seul commit le code, le montage, la fiche et le README du projet. Les binaires (`bin/`) ne sont pas envoyés. Le jeton reste sur le Pi, dans `/srv/nexus/patricia/github.json` (droits 0600), et n'est jamais renvoyé à l'interface. Le Pi a besoin d'Internet : Wi-Fi amont du S3 ou Ethernet.
+
+## Analyse et correction des projets
+
+`pi/patricia/analyzer.py` relit les fichiers `.ino`, `.h`, `.hpp`, `.c` et `.cpp` d'un projet (par ex. `/srv/nexus/projects/MY_PROJECTS/<id>/`) sans rien compiler. La carte vient de la demande, sinon de `project.json` (`board`, `fqbn` ou `spec.board`), sinon ESP32. Chaque constat a une gravité (grave / à surveiller / info), un fichier, une ligne et une note sur 100 pour le projet. Les commentaires et le texte entre guillemets sont ignorés.
+
+| Vérification | Identifiant | Correction automatique |
+|---|---|---|
+| `Serial.print…` sans `Serial.begin` | `missing-serial-begin` | `Serial.begin(115200);` en première ligne de `setup()` |
+| `digitalWrite`/`analogWrite` sans `pinMode(…, OUTPUT)` | `missing-pinmode` | `pinMode(broche, OUTPUT);` dans `setup()` |
+| `ledcWrite(broche, …)` sans `ledcAttach` | `missing-ledcattach` | `ledcAttach(broche, 5000, 8);` dans `setup()` |
+| Bibliothèque utilisée sans son `#include` (DHT, Wire, WiFi, ESP32Servo, NeoPixel, OneWire, DallasTemperature, LiquidCrystal_I2C, SSD1306 + GFX ; `Arduino.h` dans un `.cpp`) | `missing-include` | ajoute l'`#include` en haut du fichier |
+| `#include <Servo.h>` (AVR seulement) | `servo-header` | remplacé par `ESP32Servo.h` |
+| Bus I2C utilisé sans `Wire.begin()` | `missing-wire-begin` | `Wire.begin();` dans `setup()` |
+| Ancienne API LEDC 2.x (`ledcSetup` + `ledcAttachPin`) | `ledc-api-v3` | `ledcAttach(broche, f, r)` et `ledcWrite(broche, …)`, seulement si la correspondance canal → broche est sans ambiguïté |
+| `setup()` ou `loop()` absente | `missing-setup`, `missing-loop` | ajoute une `loop()` vide (si seule `loop()` manque) |
+| Broche inexistante, broche de la flash (ESP32 6-11, S3 26-32, C3 12-17), sortie sur une entrée seule (ESP32 34-39), ADC2 lu avec le Wi-Fi actif, broche de démarrage | `pin-invalid`, `pin-flash`, `pin-input-only`, `pin-adc2-wifi`, `pin-strapping` | non : il faut recâbler |
+| `delay()` d'une seconde ou plus dans `loop()` avec un serveur web | `blocking-delay` | non |
+| Accolades ou parenthèses déséquilibrées | `unbalanced-braces`, `unbalanced-parens` | non (ligne approximative) |
+| `WiFi.begin("your_ssid", …)` et autres noms d'exemple | `wifi-placeholder` | non |
+| Jeton ou clé d'API écrit en clair (`ghp_…`, `sk-…`, longues clés) | `hardcoded-secret` | non |
+
+Si un journal de compilation est fourni, les constats du diagnostic (`diagnose.py`) s'y ajoutent ; « 'DHT' does not name a type » devient un `#include` manquant corrigeable, un en-tête introuvable devient `missing-library` (installation à confirmer).
+
+**Sauvegarde.** Avant toute correction, Patricia copie les fichiers d'origine dans `<projet>/.patricia_backup/<date-heure>/`. « Annule les corrections » remet la dernière sauvegarde (ou celle qu'on nomme). Elle ne modifie que des fichiers texte du dossier du projet, ne suit jamais un lien symbolique et ignore les fichiers de plus de 512 Ko. Relancer les corrections sur un projet déjà corrigé ne change plus rien.
 
 ## Installation sur le Pi
 
