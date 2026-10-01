@@ -8,6 +8,7 @@ Patricia vit sur le Raspberry Pi (`pi/patricia/`) et s'affiche dans l'interface 
 |---|---|
 | « Je veux faire une station météo avec un BME280 et un écran OLED » | Projet créé dans sa mémoire, **montage** (schéma), **code** généré, bibliothèques, conseils ; boutons Studio, `.ino`, enregistrer sur le Pi |
 | « Flashe la station météo sur W3 » | Proposition à confirmer → compilation sur le Pi → **schéma du montage à vérifier** → flash du worker → **lecture du moniteur** et verdict (ça marche / échec / incertain) |
+| « Quelle est la température ? », « Lis les capteurs du worker 2 » | Dernières mesures envoyées au MASTER par les workers et les montages, filtrées par grandeur ou par worker ; signale les mesures qui ne se mettent plus à jour |
 | « Vérifie W3 » | Lit le journal du worker (et le port USB si tu es admin) et explique ce qu'il voit |
 | Coller une erreur de compilation ou un moniteur série | Diagnostic : bibliothèque manquante (installation proposée), mauvaise carte, API LEDC 3.x, brownout, Guru Meditation, watchdog, boucle de redémarrage, capteur absent, I2C… |
 | « Note : commander des résistances 2 kΩ », « Rappelle-toi que ma carte est un S3 » | Notes et faits gardés en mémoire, recherche plein texte |

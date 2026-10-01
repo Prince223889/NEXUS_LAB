@@ -238,7 +238,7 @@
           ${err ? `<div class="banner warn">${icon('alert')}<div>${esc(err)}</div></div>` : ''}
           ${res ? res.warnings.map((w) => `<div class="banner warn" style="margin:0">${icon('alert')}<div>${esc(w)}</div></div>`).join('') : ''}
           <div class="card"><div class="card-h"><div class="grow"><h2 class="ellipsis">${esc(spec.title)}</h2><div class="card-sub">${res ? `${res.code.split('\n').length} lignes · ${res.libs.length} bibliothèque(s) · ${res.power.total_mA} mA` : ''}</div></div>
-            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm primary" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
+            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm primary" data-act="st-flash" title="Le Pi compile, le S3 flashe un worker et vérifie le moniteur">${icon('zap')}Flasher</button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
             <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['app', 'Application'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
         </div></div>`;
       A.studioResult = res;
@@ -364,6 +364,7 @@
       try { const result = LAB.generate(spec); A.studioResult = result; await A.saveProjectToSd(clean, asProject(), result); }
       catch (e) { A.toast(e.message || String(e), 'bad'); }
     },
+    'st-flash': () => { if (!spec.modules.length) return toast('Ajoute au moins un module avant de flasher.', 'warn'); A.flashPipeline({ spec: JSON.parse(JSON.stringify(spec)), title: spec.title }); },
     'st-svg': () => A.studioResult && LAB.montageSvg && download(`montage_${projId()}_${A.studioResult.board}.svg`, LAB.montageSvg(A.studioResult, { id: projId(), title: spec.title }).svg, 'image/svg+xml'),
     'st-apk': () => {
       if (!A.AppStudio) return toast('Studio APK non chargé', 'bad');

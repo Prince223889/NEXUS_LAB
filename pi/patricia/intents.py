@@ -130,6 +130,11 @@ def detect(text: str) -> Intent:
     if re.search(r"\b(etat|statut|status|comment va|resume) (du |de la |des )?(labo|laboratoire|box|workers?|flotte|systeme)\b", ft) or ft in ("etat", "statut"):
         return Intent("status", 0.9)
 
+    if (re.search(r"\b(lis|lire|donne|quelle?s?|combien|valeurs?|affiche|montre|indique|releve)\b", ft)
+            and re.search(r"\b(capteurs?|mesures?|temperature|humidite|pression|lumiere|luminosite|co2|distance|niveau|valeurs?|fait[- ]il)\b", ft)
+            and not re.search(r"\b(brancher|branche|cabl|montage|schema|code|programme|choisir|acheter)", ft)):
+        m = re.search(r"\b(temperature|humidite|pression|lumiere|luminosite|co2|distance|niveau|gaz|sol|pluie|vent|courant|tension|poids)\b", ft)
+        return Intent("sensors", 0.85, {"workers": wids, "topic": m.group(1) if m else ""})
     if re.search(r"\b(mes projets|liste.* projets|quels projets|nos projets)\b", ft):
         return Intent("project_list", 0.9)
     if re.search(r"\b(on reprend|reprenons|continue[rs]?|ou en (est|etait|etions)|on en etait)\b", ft):

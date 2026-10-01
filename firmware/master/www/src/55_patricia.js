@@ -28,7 +28,7 @@
 
   function labContext() {
     const st = A.S.state || {};
-    return { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+    return { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label, ip: w.ip, job: w.job })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
   }
 
   /* ------------------------------------------------------------ texte riche */
@@ -340,7 +340,9 @@
     bubble(log, 'me', esc(opts.label || (q.length > 400 ? q.slice(0, 400) + '…' : q)));
     const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
     let r;
-    try { r = await piJSON('/api/v1/patricia/chat', { q, session: SESSION, context: labContext() }, 150000); piOk = true; }
+    const context = labContext();
+    try { const f = await A.api('/api/feeds'); context.feeds = (Array.isArray(f) ? f : f.feeds || []).slice(0, 80).map((x) => ({ device: x.source || x.device, key: x.key, value: x.value, unit: x.unit, ip: x.ip, age_ms: x.age_ms })); } catch (e) { /* MASTER injoignable */ }
+    try { r = await piJSON('/api/v1/patricia/chat', { q, session: SESSION, context }, 150000); piOk = true; }
     catch (e) { piOk = false; r = await localAnswer(q); }
     renderReply(log, m, r);
     setPiState();

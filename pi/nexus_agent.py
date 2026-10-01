@@ -189,6 +189,37 @@ def project_dir(pid):
         except (OSError,ValueError): pass
     return None
 
+# Durée de compilation d'un premier build sur Raspberry Pi 4 (cœur ESP32 non encore en cache), en secondes.
+FIRST_BUILD_S={"esp32":420,"esp32s3":480,"esp32c3":400}
+def build_estimate(pid,board):
+    """Temps prévu avant que le firmware soit prêt : attente dans la file + compilation (historique du Pi)."""
+    board=board if board in BOARDS else "esp32"
+    cached=False; src=project_dir(pid) if pid else None
+    if src:
+        try:
+            fp=source_fingerprint(src,board)
+            with connect() as c: row=c.execute("SELECT artifact,sha256 FROM build_cache WHERE project=? AND board=? AND fingerprint=?",(pid,board,fp)).fetchone()
+            cached=bool(row and Path(row["artifact"]).is_file())
+        except (OSError,sqlite3.Error): cached=False
+    with connect() as c:
+        done=[dict(r) for r in c.execute("SELECT project,board,elapsed FROM jobs WHERE status='success' AND COALESCE(kind,'esp')='esp' AND elapsed>3 ORDER BY finished DESC LIMIT 40")]
+        busy=[dict(r) for r in c.execute("SELECT board,status,started FROM jobs WHERE status IN ('queued','claimed','running') AND COALESCE(kind,'esp')='esp'")]
+    same=[r["elapsed"] for r in done if r["project"]==pid and r["board"]==board]
+    per_board=sorted(r["elapsed"] for r in done if r["board"]==board)
+    if same: build_s,basis=same[0],"project"
+    elif per_board: build_s,basis=per_board[len(per_board)//2],"board"
+    else: build_s,basis=FIRST_BUILD_S[board],"default"
+    wait=0.0
+    for r in busy:
+        med=sorted(x["elapsed"] for x in done if x["board"]==r["board"]) or [FIRST_BUILD_S.get(r["board"],420)]
+        est=med[len(med)//2]
+        if r["status"]=="running" and r["started"]:
+            try: est=max(10.0,est-(datetime.now(timezone.utc)-datetime.fromisoformat(r["started"])).total_seconds())
+            except ValueError: pass
+        wait+=est
+    if cached: build_s,basis=2,"cache"
+    return {"project":pid,"board":board,"build_s":round(build_s),"wait_s":round(wait),"total_s":round(build_s+wait),"basis":basis,"samples":len(same) or len(per_board),"ahead":len(busy),"cached":cached,"arduino_cli":bool(shutil.which(CLI) or Path(CLI).is_file())}
+
 def sync_user_project(pid,files):
     if not ID.fullmatch(pid) or not isinstance(files,dict) or not 1<=len(files)<=24: raise ValueError("Identifiant ou liste de fichiers invalide")
     if (PROJECTS/pid).exists(): raise ValueError("Cet identifiant appartient au catalogue protégé")
@@ -543,6 +574,8 @@ class Api(BaseHTTPRequestHandler):
             if q.get("board"): sql+=" AND board=?"; args.append(q["board"][0])
             with connect() as c: items=[dict(r) for r in c.execute(sql+" ORDER BY project,board,name LIMIT 1000",args)]
             self.sendj(200,{"items":items}); return
+        if path=="/api/v1/build/estimate":
+            self.sendj(200,build_estimate(q.get("project",[""])[0][:80],q.get("board",["esp32"])[0].lower())); return
         if path=="/api/v1/jobs":
             with connect() as c: items=[dict(r) for r in c.execute("SELECT * FROM jobs ORDER BY created DESC LIMIT 100")]
             self.sendj(200,{"items":items}); return

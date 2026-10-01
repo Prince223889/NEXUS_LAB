@@ -115,6 +115,9 @@ class IntentTests(unittest.TestCase):
             "Guru Meditation Error: Core  1 panic'ed (LoadProhibited)": "diagnose",
             "je m'appelle Aboubacar": "fact_set",
             "crée l'apk de la serre": "apk",
+            "quelle est la température ?": "sensors",
+            "lis les capteurs du worker 2": "sensors",
+            "comment brancher un capteur de température ?": "wiring",
         }
         for text, want in cases.items():
             self.assertEqual(detect(text).name, want, text)
@@ -301,6 +304,24 @@ class EngineTests(unittest.TestCase):
             self.assertTrue(f.estop)
             self.assertEqual(r["actions"], [])
 
+    def test_sensors_from_master_feeds(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            r = e.chat("quelle est la température ?", context={})
+            self.assertIn("Envoyer les mesures au MASTER", r["answer"])
+            ctx = {"lab": {"workers": [{"id": 2, "ip": "192.168.4.12"}, {"id": 3, "ip": "192.168.4.13"}]},
+                   "feeds": [{"device": "serre", "key": "dht22_temp", "value": 23.456, "unit": "°C", "ip": "192.168.4.12", "age_ms": 900},
+                             {"device": "serre", "key": "dht22_hum", "value": 51, "unit": "%", "ip": "192.168.4.12", "age_ms": 900},
+                             {"device": "cuve", "key": "hcsr04_dist", "value": 31.2, "unit": "cm", "ip": "192.168.4.13", "age_ms": 400000}]}
+            r = e.chat("quelle est la température ?", context=ctx)
+            self.assertEqual(r["intent"], "sensors")
+            self.assertIn("23.46 °C", r["answer"])
+            self.assertNotIn("dht22_hum", r["answer"])
+            r = e.chat("lis les capteurs du worker 3", context=ctx)
+            self.assertIn("hcsr04_dist", r["answer"])
+            self.assertNotIn("dht22_temp", r["answer"])
+            self.assertIn("plus de 2 minutes", r["answer"])
+
     def test_diagnose_proposes_library(self):
         with tempfile.TemporaryDirectory() as td:
             e = new_engine(td)
@@ -355,6 +376,20 @@ class AgentHttpTests(unittest.TestCase):
                 self.assertIn("stt", v)
                 st, _ = call("/api/v1/patricia/actions/0123456789abcdef/confirm", {})
                 self.assertEqual(st, 404)
+                # temps de compilation prévu : défaut prudent, puis historique du Pi
+                st, est = call("/api/v1/build/estimate?project=serre&board=esp32s3")
+                self.assertEqual((st, est["basis"], est["total_s"]), (200, "default", agent.FIRST_BUILD_S["esp32s3"]))
+                with agent.connect() as c:
+                    for i, el in enumerate((100, 140, 120)):
+                        c.execute("INSERT INTO jobs(id,project,board,status,priority,created,finished,elapsed,kind) VALUES(?,?,?,?,?,?,?,?,?)",
+                                  (f"j{i}", "autre", "esp32s3", "success", 50, agent.now(), f"2026-01-0{i + 1}T00:00:00+00:00", el, "esp"))
+                    c.execute("INSERT INTO jobs(id,project,board,status,priority,created,kind) VALUES('q1','x','esp32s3','queued',50,?,'esp')", (agent.now(),))
+                st, est = call("/api/v1/build/estimate?project=serre&board=esp32s3")
+                self.assertEqual((est["basis"], est["build_s"], est["ahead"], est["wait_s"]), ("board", 120, 1, 120))
+                with agent.connect() as c:
+                    c.execute("INSERT INTO jobs(id,project,board,status,priority,created,finished,elapsed,kind) VALUES('j9','serre','esp32s3','success',50,?,?,95,'esp')", (agent.now(), agent.now()))
+                st, est = call("/api/v1/build/estimate?project=serre&board=esp32s3")
+                self.assertEqual((est["basis"], est["build_s"]), ("project", 95))
                 srv.shutdown()
                 srv.server_close()
             finally:

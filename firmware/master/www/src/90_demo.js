@@ -282,6 +282,7 @@
       const url = new URL(path, 'http://demo.local');
       const p = url.pathname, q = (k) => url.searchParams.get(k), b = body(opts);
       if (p === '/api/session') return ok({ admin, version: '6.0.0' });
+      if (p === '/api/feeds') return ok(state().feeds);
       if (p === '/api/state') { const s = state(); s.events = events.filter((e) => e.seq > (A.S.lastSeq || 0)); return ok(s); }
       if (p === '/api/events') { const since = Number(q('since') || 0); return ok({ last: seq, events: events.filter((e) => e.seq > since) }); }
       if (p === '/api/logout') { admin = false; return ok({ ok: true }); }
@@ -306,6 +307,13 @@
       if (p === '/api/worker/forget') { const i = workers.findIndex((x) => x.id === Number(b.id)); if (i >= 0 && workers[i].state !== 'OFFLINE') return fail(409, 'le worker est en ligne'); if (i >= 0) workers.splice(i, 1); return ok({ ok: true }); }
       if (p === '/api/worker/reboot') { const w = workers.find((x) => x.id === Number(b.id)); if (w) w.uptime_ms = 0; return ok({ ok: true }); }
       if (p === '/api/worker/home') { const w = workers.find((x) => x.id === Number(b.id)); if (w) { w.state = 'READY'; w.job = '-'; } return ok({ ok: true }); }
+      if (p === '/api/worker/flash/remote') {   // démo : le worker « redémarre » sur le projet et écrit des mesures
+        const w = workers.find((x) => x.id === Number(b.id));
+        if (w) { w.state = 'FLASHING'; w.progress = 0; setTimeout(() => { w.state = 'PROJECT'; w.job = 'projet'; }, 2500); }
+        let n = 0;
+        const tick = setInterval(() => { if (++n > 14) return clearInterval(tick); wlogSeq++; wlog.push({ seq: wlogSeq, id: Number(b.id), t: Date.now(), text: n === 1 ? '# ESP32 LAB — projet chargé depuis le MASTER' : `dht22_temp:${(22 + Math.random()).toFixed(2)}\tdht22_hum:${(48 + Math.random() * 3).toFixed(2)}` }); }, 1500);
+        ev('I', 'ota', `worker ${b.id} : OTA distante ${String(b.url).slice(0, 60)}`); return ok({ ok: true });
+      }
       if (p === '/api/worker/flash') { if (b.mode === 'project') { const w = workers.find((x) => x.id === Number(b.id)); if (w) { w.state = 'PROJECT'; w.job = String(b.path).split('/').pop().replace(/\.ino\.bin$|\.bin$/i, ''); } } ev('I', 'ota', `worker ${b.id} : mise à jour ${b.path}`); return ok({ ok: true }); }
       if (p === '/api/sd/list') { const path = q('path') || '/sd'; const items = listDir(path); if (!items) return fail(404, 'dossier introuvable'); return ok({ path, admin, items, total: 31902400512, free: 31211069440 }); }
       if (p === '/api/sd/delete' || p === '/api/sd/rename' || p === '/api/sd/mkdir') {

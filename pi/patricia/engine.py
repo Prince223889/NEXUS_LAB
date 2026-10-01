@@ -306,6 +306,49 @@ class Engine:
                           followup={"question": "Quelle amélioration ?", "choices": ideas[:4], "project": p["id"]})
 
     # =============================================================== matériel
+    # Mots de la question → fragments de clés de mesures (dht22_temp, bme280_hum, var_consigne…)
+    TOPIC_KEYS = {"temperature": ("temp", "t_"), "humidite": ("hum", "rh"), "pression": ("pres", "hpa"), "lumiere": ("lux", "light", "lum"),
+                  "luminosite": ("lux", "light", "lum"), "co2": ("co2", "eco2"), "distance": ("dist", "cm", "mm"), "niveau": ("level", "niveau", "water"),
+                  "gaz": ("gas", "ppm", "mq"), "sol": ("soil", "sol", "moist"), "pluie": ("rain", "pluie"), "vent": ("wind", "vent"),
+                  "courant": ("current", "ma", "amp"), "tension": ("volt", "bus_v", "v_"), "poids": ("weight", "kg", "hx711")}
+
+    def _h_sensors(self, text, s, ctx):
+        """Mesures envoyées au MASTER par les workers et les montages (transmises par l'interface)."""
+        feeds = [f for f in (ctx.get("feeds") or []) if isinstance(f, dict) and f.get("key")]
+        if not feeds:
+            return self._resp("Je ne reçois aucune mesure pour l'instant. Active « Envoyer les mesures au MASTER » dans le Studio, "
+                              "flashe le projet sur un worker, et les valeurs apparaîtront ici et dans Capteurs en direct.", "sensors",
+                              suggestions=["Flashe mon projet sur le worker 1", "Ouvre le Studio"])
+        fresh = [f for f in feeds if (f.get("age_ms") or 0) < 120000] or feeds
+        topic = s.get("topic") or ""
+        keys = self.TOPIC_KEYS.get(topic, ())
+        wids = [str(w) for w in s.get("workers") or []]
+        pool = feeds if wids else fresh   # un worker nommé : on montre aussi ses mesures anciennes, avec un avertissement
+        pick = [f for f in pool if any(k in str(f["key"]).lower() for k in keys)] if keys else pool
+        if wids:
+            ips = {str(w.get("id")): w.get("ip") for w in (ctx.get("lab") or {}).get("workers", []) if w.get("ip")}
+            by_ip = [f for f in pick if f.get("ip") in {ips.get(w) for w in wids}]
+            pick = by_ip or pick
+        if not pick:
+            return self._resp(f"Aucune mesure de {topic} parmi les {len(fresh)} reçues. Voici ce que j'ai : "
+                              + ", ".join(sorted({f'{f.get("device")}/{f["key"]}' for f in fresh})[:12]) + ".", "sensors")
+        def val(f):
+            v = f.get("value")
+            try:
+                v = f"{float(v):.2f}".rstrip("0").rstrip(".")
+            except (TypeError, ValueError):
+                v = str(v)
+            age = (f.get("age_ms") or 0) / 1000
+            return f"- {f.get('device', '?')} · {f['key']} : **{v} {f.get('unit') or ''}**".rstrip() + (f" (il y a {age:.0f} s)" if age > 10 else "")
+        shown = {"temperature": "température", "humidite": "humidité", "lumiere": "lumière", "luminosite": "luminosité", "co2": "CO₂"}.get(topic, topic)
+        lines = [("Dernières mesures" + (f" de {shown}" if topic else "") + " :")] + [val(f) for f in pick[:16]]
+        if len(pick) > 16:
+            lines.append(f"… et {len(pick) - 16} autres dans Capteurs en direct.")
+        stale = [f for f in pick if (f.get("age_ms") or 0) > 120000]
+        if stale:
+            lines.append(f"{len(stale)} mesure(s) n'ont pas été mises à jour depuis plus de 2 minutes : vérifie l'alimentation ou le Wi-Fi de ces montages.")
+        return self._resp("\n".join(lines), "sensors", suggestions=["Fais une APK pour ces mesures", "État du labo"])
+
     def _h_status(self, text, s, ctx):
         st = ctx.get("lab") or {}
         workers = st.get("workers") or []

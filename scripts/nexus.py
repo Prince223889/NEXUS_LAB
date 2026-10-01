@@ -304,7 +304,7 @@ def c_device(a):
 def c_feeds(a):
     r = http("GET", conf()["s3"] + "/api/feeds", timeout=8)
     for f in r.get("feeds", r) if isinstance(r, dict) else r:
-        print(f"{f.get('device', '')}/{f.get('key', '')}  {f.get('value')} {f.get('unit', '')}  ({f.get('ip', '')})")
+        print(f"{f.get('source') or f.get('device', '')}/{f.get('key', '')}  {f.get('value')} {f.get('unit', '')}  ({f.get('ip', '')})")
 
 
 def c_fleet(a):

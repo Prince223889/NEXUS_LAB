@@ -794,3 +794,14 @@ body.pa-listening .pa-orb { animation: pa-spin 1.6s linear infinite, pa-pulse 1s
   .as-vars { grid-template-columns: minmax(0, 1fr); }
 }
 .as-screen .nxa-top { padding-top: 26px; }
+
+/* Flash en un clic (47_flashpipe.js) */
+.fp { gap: 14px; }
+.fp-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; counter-reset: fp; }
+.fp-steps li { flex: 1; counter-increment: fp; font-size: 11px; font-weight: 650; color: var(--text-3); text-align: center; padding-top: 30px; position: relative; min-width: 0; }
+.fp-steps li::before { content: counter(fp); position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); color: var(--text-2); font-size: 12px; }
+.fp-steps li.on { color: var(--accent); }
+.fp-steps li.on::before { background: var(--accent); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+.fp-steps li.done { color: var(--ok); }
+.fp-steps li.done::before { content: '✓'; background: var(--ok); color: #fff; }
+.fp .meter { height: 10px; }

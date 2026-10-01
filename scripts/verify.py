@@ -293,6 +293,17 @@ console.log(JSON.stringify(bad));
                 check("mesure introuvable" in md and "Règle 2 ignorée : variable introuvable" in md, "générateur : variables ou règles invalides non signalées")
                 check((pathlib.Path(d) / "out" / "montage.svg").exists(), "nexus.py generate ne produit pas le schéma de montage")
 
+    # 13. Flash en un clic, mode sans Pi, réparation
+    fp = read(WWW / "src" / "47_flashpipe.js")
+    check("A.flashPipeline" in fp and "/api/v1/build/estimate" in fp and "/api/worker/flash/remote" in fp and "'/api/worker/flash'" in fp,
+          "flash en un clic incomplet (estimation, OTA via le Pi ou depuis la microSD du S3)")
+    check("A.localVerdict" in fp, "pas de vérification du moniteur sans le Pi")
+    check("data-act=\"st-flash\"" in st_src and "data-pa=\"ota\"" in read(WWW / "src" / "30_library.js"), "bouton Flasher absent du Studio ou de la Bibliothèque")
+    check('path=="/api/v1/build/estimate"' in agent, "route d'estimation de compilation absente de l'agent Pi")
+    check("context.feeds" in read(WWW / "src" / "55_patricia.js") and "_h_sensors" in read(ROOT / "pi" / "patricia" / "engine.py"), "Patricia ne lit plus les mesures des workers")
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "repair.py"), "--check"], capture_output=True, text=True, cwd=ROOT)
+    check(r.returncode == 0, "scripts/repair.py --check signale des fichiers à régénérer : " + r.stdout.strip()[:300])
+
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):
         t = read(p)
