@@ -14,6 +14,8 @@
   POST /api/v1/patricia/projects              {id?, title, goal, board, modules, status, next_step}
   POST /api/v1/patricia/projects/<id>/delete
   POST /api/v1/patricia/facts                 {key, value} ou {key, delete:true}
+  GET  /api/v1/patricia/github                état GitHub (jamais le jeton)
+  POST /api/v1/patricia/github                {token?, owner?, private?} ou {delete:true}
   POST /api/v1/patricia/followups/<id>        {status: done|dismissed}
   GET  /api/v1/patricia/export                sauvegarde JSON complète de la mémoire
   POST /api/v1/patricia/wipe                  {what: conversations|notes|facts|followups}
@@ -80,6 +82,9 @@ def _get(h, path, q, engine, fleet_service) -> bool:
         h.sendj(200, {"items": mem.history(q.get("session", [None])[0], 60)})
     elif path == "/api/v1/patricia/export":
         h.sendj(200, mem.export())
+    elif path == "/api/v1/patricia/github":
+        from . import github
+        h.sendj(200, github.status())
     elif path == "/api/v1/patricia/voice":
         h.sendj(200, voice.status())
     elif path == "/api/v1/fleet":
@@ -108,6 +113,12 @@ def _post(h, path, b, engine, fleet_service) -> bool:
             h.sendj(200, {"ok": True})
         else:
             h.sendj(200, engine.report(aid, bool(b.get("ok")), b.get("details"), str(b.get("serial_log", ""))[:60000]))
+    elif path == "/api/v1/patricia/github":
+        from . import github
+        try:
+            h.sendj(200, github.configure(b.get("token") or None, b.get("owner"), b.get("private"), bool(b.get("delete"))))
+        except github.GitHubError as e:
+            h.sendj(400, {"error": str(e)})
     elif path == "/api/v1/patricia/diagnose":
         h.sendj(200, diag.analyze(str(b.get("log", ""))[:200000], str(b.get("kind", "auto"))))
     elif path == "/api/v1/patricia/verify":

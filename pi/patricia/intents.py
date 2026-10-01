@@ -75,6 +75,11 @@ def detect(text: str) -> Intent:
         return Intent("note_add", 0.95, {"text": m.group(1).strip()})
     if re.search(r"\b(mes notes|les notes|montre.* notes|liste.* notes)\b", ft):
         return Intent("note_list", 0.9)
+    if re.search(r"\bgit ?hub\b", ft) and re.search(r"\b(envoie|envoyer|envoi|pousse|pousser|push|publie|publier|mets|mettre|sauvegarde|sauvegarder|cree|creer|depose|deposer|upload)", ft):
+        m = re.search(r"(?:depot|repo|repository)\s+(?:github\s+)?(?:appele|nomme|qui s.appelle)?\s*[«\"']?([a-z0-9][\w.-]{1,99})", ft)
+        name = m.group(1) if m and m.group(1) not in ("github", "sur", "pour", "avec", "de", "du", "prive", "public") else ""
+        return Intent("github_push", 0.9, {"text": raw, "repo": name, "public": bool(re.search(r"\bpublic\b", ft)),
+                                           "private": bool(re.search(r"\bprive\b", ft))})
     m = re.search(r"\b(?:je m.appelle|appelle[- ]moi)\s+([\w-]{2,30})", raw, re.I)
     if m:
         return Intent("fact_set", 0.95, {"key": "prenom", "value": m.group(1)})

@@ -207,7 +207,7 @@
     let res;
     try { res = await piJSON(`/api/v1/patricia/actions/${a.id}/confirm`, {}, 300000); }
     catch (e) { status(esc(e.message), 'bad-text'); return; }
-    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); return; }
+    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); if (a.kind === 'github_push' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.files} fichier(s) · ${res.result.created ? 'dépôt créé' : 'mis à jour'}</div>`); return; }
     const p = res.params || a.params;
     try {
       if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
@@ -476,9 +476,16 @@
       <label class="field">Débit de la voix : <b id="ps-rate-v">${Math.round(prefs.rate * 100)} %</b><input type="range" id="ps-rate" min="0.7" max="1.2" step="0.02" value="${prefs.rate}"></label>
       <label class="field">Voix de lecture<select class="input" id="ps-voice"><option value="">Automatique</option>${voices.map((v) => `<option ${v.name === prefs.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
       <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div>
-      <div class="card span-2"><div class="card-h"><h2>Personnalité</h2></div><div class="card-b stack small">
+      <div class="card"><div class="card-h"><h2>Personnalité</h2></div><div class="card-b stack small">
       <div class="seg" id="ps-style"><button data-st="scientifique" class="${prefs.style !== 'complice' ? 'on' : ''}">Scientifique</button><button data-st="complice" class="${prefs.style === 'complice' ? 'on' : ''}">Complice</button></div>
-      <div class="hint"><b>Scientifique</b> (par défaut) : pédagogue et neutre, elle explique pas à pas et te corrige. <b>Complice</b> : même rigueur, mais taquine et chaleureuse ; elle te pose de petites questions et redevient sérieuse dès qu'il s'agit de sécurité.</div></div></div></div>`;
+      <div class="hint"><b>Scientifique</b> (par défaut) : pédagogue et neutre, elle explique pas à pas et te corrige. <b>Complice</b> : même rigueur, mais taquine et chaleureuse ; elle te pose de petites questions et redevient sérieuse dès qu'il s'agit de sécurité.</div></div></div>
+      <div class="card"><div class="card-h"><h2 class="grow">GitHub</h2><span class="badge" id="ps-gh-state">…</span></div><div class="card-b stack small">
+      <div class="muted">Dis « envoie la serre sur GitHub » : Patricia crée le dépôt s'il n'existe pas et y dépose le projet, après ta confirmation. Le Pi a besoin d'Internet (Wi-Fi amont du S3).</div>
+      <label class="field">Jeton GitHub (fine-grained : Administration + Contents en écriture)<input class="input" id="ps-gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+      <label class="field">Propriétaire (vide = ton compte ; ou une organisation)<input class="input" id="ps-gh-owner" placeholder=""></label>
+      <label class="switch"><input type="checkbox" id="ps-gh-private" checked><span class="track"></span>Nouveaux dépôts privés</label>
+      <div class="row"><button class="btn primary sm" id="ps-gh-save">${icon('save')}Enregistrer</button><button class="btn sm danger" id="ps-gh-del">${icon('trash')}Oublier le jeton</button></div>
+      <div class="hint">Le jeton reste sur le Pi (fichier lisible par le seul service NEXUS) et n'est jamais renvoyé à l'interface.</div></div></div></div>`;
     const presets = { ollama: { ep: 'http://127.0.0.1:11434/v1/chat/completions', model: 'qwen2.5:1.5b' }, online: { ep: 'https://', model: '' }, local: { ep: '', model: '' } };
     try { const c = await pi('/api/v1/assistant/config'); $('#ps-ep', el).value = c.endpoint || ''; $('#ps-model', el).value = c.model || ''; $('#ps-state', el).textContent = c.endpoint ? 'IA configurée' + (c.key_set ? ' · clé enregistrée' : '') : 'Mode hors ligne'; }
     catch (e) { $('#ps-state', el).textContent = 'Pi injoignable : ' + e.message; }
@@ -494,6 +501,10 @@
       try { await piJSON('/api/v1/patricia/facts', { key: 'style de patricia', value: prefs.style }); toast(prefs.style === 'complice' ? 'Mode complice activé 😉' : 'Mode scientifique activé', 'ok'); }
       catch (err) { toast('Pi injoignable : le style sera appliqué à la prochaine connexion. ' + err.message, 'warn'); }
     };
+    const ghShow = (g) => { const b = $('#ps-gh-state', el); b.textContent = g.configured ? 'connecté · ' + (g.owner || g.login) : 'non configuré'; b.className = 'badge ' + (g.configured ? 'ok' : ''); $('#ps-gh-owner', el).value = g.owner || ''; $('#ps-gh-private', el).checked = g.private !== false; };
+    pi('/api/v1/patricia/github').then(ghShow).catch(() => { $('#ps-gh-state', el).textContent = 'Pi injoignable'; });
+    $('#ps-gh-save', el).onclick = async () => { try { const tok = $('#ps-gh-token', el).value.trim(); ghShow(await piJSON('/api/v1/patricia/github', Object.assign({ owner: $('#ps-gh-owner', el).value.trim(), private: $('#ps-gh-private', el).checked }, tok ? { token: tok } : {}), 30000)); $('#ps-gh-token', el).value = ''; toast('GitHub enregistré', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
+    $('#ps-gh-del', el).onclick = async () => { try { ghShow(await piJSON('/api/v1/patricia/github', { delete: true })); toast('Jeton GitHub oublié', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
     $('#ps-test', el).onclick = () => Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
   }
 

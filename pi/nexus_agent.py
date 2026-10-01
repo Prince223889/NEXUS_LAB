@@ -441,6 +441,13 @@ class AgentHost:
         return [p.name for p in sorted(USER_PROJECTS.iterdir()) if p.is_dir() and ID.fullmatch(p.name)] if USER_PROJECTS.exists() else []
     def recent_builds(self):
         with connect() as c: return [dict(r) for r in c.execute("SELECT id,project,board,status,error,kind FROM jobs ORDER BY created DESC LIMIT 20")]
+    def github_push(self,pid,repo,private=None):
+        from patricia import github as gh
+        d=project_dir(pid)
+        if not d: raise ValueError("Projet introuvable sur le Pi : enregistre-le d’abord.")
+        try: res=gh.push_project(d,pid,repo,private)
+        except gh.GitHubError as e: raise ValueError(str(e)) from None
+        event("INFO","github",f"Projet envoyé sur GitHub par Patricia : {res['repo']}",None,pid); return res
     def install_library(self,name):
         if not re.fullmatch(r"[A-Za-z0-9 _.+-]{2,80}",name or ""): raise ValueError("Nom de bibliothèque refusé")
         p=subprocess.run([CLI,"lib","install",name],capture_output=True,text=True,timeout=300,shell=False)

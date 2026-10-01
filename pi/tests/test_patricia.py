@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import base64
 import importlib
 import json
 import math
@@ -358,6 +359,123 @@ class StyleTests(unittest.TestCase):
             self.assertTrue(h["speak"])
             stop = e.chat("arrête tout")
             self.assertFalse(any(o in stop["answer"] for o in __import__("patricia.style").style.OPENERS))
+
+class FakeGitHub:
+    """API GitHub minimale (utilisateur, dépôts, blobs, arbres, commits, références) pour tester l'envoi."""
+    def __init__(self):
+        import http.server
+        self.repos, self.objects, self.calls = {}, {}, []
+        gh = self
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def send(self, code, obj):
+                data = json.dumps(obj).encode()
+                self.send_response(code); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+
+            def body(self):
+                n = int(self.headers.get("Content-Length") or 0)
+                return json.loads(self.rfile.read(n) or b"{}")
+
+            def handle_any(self, method):
+                gh.calls.append((method, self.path))
+                if self.headers.get("Authorization") != "Bearer ghp_" + "x" * 36:
+                    return self.send(401, {"message": "Bad credentials"})
+                parts = self.path.strip("/").split("/")
+                if self.path == "/user":
+                    return self.send(200, {"login": "prince"})
+                if self.path == "/user/repos" and method == "POST":
+                    b = self.body(); key = "prince/" + b["name"]
+                    gh.repos[key] = {"name": b["name"], "private": b["private"], "default_branch": "main", "html_url": "https://github.com/" + key, "head": None, "files": {}}
+                    if b.get("auto_init"):
+                        gh.objects["c0"] = {"tree": {"sha": "t0"}}; gh.objects["t0"] = {"files": {"README.md": b"init"}}; gh.repos[key]["head"] = "c0"
+                    return self.send(201, {k: v for k, v in gh.repos[key].items() if k not in ("files", "head")})
+                if parts[0] == "repos":
+                    key = parts[1] + "/" + parts[2]; r = gh.repos.get(key)
+                    if r is None:
+                        return self.send(404, {"message": "Not Found"})
+                    rest = parts[3:]
+                    if not rest:
+                        return self.send(200, {k: v for k, v in r.items() if k not in ("files", "head")})
+                    if rest[:3] == ["git", "ref", "heads"]:
+                        return self.send(200, {"object": {"sha": r["head"]}}) if r["head"] else self.send(409, {"message": "Git Repository is empty."})
+                    if rest[:2] == ["git", "commits"] and method == "GET":
+                        return self.send(200, gh.objects[rest[2]])
+                    if rest[:2] == ["git", "blobs"]:
+                        b = self.body(); sha = "b%d" % len(gh.objects); gh.objects[sha] = base64.b64decode(b["content"]); return self.send(201, {"sha": sha})
+                    if rest[:2] == ["git", "trees"]:
+                        b = self.body(); files = dict(gh.objects[b["base_tree"]]["files"])
+                        files.update({e["path"]: gh.objects[e["sha"]] for e in b["tree"]}); sha = "t%d" % len(gh.objects); gh.objects[sha] = {"files": files}; return self.send(201, {"sha": sha})
+                    if rest[:2] == ["git", "commits"]:
+                        b = self.body(); sha = "c%d" % len(gh.objects); gh.objects[sha] = {"tree": {"sha": b["tree"]}, "message": b["message"]}; return self.send(201, {"sha": sha})
+                    if rest[:3] == ["git", "refs", "heads"] and method == "PATCH":
+                        b = self.body(); r["head"] = b["sha"]; r["files"] = gh.objects[gh.objects[b["sha"]]["tree"]["sha"]]["files"]; return self.send(200, {})
+                return self.send(404, {"message": "Not Found"})
+
+            def do_GET(self): self.handle_any("GET")
+            def do_POST(self): self.handle_any("POST")
+            def do_PATCH(self): self.handle_any("PATCH")
+            def do_PUT(self): self.handle_any("PUT")
+
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.url = "http://127.0.0.1:%d" % self.server.server_address[1]
+
+
+class GitHubTests(unittest.TestCase):
+    def test_intent(self):
+        for text in ("envoie la serre sur github", "crée un dépôt github pour station_meteo", "pousse mon projet sur GitHub en public"):
+            self.assertEqual(detect(text).name, "github_push", text)
+        self.assertTrue(detect("pousse mon projet sur GitHub en public").slots["public"])
+        self.assertEqual(detect("note que mon github est prince").name, "note_add")
+
+    def test_push_project_with_confirmation(self):
+        from patricia import github
+        fake = FakeGitHub()
+        with tempfile.TemporaryDirectory() as td:
+            old = (github.API, github.CONFIG)
+            github.API, github.CONFIG = fake.url, Path(td) / "gh" / "github.json"
+            try:
+                proj = Path(td) / "serre_auto"
+                (proj / "bin" / "esp32").mkdir(parents=True)
+                (proj / "serre_auto.ino").write_text("void setup(){}\nvoid loop(){}\n")
+                (proj / "MONTAGE.md").write_text("# Montage\n")
+                (proj / "bin" / "esp32" / "serre_auto.bin").write_bytes(b"\0" * 64)
+
+                class Host(FakeHost):
+                    def user_projects(self):
+                        return ["serre_auto"]
+
+                    def github_push(self, pid, repo, private=None):
+                        return github.push_project(proj, pid, repo, private)
+
+                e = Engine(Memory(Path(td) / "m.sqlite3"), Knowledge(CATALOG), Host(None), lambda: {})
+                self.assertIn("jeton", e.chat("envoie serre_auto sur github")["answer"])
+                with self.assertRaises(github.GitHubError):
+                    github.configure("ghp_" + "y" * 36)
+                st = github.configure("ghp_" + "x" * 36)
+                self.assertEqual(st, {"configured": True, "login": "prince", "owner": "", "private": True})
+                self.assertEqual(oct(github.CONFIG.stat().st_mode & 0o777), "0o600")
+                r = e.chat("envoie serre_auto sur github")
+                self.assertEqual(r["intent"], "github_push")
+                self.assertIn("prince/serre_auto", r["answer"])
+                self.assertFalse(fake.repos, "rien ne doit partir avant la confirmation")
+                done = e.confirm(r["actions"][0]["id"])["result"]
+                self.assertTrue(done["created"] and done["private"])
+                files = fake.repos["prince/serre_auto"]["files"]
+                self.assertEqual(sorted(files), ["MONTAGE.md", "README.md", "serre_auto.ino"])
+                self.assertIn(b"void setup", files["serre_auto.ino"])
+                # second envoi : même dépôt, nouveau commit, pas de recréation
+                (proj / "serre_auto.ino").write_text("// v2\n")
+                again = github.push_project(proj, "serre_auto")
+                self.assertFalse(again["created"])
+                self.assertEqual(fake.repos["prince/serre_auto"]["files"]["serre_auto.ino"], b"// v2\n")
+                self.assertNotIn("token", github.status())
+            finally:
+                github.API, github.CONFIG = old
+                fake.server.shutdown()
 
 class AgentHttpTests(unittest.TestCase):
     """Démarre le vrai serveur de l'agent sur un port libre, avec des dossiers temporaires."""

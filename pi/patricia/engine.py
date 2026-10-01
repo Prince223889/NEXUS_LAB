@@ -31,6 +31,7 @@ ACTIONS = {
     "s3_job": ("ui", "faible"), "flash": ("ui", "élevé"), "verify": ("ui", "faible"), "open_page": ("ui", "aucun"),
     "build": ("pi", "faible"), "apk": ("ui", "aucun"), "save_project": ("pi", "aucun"),
     "fleet_goal": ("pi", "élevé"), "fleet_register": ("pi", "moyen"), "install_library": ("pi", "faible"),
+    "github_push": ("pi", "moyen"),
 }
 CONFIRM_TTL = 300
 
@@ -445,6 +446,32 @@ class Engine:
         act = self._propose("build", {"project": pid, "board": board}, f"Compiler {pid} pour {board} sur le Pi (aucun flash)")
         return self._resp(f"Je peux mettre « {pid} » en compilation sur le Pi pour {board}. Confirme pour lancer.", "build", actions=[act])
 
+    def _h_github_push(self, text, s, ctx):
+        from . import github
+        st = github.status()
+        if not st["configured"]:
+            return self._resp("Pour envoyer un projet sur GitHub, j'ai besoin d'un jeton GitHub : Patricia → Réglages → GitHub. "
+                              "Crée-le sur github.com → Settings → Developer settings → Fine-grained tokens, avec les droits "
+                              "« Administration » (créer un dépôt) et « Contents » en écriture. Il reste sur le Pi.",
+                              "github_push", actions=[self._propose("open_page", {"page": "assistant", "q": {"tab": "settings"}}, "Ouvrir les réglages GitHub")])
+        names = list(self.host.user_projects()) if self.host and hasattr(self.host, "user_projects") else []
+        ft = fold(text)
+        pid = next((n for n in sorted(names, key=len, reverse=True) if n.replace("_", " ") in ft or n in ft), None)
+        if not pid:
+            p = self.mem.find_project(text) or (self.mem.project(ctx["project"]) if ctx.get("project") else None)
+            pid = (p or {}).get("id") if p and (p.get("id") in names or not names) else None
+        if not pid:
+            hint = ("Projets enregistrés sur le Pi : " + ", ".join(names[:12]) + ".") if names else "Aucun projet n'est encore enregistré sur le Pi : enregistre-le d'abord depuis le Studio."
+            return self._resp("Quel projet dois-je envoyer sur GitHub ? " + hint, "github_push", suggestions=[f"Envoie {n} sur GitHub" for n in names[:3]])
+        private = False if s.get("public") and not s.get("private") else (True if s.get("private") else st.get("private", True))
+        repo = github.repo_name(s.get("repo") or pid)
+        owner = st.get("owner") or st.get("login")
+        act = self._propose("github_push", {"project": pid, "repo": repo, "private": private},
+                            f"Envoyer « {pid} » sur GitHub dans {owner}/{repo} ({'privé' if private else 'public'})")
+        return self._resp(f"Je peux envoyer « {pid} » sur ton GitHub, dans le dépôt **{owner}/{repo}** ({'privé' if private else 'public'}). "
+                          "Je le crée s'il n'existe pas, puis j'y dépose le code, le montage et la fiche du projet. Confirme pour lancer.",
+                          "github_push", actions=[act])
+
     def _h_apk(self, text, s, ctx):
         p = self.mem.find_project(text) or (self.mem.project(ctx["project"]) if ctx.get("project") else None)
         lines = ["Le Studio APK crée une application Android pour ton projet : écrans, boutons, jauges et courbes reliés à tes capteurs, "
@@ -695,6 +722,8 @@ class Engine:
                 return {"execute_in_ui": True, "kind": "save_project", "params": p, "id": aid}
             elif a["kind"] == "install_library":
                 res = self.host.install_library(p["library"])
+            elif a["kind"] == "github_push":
+                res = self.host.github_push(p["project"], p.get("repo") or p["project"], p.get("private"))
             elif a["kind"] == "fleet_goal":
                 fleet = self.host.fleet.fleet
                 if fleet.estop:

@@ -38,6 +38,14 @@ Réglages → **Personnalité** :
 
 Le style est gardé dans sa mémoire (fait « style de patricia »). Même en mode complice, elle reste sobre pour l'arrêt d'urgence, le pilotage des voitures, le flash et les diagnostics, et n'a jamais de contenu sexuel.
 
+## Envoyer un projet sur GitHub
+
+1. Sur github.com : *Settings › Developer settings › Fine-grained tokens › Generate new token*, accès à « All repositories », droits **Administration** (lecture et écriture, pour créer un dépôt) et **Contents** (lecture et écriture).
+2. Dans Patricia › Réglages › **GitHub** : colle le jeton, choisis éventuellement une organisation et si les nouveaux dépôts sont privés (oui par défaut).
+3. Dis ou écris : « envoie la serre sur GitHub », « crée un dépôt github pour station_meteo », « pousse mon projet sur GitHub en public ».
+
+Patricia propose l'envoi et attend ta confirmation. Elle crée ensuite le dépôt s'il n'existe pas et y dépose en un seul commit le code, le montage, la fiche et le README du projet. Les binaires (`bin/`) ne sont pas envoyés. Le jeton reste sur le Pi, dans `/srv/nexus/patricia/github.json` (droits 0600), et n'est jamais renvoyé à l'interface. Le Pi a besoin d'Internet : Wi-Fi amont du S3 ou Ethernet.
+
 ## Installation sur le Pi
 
 `pi/install.sh` installe Patricia avec l'agent. Options :
