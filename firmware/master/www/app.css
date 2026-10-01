@@ -810,7 +810,8 @@ body.pa-listening .pa-orb { animation: pa-spin 1.6s linear infinite, pa-pulse 1s
 .fp .meter { height: 10px; }
 
 /* Cartes branchées */
-.bd-list { display: grid; gap: 6px; }
+.bd-list { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.bd-list + .hint, .grid > section.card { min-width: 0; }
 .bd-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
 .bd-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--warn, #d97706); }
 .bd-dot.ok { background: var(--ok, #16a34a); }

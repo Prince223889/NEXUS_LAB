@@ -109,7 +109,8 @@ def detect(text: str) -> Intent:
     if f:
         return f
     if re.search(r"\b(analyse|analyser|verifie|verifier|controle|corrige|corriger|repare|reparer|debug(ue)?|relis)[rz]?\b.*\b(projet|projets|code|programme|croquis|sketch|erreurs?)\b", ft) \
-            and not re.search(r"\b(marche|fonctionne|moniteur|serie)\b", ft):
+            and not re.search(r"\b(marche|fonctionne|moniteur|serie)\b", ft) \
+            or re.fullmatch(r"(analyse|analyser|corrige|corriger|repare|reparer)\s+(le |la |l.)?[\w-]{3,60}[ .!?]*", ft):
         return Intent("analyze", 0.9, {"text": raw, "fix": bool(re.search(r"\b(corrige|corriger|repare|reparer|applique)", ft))})
     if re.search(r"\b(que sais[- ]tu faire|tu peux faire quoi|aide[- ]moi a comprendre ce que tu|tes capacites|comment tu marches|aide$|^aide)\b", ft):
         return Intent("help", 0.9)
@@ -144,7 +145,7 @@ def detect(text: str) -> Intent:
     strong = re.search(r"\b(flash|flashe|flasher|flashes|flashez|televerse|televerser|upload)\b", ft)
     if (strong or re.search(r"\b(charge|installe|programme)\b", ft) and (wids or "worker" in ft or "voiture" in ft)) \
             and not re.search(r"\b(c.est quoi|qu.est[- ]ce que|comment (on|faire|fonctionne)|explique)\b", ft):
-        m = re.search(r"(?:avec|le projet|projet|programme)\s+(?:le |la |l.|du |de la )?([\w -]{3,60}?)(?:\s+(?:sur|dans|pour)\b|$|[.?!])", ft)
+        m = re.search(r"(?:avec|le projet|projet|programme)\s+(?:le |la |l'|du |de la )?([\w -]{3,60}?)(?:\s+(?:sur|dans|pour)\b|$|[.?!])", ft)
         proj = m.group(1).strip() if m else ""
         if re.fullmatch(r"(en cours|actuel|ouvert|du studio|studio|courant|mon projet|ce projet)", proj) or proj.startswith("le worker"):
             proj = ""
@@ -152,7 +153,7 @@ def detect(text: str) -> Intent:
     if re.search(r"\b(verifie|controle|regarde)\b.*\b(marche|fonctionne|moniteur|serie|flash)", ft):
         return Intent("verify", 0.8, {"workers": wids})
     if re.search(r"\b(compile|compiler|build)\b", ft):
-        m = re.search(r"(?:compile[rz]?|build)\s+(?:moi\s+)?(?:le projet |le |la |l.|mon projet )?([\w-]{3,60})", ft)
+        m = re.search(r"(?:compile[rz]?|build)\s+(?:moi\s+)?(?:le projet |le |la |l'|mon projet )?([\w-]{3,60})", ft)
         proj = m.group(1) if m and m.group(1) not in ("projet", "programme", "code", "tout", "pour", "sur", "avec", "maintenant", "studio", "ca") else ""
         return Intent("build", 0.85, {"project": proj, "board": board_in(ft)})
     if re.search(r"\b(apk|application android|appli(cation)? (mobile|telephone|android|pour (mon |le )?telephone))\b", ft):

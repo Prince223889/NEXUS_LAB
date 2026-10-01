@@ -109,7 +109,7 @@ Une broche tenue par `PWM_GEN`, `SERVO_SWEEP`, `TONE_TEST` ou `ONEWIRE_SCAN` est
 - `POST /api/v1/projects/save` : sauvegarde du sketch, `project.json` et README dans `PROJECTS/MY_PROJECTS` sur la carte FAT32 du Pi (ou microSD directe en mode S3 seul).
 - POST /api/v1/build : met le build en file Pi; le binaire final vérifié est publié dans FIRMWARE/ sur la microSD de données du Pi. La base de jobs reste dans /srv/nexus.
 - GET /api/v1/build/estimate?project=&board= : temps prévu avant que le firmware soit prêt (`build_s`, `wait_s`, `total_s`, `basis` = cache, project, board ou default, `ahead` = compilations en file).
-- `GET /api/v1/ping` (public) : réponse minimale pour les sondes du S3. `GET /api/v1/link[?now=1]` : liaison Pi → S3 (le Pi s'annonce au S3 toutes les 30 s, `NEXUS_S3_URL`, `NEXUS_LINK_PERIOD`) ; `now=1` mesure tout de suite.
+- `GET /api/v1/ping` (public) : réponse minimale pour les sondes du S3. `GET /api/v1/link[?now=1]` : liaison Pi → S3 (le Pi s'annonce au S3 toutes les 30 s, `NEXUS_S3_URL`, `NEXUS_LINK_PERIOD`) ; `now=1` mesure tout de suite. `GET /api/v1/usb` : cartes série branchées sur les ports USB du Pi (`/dev/serial/by-id`, `ttyUSB*`, `ttyACM*`) avec le type deviné (ESP32 natif, CP210x, CH340, FTDI, Arduino, Pico).
 - `GET/POST /api/v1/patricia/github` : état ou réglage du jeton GitHub de Patricia (le jeton n'est jamais renvoyé).
 - Les routes Pi privées exigent `Authorization: Bearer <NEXUS_TOKEN>`. Le lien firmware temporaire signé est lu par le worker après autorisation explicite du MASTER S3.
 - `/api/v1/patricia/*` (assistante) et `/api/v1/fleet/*` (flotte de véhicules) : voir [PATRICIA.md](PATRICIA.md#api-pi-port-8088-jeton-bearer).

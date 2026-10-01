@@ -36,6 +36,7 @@
       const clean = JSON.parse(JSON.stringify(spec)); if (clean.options) delete clean.options.wifi_pass;
       ctx.studio = { spec: clean, warnings: warnings.slice(0, 12) };
     }
+    ctx.direct = !!prefs.direct;   // Patricia ne dit pas « confirme » quand l'interface agit d'elle-même
     return ctx;
   }
 

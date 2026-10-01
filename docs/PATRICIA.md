@@ -7,17 +7,39 @@ Patricia vit sur le Raspberry Pi (`pi/patricia/`) et s'affiche dans l'interface 
 | Demande (exemples) | Ce qui se passe |
 |---|---|
 | « Je veux faire une station météo avec un BME280 et un écran OLED » | Projet créé dans sa mémoire, **montage** (schéma), **code** généré, bibliothèques, conseils ; boutons Studio, `.ino`, enregistrer sur le Pi |
-| « Flashe la station météo sur W3 » | Proposition à confirmer → compilation sur le Pi → **schéma du montage à vérifier** → flash du worker → **lecture du moniteur** et verdict (ça marche / échec / incertain) |
+| « Flash », « Flashe la station météo sur W3 » | Sans précision : le projet ouvert dans le **Studio**, sur le premier worker libre. Compilation sur le Pi → flash du worker → **lecture du moniteur** et verdict (ça marche / échec / incertain). Part tout de suite ou après validation, selon le réglage |
+| « Compile », « compile la serre pour S3 » | Compilation sur le Pi (le projet du Studio est d'abord enregistré sur le Pi) ; une erreur est lue et expliquée |
+| « Qui es-tu ? », « tu es quoi pour moi ? » | Toujours la même réponse chaleureuse : sa partenaire de labo, amie et complice de tes projets (une IA, pas une petite amie) |
+| « Quelles cartes sont branchées ? », « fais un check-up de toutes les cartes » | Bilan : MASTER, workers sur le Wi-Fi (signal, puce, mémoire), carte sur l'USB du S3, cartes série sur l'USB du Pi, liaison Pi ↔ S3 ; check-up de chaque worker en ligne. Même bilan dans **Système › Cartes branchées** |
+| « Crée un dossier serre », « crée un fichier serre/notes.txt avec : … », « liste mes fichiers », « lis le fichier … », « supprime le dossier essais » | Dossiers et fichiers dans tes projets sur le Pi (`MY_PROJECTS`) ; une suppression part dans `.corbeille`, un fichier remplacé y garde son ancienne version |
+| « Crée un dépôt github mon-robot » | Nouveau dépôt sur ton compte (README initial), privé par défaut |
+| « Analyse mon projet », « corrige les erreurs de serre » | Analyse du code (voir plus bas) et correction automatique avec copie de sauvegarde |
+| « Lance un voltmètre sur W2 », « fais un test des broches », « lance un scan 1-wire » | Nouveaux jobs des workers : voltmètre, test des broches, 1-Wire, analyseur logique, générateur PWM, balayage servo, test buzzer |
 | « Quelle est la température ? », « Lis les capteurs du worker 2 » | Dernières mesures envoyées au MASTER par les workers et les montages, filtrées par grandeur ou par worker ; signale les mesures qui ne se mettent plus à jour |
 | « Vérifie W3 » | Lit le journal du worker (et le port USB si tu es admin) et explique ce qu'il voit |
 | Coller une erreur de compilation ou un moniteur série | Diagnostic : bibliothèque manquante (installation proposée), mauvaise carte, API LEDC 3.x, brownout, Guru Meditation, watchdog, boucle de redémarrage, capteur absent, I2C… |
 | « Note : commander des résistances 2 kΩ », « Rappelle-toi que ma carte est un S3 » | Notes et faits gardés en mémoire, recherche plein texte |
 | « Où en est mon arrosage ? », « Améliore mon projet » | Historique du projet, prochaine étape, idées d'amélioration (elle demande si tu veux les appliquer) |
 | « Lance un check-up sur tous les workers » | Job S3 proposé, exécuté après confirmation |
-| « Fais une APK pour la station météo » | Le Pi crée l'application (une valeur et une courbe par mesure) et répond avec le lien direct et le QR ; à personnaliser dans le **Studio APK** ([STUDIO_APK.md](STUDIO_APK.md)) |
+| « Fais-moi une APK pour la serre », « une APK avec un DHT22 et un relais », « crée l'APK » | Le Pi crée l'application (une valeur et une courbe par mesure, un bouton par actionneur) à partir du projet nommé, des capteurs cités ou du projet du Studio, et répond avec le lien direct et le QR ; à personnaliser dans le **Studio APK** ([STUDIO_APK.md](STUDIO_APK.md)) |
 | « Voiture 2 va en 1,5 2 », « toutes les voitures en ligne », « stop » | Pilotage de la flotte (voir plus bas). **« stop » / « arrête tout » est immédiat**, sans confirmation |
 
-Toute action matérielle (flash, job, déplacement, installation) est une **proposition** avec Confirmer / Annuler, valable 5 minutes. Rien ne part tout seul, et Patricia ne lance jamais la compilation complète des 320 projets.
+### Agir directement ou demander de valider
+
+Réglages → **Quand je dis « flash » ou « compile »** :
+
+- **Patricia agit directement** (par défaut) : flash, compilation, APK, jobs et check-up, nouveaux dossiers et nouveaux fichiers partent dès qu'elle a compris. Pour un flash, la fenêtre du flash s'ouvre et enchaîne seule (worker, montage, compilation, OTA, moniteur).
+- **Patricia me demande de valider** : chaque action arrive avec Confirmer / Annuler (valable 5 minutes).
+
+Dans les deux cas, restent **toujours à confirmer** : l'envoi sur GitHub et la création d'un dépôt, la suppression ou le remplacement d'un fichier, la correction automatique de ton code et le déplacement des voitures. « stop » / « arrête tout » est immédiat. Patricia ne lance jamais la compilation complète des 320 projets.
+
+### Qui est Patricia
+
+Patricia est une IA : l'assistante et la complice de ton labo. À « qui es-tu ? » ou « tu es quoi pour moi ? », elle répond toujours de la même façon, avec chaleur : ta partenaire de labo, ton amie pour tes projets. Elle ne joue pas le rôle d'une petite amie.
+
+### Comme une IA en ligne
+
+Sans Internet, Patricia comprend les demandes du labo ci-dessus (règles en français) et cherche dans le catalogue et sa mémoire. Pour discuter de tout, comme avec ChatGPT ou Claude, branche une IA dans Réglages → IA : un modèle local avec Ollama (gratuit, plus lent et moins fin sur un Pi 4) ou un service en ligne au format « chat/completions » avec ta clé. L'IA reçoit les mêmes outils (catalogue, mémoire, fichiers, analyse, cartes branchées, actions) et passe par les mêmes règles de validation.
 
 ## Voix
 
@@ -45,7 +67,7 @@ Réglages → **Personnalité** :
 | Style | Comportement |
 |---|---|
 | **Scientifique** (par défaut) | Neutre et pédagogue : explique pas à pas, donne le pourquoi, corrige les erreurs avec douceur. |
-| **Complice** | Même pédagogie, plus chaleureuse : te taquine sur tes erreurs, t'encourage, te pose parfois une question personnelle légère. Voix un peu plus aiguë. |
+| **Complice** | Même pédagogie, plus chaleureuse : te taquine sur tes erreurs, t'encourage, te pose parfois une question personnelle légère. Voix un peu plus posée. |
 
 Le style est gardé dans sa mémoire (fait « style de patricia »). Même en mode complice, elle reste sobre pour l'arrêt d'urgence, le pilotage des voitures, le flash et les diagnostics, et n'a jamais de contenu sexuel.
 
@@ -53,7 +75,7 @@ Le style est gardé dans sa mémoire (fait « style de patricia »). Même en mo
 
 1. Sur github.com : *Settings › Developer settings › Fine-grained tokens › Generate new token*, accès à « All repositories », droits **Administration** (lecture et écriture, pour créer un dépôt) et **Contents** (lecture et écriture).
 2. Dans Patricia › Réglages › **GitHub** : colle le jeton, choisis éventuellement une organisation et si les nouveaux dépôts sont privés (oui par défaut).
-3. Dis ou écris : « envoie la serre sur GitHub », « crée un dépôt github pour station_meteo », « pousse mon projet sur GitHub en public ».
+3. Dis ou écris : « envoie la serre sur GitHub », « crée un dépôt github pour station_meteo », « pousse mon projet sur GitHub en public ». Pour un dépôt vide : « crée un dépôt github mon-robot ». Tout dossier créé par Patricia dans tes projets peut être envoyé de la même façon.
 
 Patricia propose l'envoi et attend ta confirmation. Elle crée ensuite le dépôt s'il n'existe pas et y dépose en un seul commit le code, le montage, la fiche et le README du projet. Les binaires (`bin/`) ne sont pas envoyés. Le jeton reste sur le Pi, dans `/srv/nexus/patricia/github.json` (droits 0600), et n'est jamais renvoyé à l'interface. Le Pi a besoin d'Internet : Wi-Fi amont du S3 ou Ethernet.
 

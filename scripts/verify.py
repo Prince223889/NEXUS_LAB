@@ -334,6 +334,17 @@ console.log(JSON.stringify(bad));
     check('path=="/api/v1/ping"' in agent and "def link_loop" in agent, "tests de liaison du Pi absents")
     check('"/api/v1/patricia/github"' in read(ROOT / "pi" / "patricia" / "api.py") and "github_push" in read(ROOT / "pi" / "patricia" / "engine.py"), "envoi GitHub de Patricia absent")
     check("0o600" in read(ROOT / "pi" / "patricia" / "github.py"), "le jeton GitHub doit être stocké en 0600")
+    # Patricia agit : actions directes, cartes branchées, fichiers, analyse
+    eng = read(ROOT / "pi" / "patricia" / "engine.py")
+    check("AUTO_KINDS" in eng and not ({"github_push", "github_create", "fs_delete", "apply_fix", "fleet_goal"} & set(re.findall(r'"(\w+)"', eng.split("AUTO_KINDS = ", 1)[1].split("}", 1)[0]))),
+          "Patricia : envoi GitHub, suppression, correction de code et voitures doivent toujours être confirmés")
+    pa = read(WWW / "src" / "55_patricia.js")
+    check("ps-direct" in pa and "autoRun(a)" in pa, "réglage « agir directement » de Patricia absent")
+    check((WWW / "src" / "44_boards.js").exists() and '"/api/v1/usb"' in read(ROOT / "pi" / "nexus_agent.py"), "page Cartes branchées ou route /api/v1/usb absente")
+    check(".corbeille" in read(ROOT / "pi" / "patricia" / "workspace.py") and "is_symlink" in read(ROOT / "pi" / "patricia" / "workspace.py"), "espace de travail de Patricia non protégé")
+    check(".patricia_backup" in read(ROOT / "pi" / "patricia" / "analyzer.py"), "les corrections de Patricia doivent garder une sauvegarde")
+    st = read(WWW / "src" / "35_studio.js")
+    check("data-quick" in st and "every" in st and 'data-act="st-apk"' in st.split("st-flash", 1)[1][:600], "Studio : ajout rapide d'actionneurs, minuterie ou bouton APK absent")
 
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):

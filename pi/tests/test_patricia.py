@@ -418,6 +418,29 @@ class Phase6Tests(unittest.TestCase):
             for bad in ("../etc/passwd", ".ssh/x", "a/../../b"):
                 self.assertNotIn("actions", {k: v for k, v in e.chat("crée un fichier " + bad).items() if v})
 
+    def test_analyze_and_fix(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            root = Path(td) / "ws"
+            (root / "lampe").mkdir(parents=True)
+            (root / "lampe" / "lampe.ino").write_text("void setup() {\n}\nvoid loop() {\n  digitalWrite(13, HIGH);\n  Serial.println(1);\n}\n")
+            e.host.workspace_root = lambda: root
+            e.host.user_projects = lambda: ["lampe"]
+            e.host.project_path = lambda pid: root / pid
+            r = e.chat("analyse lampe")
+            self.assertEqual(r["intent"], "analyze")
+            a = r["actions"][0]
+            self.assertEqual(a["kind"], "apply_fix")
+            self.assertFalse(a["auto"])   # corriger le code : toujours à valider
+            res = e.confirm(a["id"])["result"]
+            self.assertTrue(res["applied"])
+            code = (root / "lampe" / "lampe.ino").read_text()
+            self.assertIn("Serial.begin(115200);", code)
+            self.assertIn("pinMode(13, OUTPUT);", code)
+            self.assertFalse(e.chat("analyse lampe")["actions"])
+            r = e.chat("analyse mon projet", context={"studio": {"spec": self.SPEC, "warnings": ["GPIO2 : broche de démarrage"]}})
+            self.assertIn("GPIO2", r["answer"])
+
     def test_workspace_safety(self):
         from patricia.workspace import Workspace, WorkspaceError
         with tempfile.TemporaryDirectory() as td:

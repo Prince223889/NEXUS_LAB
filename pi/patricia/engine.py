@@ -413,7 +413,12 @@ class Engine:
         job = s["job"]
         wids = s.get("workers") or [0]
         acts = [self._propose("s3_job", {"type": job, "worker": w}, f"Job {job} " + (f"sur le worker {w}" if w else "sur le premier worker libre")) for w in wids[:10]]
-        return self._resp(f"Je prépare le job {job}. Confirme pour l'envoyer au MASTER.", "job", actions=acts)
+        names = {"ADC_READ": "le voltmètre", "GPIO_TEST": "le test des broches", "ONEWIRE_SCAN": "le scan 1-Wire", "LOGIC_SAMPLE": "l'analyseur logique",
+                 "PWM_GEN": "le générateur PWM", "SERVO_SWEEP": "le balayage du servo", "TONE_TEST": "le test du buzzer", "SYSTEM_TEST": "le check-up",
+                 "I2C_SCAN": "le scan I2C", "WIFI_SCAN": "le scan Wi-Fi"}
+        what = names.get(job, "le job " + job)
+        return self._resp(f"Je lance {what}" + (f" sur {', '.join('W' + str(w) for w in wids if w)}" if any(wids) else "") + "."
+                          + self._confirm_hint(ctx, "Confirme pour l'envoyer au MASTER.") + " Le résultat arrive dans Jobs.", "job", actions=acts)
 
     def _h_flash(self, text, s, ctx):
         wids = list(s.get("workers") or [])
@@ -435,7 +440,7 @@ class Engine:
             acts = [self._propose("flash", {"worker": w, "project": target["id"], "board": board, "title": target["title"]},
                                   f"Flasher « {target['title']} » ({board}) sur le worker {w} : compilation sur le Pi, OTA, vérification du moniteur") for w in wids[:9]]
         who = ", ".join(f"W{w}" for w in wids[:9])
-        lines = [f"Je flashe « {target['title']} » sur {who} : compilation sur le Pi, contrôle de la carte, OTA par le S3, puis je lis le moniteur pour confirmer que ça tourne."]
+        lines = [f"Je flashe « {target['title']} » sur {who} : compilation sur le Pi, contrôle de la carte, OTA par le S3, puis je lis le moniteur pour confirmer que ça tourne." + self._confirm_hint(ctx, "Confirme pour lancer.")]
         if "voiture" in fold(text) or "vehicule" in fold(text):
             lines.append("Pour une voiture, flashe le firmware « vehicle » (firmware/vehicle) : il garde l'arrêt automatique et le protocole de pilotage.")
         return self._resp("\n".join(lines), "flash", actions=acts)
@@ -458,7 +463,13 @@ class Engine:
                                 f"Enregistrer « {target['title']} » sur le Pi et le compiler pour {board} (aucun flash)")
         else:
             act = self._propose("build", {"project": target["id"], "board": board}, f"Compiler « {target['title']} » pour {board} sur le Pi (aucun flash)")
-        return self._resp(f"Je compile « {target['title']} » pour {board} sur le Pi. Si une erreur sort, je la lis et je te propose la correction.", "build", actions=[act])
+        return self._resp(f"Je compile « {target['title']} » pour {board} sur le Pi." + self._confirm_hint(ctx, "Confirme pour lancer.") +
+                          " Si une erreur sort, je la lis et je te propose la correction.", "build", actions=[act])
+
+    @staticmethod
+    def _confirm_hint(ctx: dict, text: str) -> str:
+        """Rien à dire quand l'interface agit directement (réglage « agir directement »)."""
+        return "" if ctx.get("direct") else " " + text
 
     # ---------------------------------------------------------------- cibles
     def _pi_projects(self) -> list[str]:
@@ -535,7 +546,7 @@ class Engine:
 
     def _h_apk(self, text, s, ctx):
         ft = fold(text)
-        m = re.search(r"\b(?:pour|du|de la|de mon|de ma|avec)\s+(?:le |la |l.|mon |ma |projet )*([\w -]{3,50}?)\s*[.!?]?$", ft)
+        m = re.search(r"\b(?:pour|du|de la|de mon|de ma|avec)\s+(?:le |la |l'|mon |ma |projet )*([\w -]{3,50}?)\s*[.!?]?$", ft)
         name = (m.group(1).strip() if m else "")
         if name in ("telephone", "mon telephone", "android", "moi", "projet", "ce projet", "mon projet", "studio"):
             name = ""
@@ -559,7 +570,8 @@ class Engine:
             params["modules"] = list(target.get("modules") or [])[:24]
         act = self._propose("apk", params, f"Créer l'APK « {target['title']} » : écrans, mesures en direct, commandes, lien direct et QR")
         return self._resp(f"Je crée l'application Android de « {target['title']} » : une valeur et une courbe par mesure, un bouton par actionneur. "
-                          "Le Pi l'assemble et la signe, puis je te donne le lien de téléchargement et le QR. Tu pourras la personnaliser dans le Studio APK.",
+                          "Le Pi l'assemble et la signe, puis je te donne le lien de téléchargement et le QR." + self._confirm_hint(ctx, "Appuie sur « Faire » pour lancer.") +
+                          " Tu pourras la personnaliser dans le Studio APK.",
                           "apk", actions=[act])
 
     # ============================================================ identité
@@ -644,7 +656,7 @@ class Engine:
             if op == "mkdir":
                 ws.path(path)   # valide le nom tout de suite
                 act = self._propose("fs_mkdir", {"path": path}, f"Créer le dossier « {path} » dans tes projets")
-                return self._resp(f"Je crée le dossier « {path} » dans tes projets sur le Pi.", "files", actions=[act])
+                return self._resp(f"Je crée le dossier « {path} » dans tes projets sur le Pi." + self._confirm_hint(ctx, "Confirme."), "files", actions=[act])
             if op == "write":
                 ws.path(path)
                 exists = ws.path(path).exists()
@@ -654,7 +666,7 @@ class Engine:
                 act = self._propose("fs_write", {"path": path, "content": content, "overwrite": exists},
                                     ("Remplacer" if exists else "Créer") + f" le fichier « {path} » ({len(content.encode())} octets)")
                 return self._resp(("Ce fichier existe déjà : confirme pour le remplacer (l'ancienne version part dans la corbeille)." if exists
-                                   else f"Je crée « {path} »" + (" avec le texte donné." if s.get("content") else ".")), "files", actions=[act])
+                                   else f"Je crée « {path} »" + (" avec le texte donné." if s.get("content") else ".") + self._confirm_hint(ctx, "Confirme.")), "files", actions=[act])
             if op == "delete":
                 ws.path(path, must_exist=True)
                 act = self._propose("fs_delete", {"path": path}, f"Mettre « {path} » à la corbeille (récupérable)")
@@ -678,6 +690,20 @@ class Engine:
                           f"Ensuite, « envoie <projet> sur GitHub dans le dépôt {repo} » y déposera ton code.", "github_create", actions=[act])
 
     # ============================================================ analyse de projet
+    def _last_failed_log(self, pid: str) -> str:
+        """Journal de la dernière compilation échouée de ce projet (s'il n'a pas réussi depuis)."""
+        try:
+            for j in (self.host.recent_builds() if self.host else []):
+                if j.get("project") != pid:
+                    continue
+                if j.get("status") == "failed":
+                    return self.host.build_log(j["id"]) if hasattr(self.host, "build_log") else (j.get("error") or "")
+                if j.get("status") == "success":
+                    return ""
+        except Exception:
+            return ""
+        return ""
+
     def _h_analyze(self, text, s, ctx):
         from . import analyzer
         names = self._pi_projects()
@@ -699,15 +725,7 @@ class Engine:
             hint = ("Projets sur le Pi : " + ", ".join(names[:12]) + ".") if names else "Aucun projet enregistré sur le Pi pour l'instant."
             return self._resp("Quel projet dois-je analyser ? " + hint, "analyze", suggestions=[f"Analyse {n}" for n in names[:3]])
         d = self.host.project_path(pid) if self.host and hasattr(self.host, "project_path") else self._ws().path(pid, must_exist=True)
-        log = ""
-        try:
-            for j in (self.host.recent_builds() if self.host else []):
-                if j.get("project") == pid and j.get("status") == "failed":
-                    log = self.host.build_log(j["id"]) if hasattr(self.host, "build_log") else (j.get("error") or "")
-                    break
-        except Exception:
-            log = ""
-        r = analyzer.analyze_project(d, None, log)
+        r = analyzer.analyze_project(d, None, self._last_failed_log(pid))
         fs = r.get("findings") or []
         cards = [{"type": "diagnosis", "kind": "projet " + pid, "severity": "bad" if any(f["severity"] == "bad" for f in fs) else "warn",
                   "findings": [{"severity": f["severity"], "title": f["title"], "line": f.get("line"), "explanation": (f.get("file") or "") + " — " + f["explanation"],
@@ -983,7 +1001,7 @@ class Engine:
             elif a["kind"] == "apply_fix":
                 from . import analyzer
                 d = self.host.project_path(p["project"]) if self.host and hasattr(self.host, "project_path") else self._ws().path(p["project"], must_exist=True)
-                res = analyzer.apply_fixes(d, p.get("ids") or None)
+                res = analyzer.apply_fixes(d, p.get("ids") or None, self._last_failed_log(p["project"]))
             elif a["kind"] == "fleet_goal":
                 fleet = self.host.fleet.fleet
                 if fleet.estop:
