@@ -17,6 +17,7 @@ from patricia.fleet import Arena
 from patricia.fleet_net import FleetService
 from patricia.knowledge import Knowledge
 from patricia.memory import Memory
+from appstudio import api as appstudio_api
 
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv("NEXUS_DATA","/srv/nexus"))
@@ -37,7 +38,10 @@ WHATSAPP_ALLOWLIST={re.sub(r"\D","",x) for x in os.getenv("NEXUS_WHATSAPP_ALLOWL
 AI_CONFIG=DATA/"assistant-config.json"
 PATRICIA_DB=Path(os.getenv("NEXUS_PATRICIA_DB",str(DATA/"patricia"/"memory.sqlite3")))
 FLEET_KEY=os.getenv("NEXUS_FLEET_KEY","")
-ENGINE=None; FLEET=None
+ENGINE=None; FLEET=None; APPCTX=None
+APPSTUDIO=Path(os.getenv("NEXUS_APPSTUDIO",str(DATA/"appstudio")))
+BASE_APK=Path(os.getenv("NEXUS_APK",str(DATA/"packages"/"nexus-lab.apk")))
+PLAYER=Path(os.getenv("NEXUS_PLAYER",str(next((p for p in (ROOT/"player",ROOT/"mobile"/"app"/"src"/"main"/"assets"/"player") if (p/"runtime.js").is_file()),ROOT/"player"))))
 CLI=os.getenv("ARDUINO_CLI","arduino-cli")
 PORT=int(os.getenv("NEXUS_PORT","8088"))
 BUILD_WORKERS=max(1,min(4,int(os.getenv("NEXUS_BUILD_WORKERS","1"))))
@@ -380,6 +384,13 @@ def build_android(job):
     finally:
         with lock: active.pop(jid,None)
 
+def record_app_build(pid,artifact,digest):
+    """Une APK du Studio APK devient un job Android réussi : même lien direct et même QR que les autres APK."""
+    jid=artifact.parent.name
+    with connect() as c: c.execute("INSERT INTO jobs(id,project,board,status,priority,created,started,finished,elapsed,stage,progress,log,artifact,sha256,error,kind) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(jid,pid,"android","success",50,now(),now(),now(),0,"APK du Studio APK prête",100,"Assemblée et signée sur le Pi, sans compilation",str(artifact),digest,None,"android"))
+    event("INFO","android","APK du Studio APK fabriquée",jid,pid,"android","success"); add_message("Studio APK",f"APK prête : {pid} · SHA-256 {digest[:12]}…")
+    return jid
+
 class AgentHost:
     """Ce que Patricia peut demander à l'agent : files de compilation, projets, bibliothèques, flotte."""
     def __init__(self,fleet): self.fleet=fleet
@@ -484,8 +495,9 @@ class Api(BaseHTTPRequestHandler):
             try: shared_free=shutil.disk_usage(PROJECTS).free
             except OSError: shared_free=0
             self.sendj(200,{"ok":True,"service":"NEXUS-AGENT","version":"1.0.0","arduino_cli":shutil.which(CLI) or "absent","host_arch":platform.machine(),"project_count":n,"shared_storage":str(SHARED_ROOT),"shared_free_bytes":shared_free}); return
+        if path.startswith("/apps/") and APPCTX and appstudio_api.handle_public(self,"GET",path,APPCTX,body_json): return
         if path=="/download/nexus-lab.apk":
-            apk=Path(os.getenv("NEXUS_APK",str(DATA/"packages"/"nexus-lab.apk")))
+            apk=BASE_APK
             if not apk.is_file(): self.sendj(404,{"error":"APK absent du Pi"}); return
             self.send_response(200); self.send_header("Content-Type","application/vnd.android.package-archive")
             self.send_header("Content-Length",str(apk.stat().st_size)); self.send_header("Content-Disposition",'attachment; filename="nexus-lab.apk"'); self.end_headers()
@@ -493,6 +505,7 @@ class Api(BaseHTTPRequestHandler):
             return
         if not (path.startswith("/download/apps/") or path.startswith("/download/firmware/")) and self.denied(): return
         if ENGINE and patricia_api.handle(self,"GET",path,q,ENGINE,FLEET,body_json): return
+        if APPCTX and appstudio_api.handle(self,"GET",path,APPCTX,body_json): return
         if path=="/api/v1/assistant/config":
             cfg=assistant_config()
             self.sendj(200,{"endpoint":cfg["endpoint"],"model":cfg["model"],"configured":bool(cfg["endpoint"] and cfg["key"]),"key_set":bool(cfg["key"])}); return
@@ -601,8 +614,13 @@ class Api(BaseHTTPRequestHandler):
                 import qrcode
                 from io import BytesIO
                 url=f"http://{self.headers.get('Host','nexus-pi.local:8088')}/download/apps/{row['project']}/{jid}.apk"
-                stream=BytesIO(); qrcode.make(url).save(stream,format="PNG"); data=stream.getvalue()
-                self.send_response(200); self.send_header("Content-Type","image/png"); self.send_header("Content-Length",str(len(data))); self.send_header("Cache-Control","no-store"); self.send_header("Access-Control-Allow-Origin","*"); self.end_headers(); self.wfile.write(data)
+                stream=BytesIO()
+                try: qrcode.make(url).save(stream,format="PNG"); ctype="image/png"
+                except ImportError:   # sans Pillow : QR en SVG, lisible pareil
+                    import qrcode.image.svg
+                    qrcode.make(url,image_factory=qrcode.image.svg.SvgPathImage).save(stream); ctype="image/svg+xml"
+                data=stream.getvalue()
+                self.send_response(200); self.send_header("Content-Type",ctype); self.send_header("Content-Length",str(len(data))); self.send_header("Cache-Control","no-store"); self.send_header("Access-Control-Allow-Origin","*"); self.end_headers(); self.wfile.write(data)
             except ImportError: self.sendj(503,{"error":"Générateur QR absent: installe python3-qrcode."})
             return
         if path.startswith("/api/v1/jobs/") and path.endswith("/firmware-link"):
@@ -633,8 +651,10 @@ class Api(BaseHTTPRequestHandler):
     def do_POST(self):
         path=urlparse(self.path).path
         if path=="/webhooks/whatsapp": self.whatsapp_webhook(); return
+        if path.startswith("/apps/") and APPCTX and appstudio_api.handle_public(self,"POST",path,APPCTX,body_json): return
         if self.denied(): return
         if ENGINE and patricia_api.handle(self,"POST",path,{},ENGINE,FLEET,body_json): return
+        if APPCTX and appstudio_api.handle(self,"POST",path,APPCTX,body_json): return
         if path=="/api/v1/storage/upload":
             try: target=shared_path(parse_qs(urlparse(self.path).query).get("path",[""])[0])
             except ValueError as e: self.sendj(400,{"error":str(e)}); return
@@ -774,7 +794,8 @@ def main():
     if len(TOKEN)<32: raise SystemExit("NEXUS_TOKEN absent/trop court : configure un jeton aléatoire de 32 caractères.")
     for p in (DATA,PROJECTS,USER_PROJECTS,FIRMWARE,BUILDS,APPS,DB.parent): p.mkdir(parents=True,exist_ok=True)
     init(); index_fw()
-    global ENGINE,FLEET
+    global ENGINE,FLEET,APPCTX
+    APPCTX=appstudio_api.Context(designs=APPSTUDIO/"apps",apps=APPS,keys=APPSTUDIO/"keys",base_apk=BASE_APK,player=PLAYER if (PLAYER/"runtime.js").is_file() else None,record=record_app_build)
     FLEET=FleetService(FLEET_KEY,Arena(float(os.getenv("NEXUS_ARENA_W","4")),float(os.getenv("NEXUS_ARENA_H","4")),float(os.getenv("NEXUS_ARENA_CELL","0.5"))))
     FLEET.start()
     ENGINE=Engine(Memory(PATRICIA_DB),Knowledge(CATALOG),AgentHost(FLEET),patricia_llm_config)

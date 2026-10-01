@@ -38,10 +38,37 @@ public final class MainActivity extends Activity {
   private JSONObject project;
   @Override public void onCreate(Bundle state){
     super.onCreate(state); getWindow().setStatusBarColor(Color.rgb(13,20,33)); getWindow().setNavigationBarColor(Color.rgb(13,20,33));
+    if(hasAsset("player/app.js")){playerApp();return;}
     try{project=new JSONObject(readAsset("project.json"));}catch(Exception ignored){project=null;}
     if(project!=null){projectApp();return;} webApp();
   }
   private String readAsset(String name)throws Exception{BufferedReader r=new BufferedReader(new InputStreamReader(getAssets().open(name),"UTF-8"));StringBuilder b=new StringBuilder();String l;while((l=r.readLine())!=null)b.append(l);r.close();return b.toString();}
+  private boolean hasAsset(String name){try{getAssets().open(name).close();return true;}catch(Exception e){return false;}}
+  /* ---------------------------------------------------------------- application du Studio APK */
+  // Le Pi glisse la conception (player/app.js) dans cette APK et la signe : aucune compilation Android.
+  private boolean player=false;
+  private void playerApp(){
+    player=true; web=new WebView(this); setContentView(web);
+    WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(true);s.setAllowContentAccess(false);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(false);s.setMediaPlaybackRequiresUserGesture(true);
+    web.setBackgroundColor(Color.rgb(16,22,33));
+    web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){Uri u=r.getUrl();if("file".equals(u.getScheme()))return false;try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}});
+    web.setWebChromeClient(new WebChromeClient());
+    web.addJavascriptInterface(new NativeBridge(),"NexusNative");
+    tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null)tts.setLanguage(Locale.FRANCE);});
+    web.loadUrl("file:///android_asset/player/index.html");
+  }
+  private void httpCall(String id,String method,String url,String body){
+    io.execute(()->{HttpURLConnection c=null;int code=0;String out;
+      try{Uri u=Uri.parse(url);if(!("http".equals(u.getScheme())||"https".equals(u.getScheme()))||u.getHost()==null)throw new IllegalArgumentException("Adresse invalide");
+        String m=method==null?"GET":method.toUpperCase(Locale.ROOT);if(!m.equals("GET")&&!m.equals("POST")&&!m.equals("PUT")&&!m.equals("DELETE"))m="GET";
+        c=(HttpURLConnection)new URL(url).openConnection();c.setConnectTimeout(4000);c.setReadTimeout(6000);c.setRequestMethod(m);
+        if(body!=null&&!body.isEmpty()&&!m.equals("GET")){c.setDoOutput(true);String t=body.trim();c.setRequestProperty("Content-Type",t.startsWith("{")||t.startsWith("[")?"application/json":"application/x-www-form-urlencoded");c.getOutputStream().write(body.getBytes("UTF-8"));}
+        code=c.getResponseCode();java.io.InputStream in=code>=400?c.getErrorStream():c.getInputStream();StringBuilder b=new StringBuilder();
+        if(in!=null){BufferedReader r=new BufferedReader(new InputStreamReader(in,"UTF-8"));char[] buf=new char[4096];int n;while((n=r.read(buf))>0&&b.length()<262144)b.append(buf,0,n);r.close();}
+        out=b.toString();
+      }catch(Exception e){code=0;out=String.valueOf(e.getMessage());}finally{if(c!=null)c.disconnect();}
+      final int fc=code;final String fo=out;runOnUiThread(()->{if(web!=null)web.evaluateJavascript("window.__nexusHttp&&window.__nexusHttp("+JSONObject.quote(id)+","+fc+","+JSONObject.quote(fo)+")",null);});});
+  }
   private void webApp(){
     FrameLayout root=new FrameLayout(this); web=new WebView(this); progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); progress.setMax(100); root.addView(web,new FrameLayout.LayoutParams(-1,-1)); FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-1,dp(3),Gravity.TOP);root.addView(progress,p);setContentView(root);
     WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(true);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(false);web.setBackgroundColor(Color.rgb(16,22,33));
@@ -60,6 +87,11 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public boolean available(){return SpeechRecognizer.isRecognitionAvailable(MainActivity.this);}
     @JavascriptInterface public void listen(String lang){handler.post(()->startListening(lang==null||lang.isEmpty()?"fr-FR":lang));}
     @JavascriptInterface public void stopListening(){handler.post(()->{if(recognizer!=null)recognizer.stopListening();});}
+    @JavascriptInterface public boolean player(){return player;}
+    @JavascriptInterface public void http(String id,String method,String url,String body){if(player)httpCall(id,method,url,body);}
+    @JavascriptInterface public void vibrate(int ms){handler.post(()->{try{android.os.Vibrator v=(android.os.Vibrator)getSystemService(VIBRATOR_SERVICE);if(v!=null)v.vibrate(Math.max(10,Math.min(ms,2000)));}catch(Exception ignored){}});}
+    @JavascriptInterface public void toast(String text){handler.post(()->Toast.makeText(MainActivity.this,text==null?"":text,Toast.LENGTH_SHORT).show());}
+    @JavascriptInterface public void barColor(String hex){handler.post(()->{try{int c=Color.parseColor(hex);getWindow().setStatusBarColor(c);getWindow().setNavigationBarColor(c);}catch(Exception ignored){}});}
     @JavascriptInterface public void speak(String text){handler.post(()->{if(tts!=null&&text!=null)tts.speak(text.length()>3500?text.substring(0,3500):text,TextToSpeech.QUEUE_FLUSH,null,"patricia");});}
   }
   private void voiceResult(boolean ok,String text){if(web!=null)web.evaluateJavascript("window.__nexusVoice&&window.__nexusVoice("+ok+","+JSONObject.quote(text==null?"":text)+")",null);}
@@ -133,7 +165,9 @@ public final class MainActivity extends Activity {
   private boolean valid(String v){if(v==null)return false;Uri u=Uri.parse(v.trim());return("http".equals(u.getScheme())||"https".equals(u.getScheme()))&&u.getHost()!=null&&u.getUserInfo()==null;}
   private String clean(String v){String x=v.trim();while(x.endsWith("/"))x=x.substring(0,x.length()-1);return x;}
   @Override protected void onActivityResult(int req,int result,Intent data){super.onActivityResult(req,result,data);if(req==PICK_FILE&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}
-  @Override public void onBackPressed(){if(web!=null&&web.canGoBack())web.goBack();else super.onBackPressed();}
+  @Override public void onBackPressed(){
+    if(player&&web!=null){web.evaluateJavascript("window.__nexusBack?String(window.__nexusBack()):'false'",r->{if(!"\"true\"".equals(r))finish();});return;}
+    if(web!=null&&web.canGoBack())web.goBack();else super.onBackPressed();}
   private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
   @Override protected void onDestroy(){if(recognizer!=null){recognizer.destroy();recognizer=null;}if(tts!=null){tts.shutdown();tts=null;}handler.removeCallbacksAndMessages(null);io.shutdownNow();if(web!=null){web.stopLoading();web.destroy();}super.onDestroy();}
 }

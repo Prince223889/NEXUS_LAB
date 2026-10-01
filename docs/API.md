@@ -94,3 +94,4 @@ Types de job : `PING`, `SYSTEM_TEST` (alias `CHECKUP`), `BENCHMARK`, `FS_TEST`, 
 - POST /api/v1/build : met le build en file Pi; le binaire final vérifié est publié dans FIRMWARE/ sur la microSD de données du Pi. La base de jobs reste dans /srv/nexus.
 - Les routes Pi privées exigent `Authorization: Bearer <NEXUS_TOKEN>`. Le lien firmware temporaire signé est lu par le worker après autorisation explicite du MASTER S3.
 - `/api/v1/patricia/*` (assistante) et `/api/v1/fleet/*` (flotte de véhicules) : voir [PATRICIA.md](PATRICIA.md#api-pi-port-8088-jeton-bearer).
+- `/api/v1/appstudio/*` (Studio APK) et `/apps/<id>/` (appli web publique) : voir `pi/appstudio/api.py` et [STUDIO_APK.md](STUDIO_APK.md).

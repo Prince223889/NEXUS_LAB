@@ -90,7 +90,7 @@ def main() -> int:
     # pas au MASTER : elles sont vérifiées à part, contre le code du Pi.
     pi_used = {u for u in used if u.startswith("/api/v1/")}
     used -= pi_used
-    pi_src = read(ROOT / "pi" / "nexus_agent.py") + read(ROOT / "pi" / "patricia" / "api.py")
+    pi_src = read(ROOT / "pi" / "nexus_agent.py") + read(ROOT / "pi" / "patricia" / "api.py") + read(ROOT / "pi" / "appstudio" / "api.py")
     for u in sorted(pi_used):
         check(u.rstrip("/") in pi_src, f"l'interface appelle {u} qui n'existe pas dans l'agent du Pi")
     for u in sorted(used):
@@ -229,11 +229,34 @@ console.log(JSON.stringify(bad));
     check(re.search(r'LAB_AP_PASSWORD\s+"([^"]+)"', vcfg).group(1) == ap_w, "mot de passe Wi-Fi du firmware véhicule différent du worker")
     check("MAX_LEASE_MS" in veh and "bail_expire" in veh, "le firmware véhicule n'arrête plus les moteurs à l'expiration du bail")
     check("OBSTACLE_STOP_MM" in veh, "le firmware véhicule n'a plus d'arrêt sur obstacle")
+    # 11. Studio APK : fabrique sans compilation, lecteur partagé, écran du MASTER
+    aps = ROOT / "pi" / "appstudio"
+    for mod in ("axml", "apksign", "forge", "api"):
+        check((aps / f"{mod}.py").exists(), f"pi/appstudio/{mod}.py manquant")
+    check("appstudio_api.handle(" in agent and "appstudio_api.handle_public(" in agent, "les routes du Studio APK ne sont pas branchées dans nexus_agent.py")
+    inst = read(ROOT / "pi" / "install.sh")
+    check("pi/appstudio" in inst and "assets/player" in inst, "pi/install.sh n'installe pas le Studio APK et son lecteur")
+    runtime = WWW / "src" / "57_appruntime.js"
+    player = ROOT / "mobile" / "app" / "src" / "main" / "assets" / "player"
+    check(runtime.exists() and (player / "runtime.js").exists() and runtime.read_bytes() == (player / "runtime.js").read_bytes(),
+          "le moteur d'application de l'APK diffère de l'aperçu : lance python3 scripts/sync_app_runtime.py")
+    check('src="runtime.js"' in read(player / "index.html") and 'src="app.js"' in read(player / "index.html"), "lecteur de l'APK incomplet")
+    java = read(ROOT / "mobile" / "app" / "src" / "main" / "java" / "local" / "nexus" / "lab" / "MainActivity.java")
+    check('hasAsset("player/app.js")' in java and "window.__nexusHttp" in java, "l'APK NEXUS ne sait plus lancer une application du Studio APK")
+    check(re.search(r"versionName '1\.(\d+)", read(ROOT / "mobile" / "app" / "build.gradle")) and
+          int(re.search(r"versionName '1\.(\d+)", read(ROOT / "mobile" / "app" / "build.gradle")).group(1)) >= 2,
+          "l'APK NEXUS doit être en version 1.2 ou plus (lecteur du Studio APK)")
+    check("targetSdk 28" in read(ROOT / "mobile" / "app" / "build.gradle"),
+          "targetSdk a changé : vérifie que la signature v1 du Pi reste acceptée (v2 obligatoire dès targetSdk 30)")
+    forge_src = read(aps / "forge.py")
+    rt_src = read(runtime)
+    for comp in re.findall(r'"([a-z_]+)"', re.search(r"COMPONENTS = \{([^}]+)\}", forge_src).group(1)):
+        check(f"{comp}: {{" in rt_src or f"'{comp}'" in rt_src, f"composant {comp} accepté par le Pi mais absent du moteur")
     r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", str(ROOT / "pi" / "tests")], capture_output=True, text=True, cwd=ROOT)
     tail = (r.stderr.strip().splitlines() or [""])
     check(r.returncode == 0, "tests de Patricia en échec : " + " | ".join(l for l in tail if "FAIL" in l or "Error" in l)[:400])
     if r.returncode == 0:
-        print("Patricia : " + next((l for l in tail if l.startswith("Ran ")), "tests OK"))
+        print("Patricia et Studio APK : " + next((l for l in tail if l.startswith("Ran ")), "tests OK"))
 
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):

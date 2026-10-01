@@ -29,6 +29,7 @@ Dépôt GitHub : [Prince223889/ESP32-box](https://github.com/Prince223889/ESP32-
 | **Fichiers** | Explorateur microSD, glisser-déposer, renommer/supprimer, aperçu du code, **graphique automatique des CSV** |
 | **USB & Flash** | Programmation par câble d'une carte **Arduino** (.hex) **ou ESP32/S3/C3** (.bin, protocole esptool, vérification MD5) avec **moniteur de flash** et aperçu du **montage** ; moniteur série (CDC, CH340, CP210x, FTDI) |
 | **Patricia** | Assistante (texte et **voix**) : crée tes projets avec montage et code, flashe un worker puis **lit le moniteur** pour dire si ça marche, diagnostique les erreurs, garde notes et historique, propose des améliorations ; IA locale (Ollama) ou en ligne facultative. Voir [docs/PATRICIA.md](docs/PATRICIA.md) |
+| **Studio APK** | Crée ton application Android **sans coder**, façon App Inventor : écrans, glisser-déposer, variables reliées aux capteurs, blocs « quand… alors… », voix, joystick. Le Pi l'assemble et la signe **sans compiler** puis donne le **lien direct**, le **QR** et une appli web. Voir [docs/STUDIO_APK.md](docs/STUDIO_APK.md) |
 | **Flotte de véhicules** | Jusqu'à 9 voitures (`firmware/vehicle/`) sur une arène : envoi par clic, formations, joystick, réservation de cases anti-collision, **arrêt général** (Espace). Validé en simulation seulement |
 | **Réglages** | Système, configuration complète, mise à jour OTA (Internet ou fichier), scan réseau, journal filtrable, thème, raccourcis |
 
@@ -40,7 +41,7 @@ Pour utiliser des workers sur des voitures, consultez [docs/SECURITE_VEHICULES.m
 
 Le Pi démarre sur la clé USB 8 Go et garde sa microSD de 64 Go pour les projets, firmwares et builds. Le S3 garde sa microSD de 2 Go contenant la copie autonome `SD_CARD/` avec fichiers `.bin`, `.hex`, montages et explications. Les cartes restent dans leurs appareils; le S3 accède au Pi par Wi-Fi, et le Pi compile les projets. Le S3 reste maître des workers et autorise chaque flash. Guide des deux cartes, installation, APK et QR : [docs/ARCHITECTURE_S3_PI.md](docs/ARCHITECTURE_S3_PI.md).
 
-L’APK dans la livraison est l’enveloppe mobile générale. Une APK personnalisée se construit à partir d’un export Studio avec `scripts\build_project_apk.bat`, puis `scripts\publish_project_apk.bat` la dépose sur le Pi et crée un QR LAN. Le Pi 4 ARM64 ne compile pas cette APK avec le modèle Android Gradle x86_64 du projet.
+Le **Studio APK** fabrique désormais les APK de projet directement sur le Pi, sans compilation, à partir de l’APK NEXUS 1.2 ([docs/STUDIO_APK.md](docs/STUDIO_APK.md)). L’APK dans la livraison est l’enveloppe mobile générale. Une APK personnalisée se construit à partir d’un export Studio avec `scripts\build_project_apk.bat`, puis `scripts\publish_project_apk.bat` la dépose sur le Pi et crée un QR LAN. Le Pi 4 ARM64 ne compile pas cette APK avec le modèle Android Gradle x86_64 du projet.
 
 ## Démarrage rapide
 
@@ -56,6 +57,8 @@ firmware/master/        MASTER ESP32-S3 (ESP-IDF 6.1) — main/ (C), www/ (inter
 firmware/worker/        Worker Arduino (un seul programme pour les 10 cartes)
 firmware/vehicle/       Firmware des voitures pilotées par Patricia (NXV1, HMAC, dead-man)
 pi/patricia/            Patricia : mémoire, diagnostic, intentions, IA, flotte, voix
+pi/appstudio/           Studio APK : manifeste binaire, signature, fabrique d'APK, appli web
+mobile/                 APK NEXUS (interface, micro natif, lecteur des applis du Studio APK)
 catalog/                Source du catalogue : cartes, bibliothèques, modules, générateur, projets
   src/                  modules par famille + générateur de code (partagé navigateur/Node)
   classics/             49 programmes écrits à la main

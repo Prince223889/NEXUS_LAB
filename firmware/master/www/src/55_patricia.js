@@ -210,10 +210,28 @@
     try {
       if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
       else if (a.kind === 'open_page') { A.go(p.page, p.q || undefined); }
+      else if (a.kind === 'apk') { await apkFlow(p, row, a); }
       else if (a.kind === 'save_project') { const card = log.querySelector('[data-gen]'); status('Enregistrement…'); const c = card && P._cards[card.dataset.gen]; if (c) { const res2 = window.LAB.generate({ board: c.board, title: c.title, modules: c.modules.map((id) => ({ id })) }); const id = await saveToPi(c, res2); status(id ? `${icon('check')} Enregistré : ${esc(id)}` : 'Échec'); report(a.id, !!id, { id }); } }
       else if (a.kind === 'flash') { await flashFlow(p, row, a, log); }
       else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
     } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
+  }
+  /* APK créée par le Pi depuis un projet de la mémoire : lien direct + QR dans la conversation. */
+  async function apkFlow(p, row, a) {
+    if (!A.AppStudio) throw new Error('Studio APK non chargé');
+    row.innerHTML = '<div class="small">Préparation de l\'application…</div>';
+    const spec = { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
+    const design = A.AppStudio.fromSpec(spec, p.title);
+    design.id = A.AppStudio.slug(p.project || p.title);
+    row.innerHTML = '<div class="small">Le Pi assemble et signe l\'APK…</div>';
+    const res = await A.AppStudio.publish(design, true);
+    const qr = await A.AppStudio.qrUrl(res);
+    row.innerHTML = `<div class="pa-card"><div class="pa-card-h">${icon('phone')}<b class="grow">${esc(p.title)} · APK v${esc(res.version)}</b></div>
+      <div class="row wrap" style="gap:12px;align-items:flex-start">${qr ? `<img src="${qr}" alt="QR" width="120" height="120" style="background:#fff;border-radius:8px">` : ''}
+      <div class="grow" style="min-width:0"><a class="btn primary" href="${esc(res.apk_url)}" download>${icon('download')}Télécharger l'APK</a>
+      <div class="small" style="margin-top:6px;word-break:break-all">${esc(res.apk_url)}</div>
+      <div class="small">Appli web : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">ouvrir</a> · <a href="#apkstudio?p=${encodeURIComponent(p.project)}">personnaliser dans le Studio APK</a></div></div></div></div>`;
+    report(a.id, true, { apk: res.apk_url, sha256: res.sha256 });
   }
   async function report(aid, ok, details, serial) {
     try { return await piJSON(`/api/v1/patricia/actions/${aid}/report`, { ok, details, serial_log: serial || '' }); } catch (e) { return null; }

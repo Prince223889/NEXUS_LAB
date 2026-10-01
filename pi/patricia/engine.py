@@ -28,7 +28,7 @@ from .memory import Memory, fold, slug
 # kind → (exécuteur, risque) ; « ui » = l'interface exécute via le MASTER S3 après confirmation.
 ACTIONS = {
     "s3_job": ("ui", "faible"), "flash": ("ui", "élevé"), "verify": ("ui", "faible"), "open_page": ("ui", "aucun"),
-    "build": ("pi", "faible"), "apk": ("pi", "faible"), "save_project": ("pi", "aucun"),
+    "build": ("pi", "faible"), "apk": ("ui", "aucun"), "save_project": ("pi", "aucun"),
     "fleet_goal": ("pi", "élevé"), "fleet_register": ("pi", "moyen"), "install_library": ("pi", "faible"),
 }
 CONFIRM_TTL = 300
@@ -388,12 +388,15 @@ class Engine:
 
     def _h_apk(self, text, s, ctx):
         p = self.mem.find_project(text) or (self.mem.project(ctx["project"]) if ctx.get("project") else None)
-        lines = ["Le Studio APK crée une application Android pour ton projet : écrans, boutons, jauges et graphiques reliés à tes capteurs, sans coder."]
-        acts = [self._propose("open_page", {"page": "apkstudio", "q": {"p": p["id"]} if p else {}}, "Ouvrir le Studio APK")]
+        lines = ["Le Studio APK crée une application Android pour ton projet : écrans, boutons, jauges et courbes reliés à tes capteurs, "
+                 "blocs « quand… alors… », voix. Le Pi l'assemble et la signe en quelques secondes, sans compiler, puis donne le lien direct et le QR."]
+        acts = []
         if p:
-            acts.append(self._propose("apk", {"project": p["id"]}, f"Construire l'APK de « {p['title']} »"))
-        lines.append("Limite réelle : les outils Android de Google n'existent pas pour le processeur ARM du Pi 4. "
-                     "La construction se fait sur un PC (scripts/build_project_apk.bat), puis le Pi l'héberge et donne le lien et le QR de téléchargement.")
+            acts.append(self._propose("apk", {"project": p["id"], "title": p.get("title") or p["id"], "board": p.get("board") or "esp32",
+                                              "modules": list(p.get("modules") or [])[:24]},
+                                      f"Créer l'APK de « {p.get('title') or p['id']} » (une valeur et une courbe par mesure)"))
+            lines.append("Je peux créer tout de suite une première version, puis tu la personnalises dans le Studio APK.")
+        acts.append(self._propose("open_page", {"page": "apkstudio", "q": {"p": p["id"]} if p else {}}, "Ouvrir le Studio APK"))
         return self._resp("\n".join(lines), "apk", actions=acts)
 
     # ============================================================ véhicules
@@ -628,8 +631,6 @@ class Engine:
         try:
             if a["kind"] == "build":
                 res = self.host.queue_build(p["project"], p.get("board", "esp32"))
-            elif a["kind"] == "apk":
-                res = self.host.queue_apk(p["project"])
             elif a["kind"] == "save_project":   # le code est généré dans le navigateur, qui l'envoie au Pi
                 self.mem.set_action(aid, "confirmed")
                 return {"execute_in_ui": True, "kind": "save_project", "params": p, "id": aid}

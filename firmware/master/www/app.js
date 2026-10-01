@@ -1,4 +1,4 @@
-/* ESP32 LAB — app.js généré depuis www/src (15 fichiers). Ne pas modifier : éditez www/src. */
+/* ESP32 LAB — app.js généré depuis www/src (17 fichiers). Ne pas modifier : éditez www/src. */
 /* ---- 10_core.js ---- */
 /* ESP32 LAB 6 — application web du MASTER (PC, tablette, téléphone).
  * Fichier source : les fichiers de www/src/ sont concaténés dans www/app.js par tools/bundle_www.py
@@ -3740,10 +3740,28 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     try {
       if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
       else if (a.kind === 'open_page') { A.go(p.page, p.q || undefined); }
+      else if (a.kind === 'apk') { await apkFlow(p, row, a); }
       else if (a.kind === 'save_project') { const card = log.querySelector('[data-gen]'); status('Enregistrement…'); const c = card && P._cards[card.dataset.gen]; if (c) { const res2 = window.LAB.generate({ board: c.board, title: c.title, modules: c.modules.map((id) => ({ id })) }); const id = await saveToPi(c, res2); status(id ? `${icon('check')} Enregistré : ${esc(id)}` : 'Échec'); report(a.id, !!id, { id }); } }
       else if (a.kind === 'flash') { await flashFlow(p, row, a, log); }
       else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
     } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
+  }
+  /* APK créée par le Pi depuis un projet de la mémoire : lien direct + QR dans la conversation. */
+  async function apkFlow(p, row, a) {
+    if (!A.AppStudio) throw new Error('Studio APK non chargé');
+    row.innerHTML = '<div class="small">Préparation de l\'application…</div>';
+    const spec = { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
+    const design = A.AppStudio.fromSpec(spec, p.title);
+    design.id = A.AppStudio.slug(p.project || p.title);
+    row.innerHTML = '<div class="small">Le Pi assemble et signe l\'APK…</div>';
+    const res = await A.AppStudio.publish(design, true);
+    const qr = await A.AppStudio.qrUrl(res);
+    row.innerHTML = `<div class="pa-card"><div class="pa-card-h">${icon('phone')}<b class="grow">${esc(p.title)} · APK v${esc(res.version)}</b></div>
+      <div class="row wrap" style="gap:12px;align-items:flex-start">${qr ? `<img src="${qr}" alt="QR" width="120" height="120" style="background:#fff;border-radius:8px">` : ''}
+      <div class="grow" style="min-width:0"><a class="btn primary" href="${esc(res.apk_url)}" download>${icon('download')}Télécharger l'APK</a>
+      <div class="small" style="margin-top:6px;word-break:break-all">${esc(res.apk_url)}</div>
+      <div class="small">Appli web : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">ouvrir</a> · <a href="#apkstudio?p=${encodeURIComponent(p.project)}">personnaliser dans le Studio APK</a></div></div></div></div>`;
+    report(a.id, true, { apk: res.apk_url, sha256: res.sha256 });
   }
   async function report(aid, ok, details, serial) {
     try { return await piJSON(`/api/v1/patricia/actions/${aid}/report`, { ok, details, serial_log: serial || '' }); } catch (e) { return null; }
@@ -4128,6 +4146,1098 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     }
   });
   A.commands.push({ title: 'ARRÊT D\'URGENCE de la flotte', group: 'Action', icon: 'stop', run: () => A.fleetStop() });
+})();
+/* ---- 57_appruntime.js ---- */
+/* NEXUS App Runtime — moteur des applications du Studio APK.
+ * Un seul fichier, sans dépendance, utilisé à l'identique par :
+ *   - l'aperçu et le mode test du Studio APK (interface du MASTER),
+ *   - l'APK Android (assets/player/runtime.js, copie synchronisée par scripts/sync_app_runtime.py),
+ *   - l'appli web servie par le Pi (/apps/<id>/).
+ * Ce que tu vois dans l'aperçu est donc exactement ce que fera l'application. */
+(function () {
+  'use strict';
+  const R = (window.NexusAppRuntime = window.NexusAppRuntime || {});
+  R.VERSION = '1.0.0';
+  R.FORMAT = 'nexus-app/1';
+
+  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ESC[c]);
+  const num = (v, d) => { const n = parseFloat(v); return isFinite(n) ? n : d; };
+  const h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+  /* ------------------------------------------------------------------ catalogue des composants */
+  // [clé, libellé, type d'éditeur, valeur par défaut]. Types : text, textarea, number, color, var, select:a=A|b=B, bool, actions
+  const WIDTH = ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'full'];
+  R.COMPONENTS = {
+    title: { label: 'Titre', icon: 'T', group: 'Affichage', props: [['text', 'Texte', 'text', 'Mon application'], ['sub', 'Sous-titre', 'text', '']] },
+    text: { label: 'Texte', icon: '¶', group: 'Affichage', props: [['text', 'Texte (mets {variable} pour afficher une valeur)', 'textarea', 'Bonjour !'], ['size', 'Taille', 'select:s=Petit|m=Moyen|l=Grand', 'm'], WIDTH] },
+    value: { label: 'Valeur', icon: '42', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Température'], ['var', 'Variable', 'var', ''], ['unit', 'Unité', 'text', ''], ['decimals', 'Décimales', 'number', 1], ['warn', 'Orange au-dessus de', 'number', ''], ['alarm', 'Rouge au-dessus de', 'number', ''], ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'half']] },
+    gauge: { label: 'Jauge', icon: '◔', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Humidité'], ['var', 'Variable', 'var', ''], ['min', 'Minimum', 'number', 0], ['max', 'Maximum', 'number', 100], ['unit', 'Unité', 'text', '%'], ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'half']] },
+    chart: { label: 'Courbe', icon: '〽', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Évolution'], ['var', 'Variable', 'var', ''], ['points', 'Points affichés', 'number', 60], WIDTH] },
+    led: { label: 'Voyant', icon: '●', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Alerte'], ['var', 'Variable', 'var', ''], ['op', 'S\'allume si', 'select:gt=est supérieure à|lt=est inférieure à|eq=est égale à|on=est vraie (1)', 'gt'], ['value', 'Valeur', 'text', '0'], ['color', 'Couleur', 'color', '#ef4444'], ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'half']] },
+    button: { label: 'Bouton', icon: '▭', group: 'Commandes', props: [['text', 'Texte', 'text', 'Appuie'], ['color', 'Couleur', 'color', ''], ['style', 'Style', 'select:fill=Plein|outline=Contour', 'fill'], WIDTH, ['do', 'Quand on appuie', 'actions', []]] },
+    switch: { label: 'Interrupteur', icon: '⏻', group: 'Commandes', props: [['label', 'Libellé', 'text', 'Lampe'], ['var', 'Variable (1 / 0)', 'var', ''], WIDTH, ['do', 'Quand on allume', 'actions', []], ['off', 'Quand on éteint', 'actions', []]] },
+    slider: { label: 'Curseur', icon: '⇔', group: 'Commandes', props: [['label', 'Libellé', 'text', 'Vitesse'], ['var', 'Variable', 'var', ''], ['min', 'Minimum', 'number', 0], ['max', 'Maximum', 'number', 100], ['step', 'Pas', 'number', 1], WIDTH, ['do', 'Quand on relâche', 'actions', []]] },
+    input: { label: 'Saisie', icon: '⌨', group: 'Commandes', props: [['label', 'Libellé', 'text', 'Message'], ['var', 'Variable', 'var', ''], ['placeholder', 'Indication', 'text', ''], ['kind', 'Type', 'select:text=Texte|number=Nombre', 'text'], WIDTH, ['do', 'Quand on valide', 'actions', []]] },
+    joystick: { label: 'Joystick', icon: '✥', group: 'Commandes', props: [['var_x', 'Variable X (-100…100)', 'var', ''], ['var_y', 'Variable Y (-100…100)', 'var', ''], ['do', 'Quand il bouge (5 fois/s)', 'actions', []]] },
+    image: { label: 'Image', icon: '🖼', group: 'Affichage', props: [['emoji', 'Emoji ou symbole', 'text', '🌱'], ['size', 'Taille (px)', 'number', 64], ['caption', 'Légende', 'text', ''], WIDTH] },
+    link: { label: 'Lien', icon: '↗', group: 'Affichage', props: [['text', 'Texte', 'text', 'Ouvrir la page de l\'appareil'], ['url', 'Adresse', 'text', 'http://192.168.4.20/'], WIDTH] },
+    spacer: { label: 'Espace', icon: '↕', group: 'Affichage', props: [['size', 'Hauteur (px)', 'number', 16]] }
+  };
+  R.ACTIONS = {
+    set: { label: 'Mettre une variable à', fields: [['var', 'Variable', 'var'], ['value', 'Valeur ou calcul ({x} + 1)', 'text']] },
+    toggle: { label: 'Inverser une variable (0 ↔ 1)', fields: [['var', 'Variable', 'var']] },
+    http: { label: 'Envoyer une requête à un appareil', fields: [['method', 'Méthode', 'select:GET=GET|POST=POST'], ['url', 'Adresse ({variables} permises)', 'text'], ['body', 'Corps (POST)', 'text']] },
+    job: { label: 'Lancer un job du MASTER', fields: [['type', 'Job', 'select:PING=Ping|SYSTEM_TEST=Check-up|I2C_SCAN=Scan I2C|WIFI_SCAN=Scan Wi-Fi|IDENTIFY=Faire clignoter|BENCHMARK=Benchmark'], ['worker', 'Worker (0 = auto)', 'number']] },
+    goto: { label: 'Aller à l\'écran', fields: [['screen', 'Écran', 'screen']] },
+    speak: { label: 'Dire à voix haute', fields: [['text', 'Texte ({variables} permises)', 'text']] },
+    listen: { label: 'Écouter la voix dans une variable', fields: [['var', 'Variable', 'var']] },
+    notify: { label: 'Afficher un message', fields: [['text', 'Message', 'text']] },
+    vibrate: { label: 'Vibrer', fields: [['ms', 'Durée (ms)', 'number']] }
+  };
+  R.WHEN = {
+    start: { label: 'Au démarrage' },
+    timer: { label: 'Toutes les N secondes', fields: [['every', 'Secondes', 'number']] },
+    above: { label: 'Quand une variable dépasse', fields: [['var', 'Variable', 'var'], ['value', 'Seuil', 'text']] },
+    below: { label: 'Quand une variable passe sous', fields: [['var', 'Variable', 'var'], ['value', 'Seuil', 'text']] },
+    equals: { label: 'Quand une variable devient égale à', fields: [['var', 'Variable', 'var'], ['value', 'Valeur', 'text']] },
+    change: { label: 'Quand une variable change', fields: [['var', 'Variable', 'var']] },
+    screen: { label: 'À l\'ouverture d\'un écran', fields: [['screen', 'Écran', 'screen']] }
+  };
+
+  R.blank = function (name) {
+    return {
+      format: R.FORMAT, id: '', name: name || 'Mon application', version: 1, icon: '📱', color: '#2f7cf6', theme: 'auto',
+      s3: 'http://192.168.4.1', description: '', vars: [],
+      screens: [{ id: 'accueil', title: 'Accueil', items: [{ id: 'c1', type: 'title', text: name || 'Mon application', sub: 'Créée avec NEXUS LAB' }] }],
+      rules: []
+    };
+  };
+  R.newItem = function (type, design) {
+    const meta = R.COMPONENTS[type];
+    const used = new Set();
+    (design.screens || []).forEach((s) => (s.items || []).forEach((i) => used.add(i.id)));
+    let n = 1;
+    while (used.has('c' + n)) n++;
+    const it = { id: 'c' + n, type };
+    meta.props.forEach(([k, , kind, def]) => { it[k] = kind === 'actions' ? [] : def; });
+    return it;
+  };
+
+  /* ------------------------------------------------------------------ calculs sûrs ({x} * 1.8 + 32) */
+  function calc(src) {
+    const s = String(src).replace(/\s+/g, '');
+    let i = 0;
+    const peek = () => s[i];
+    function atom() {
+      if (peek() === '(') { i++; const v = add(); if (s[i++] !== ')') throw 0; return v; }
+      if (peek() === '-') { i++; return -atom(); }
+      const m = /^\d+(?:\.\d+)?/.exec(s.slice(i));
+      if (!m) throw 0;
+      i += m[0].length;
+      return parseFloat(m[0]);
+    }
+    function mul() { let v = atom(); while (peek() === '*' || peek() === '/' || peek() === '%') { const o = s[i++], r = atom(); v = o === '*' ? v * r : o === '/' ? v / r : v % r; } return v; }
+    function add() { let v = mul(); while (peek() === '+' || peek() === '-') { const o = s[i++], r = mul(); v = o === '+' ? v + r : v - r; } return v; }
+    const v = add();
+    if (i !== s.length) throw 0;
+    return v;
+  }
+  R.calc = calc;
+
+  /* ------------------------------------------------------------------ réseau */
+  function nativeNet() {
+    const pending = {};
+    let seq = 0;
+    window.__nexusHttp = (id, status, text) => { const p = pending[id]; if (!p) return; delete pending[id]; status ? p.ok({ status, text }) : p.ko(new Error(text || 'réseau injoignable')); };
+    return (method, url, body) => new Promise((ok, ko) => {
+      const id = 'h' + (++seq);
+      pending[id] = { ok, ko };
+      setTimeout(() => { if (pending[id]) { delete pending[id]; ko(new Error('délai dépassé')); } }, 9000);
+      window.NexusNative.http(id, method, url, body || '');
+    });
+  }
+  function fetchNet(proxy) {
+    return async (method, url, body) => {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+      try {
+        const sameOrigin = !/^https?:/i.test(url) || url.indexOf(location.origin + '/') === 0;
+        let r;
+        if (proxy && !sameOrigin) {
+          r = await fetch(proxy, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method, url, body: body || '' }), signal: ctl.signal });
+        } else {
+          const opt = { method, signal: ctl.signal };
+          if (body && method !== 'GET') { opt.body = body; opt.headers = { 'Content-Type': /^[[{]/.test(body.trim()) ? 'application/json' : 'application/x-www-form-urlencoded' }; }
+          r = await fetch(url, opt);
+        }
+        return { status: r.status, text: await r.text() };
+      } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'délai dépassé' : 'injoignable (ou bloqué par le navigateur : teste dans l\'APK)');
+      } finally { clearTimeout(t); }
+    };
+  }
+  R.net = function (opts) {
+    if (opts && typeof opts.net === 'function') return opts.net;
+    if (window.NexusNative && window.NexusNative.player && window.NexusNative.player()) return nativeNet();
+    return fetchNet(opts && opts.proxy);
+  };
+
+  /* ------------------------------------------------------------------ styles (injectés une seule fois) */
+  const CSS = `
+.nxa{--a:#2f7cf6;--bg:#f4f6fb;--card:#fff;--fg:#141b2b;--mut:#6a7487;--line:#e2e7f0;--ok:#16a34a;--warn:#f59e0b;--bad:#ef4444;
+ font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg);display:flex;flex-direction:column;height:100%;min-height:100%;overflow:hidden;position:relative}
+.nxa[data-theme=dark]{--bg:#0f1522;--card:#18212f;--fg:#e8edf6;--mut:#94a0b6;--line:#263246}
+@media (prefers-color-scheme:dark){.nxa[data-theme=auto]{--bg:#0f1522;--card:#18212f;--fg:#e8edf6;--mut:#94a0b6;--line:#263246}}
+.nxa *{box-sizing:border-box}
+.nxa-top{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--a);color:#fff;flex:none}
+.nxa-top b{font-size:17px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nxa-top .nxa-ic{font-size:22px;line-height:1}
+.nxa-top button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;min-width:34px;height:34px;font-size:17px;cursor:pointer}
+.nxa-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.45);flex:none}
+.nxa-dot.on{background:#6ff0a6;box-shadow:0 0 0 3px rgba(111,240,166,.25)}
+.nxa-body{flex:1;overflow:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start}
+.nxa-item{grid-column:span 2;min-width:0}
+.nxa-item.half{grid-column:span 1}
+.nxa-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.nxa-lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.nxa-big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.nxa-big small{font-size:14px;font-weight:500;color:var(--mut);margin-left:3px}
+.nxa-big.warn{color:var(--warn)}.nxa-big.bad{color:var(--bad)}
+.nxa-h1{font-size:24px;font-weight:750;margin:4px 2px 0}.nxa-h1+div{color:var(--mut);margin:2px 2px 4px}
+.nxa-t{white-space:pre-wrap;margin:2px}.nxa-t.s{font-size:13px;color:var(--mut)}.nxa-t.l{font-size:19px;font-weight:600}
+.nxa-btn{width:100%;min-height:50px;border-radius:14px;border:2px solid var(--bc,var(--a));background:var(--bc,var(--a));color:#fff;font:600 16px system-ui,sans-serif;cursor:pointer;touch-action:manipulation;transition:transform .08s}
+.nxa-btn.outline{background:transparent;color:var(--bc,var(--a))}
+.nxa-btn:active{transform:scale(.97)}
+.nxa-row{display:flex;align-items:center;gap:10px}
+.nxa-sw{margin-left:auto;width:54px;height:32px;border-radius:20px;background:var(--line);position:relative;border:0;cursor:pointer;flex:none;transition:background .15s}
+.nxa-sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
+.nxa-sw.on{background:var(--a)}.nxa-sw.on::after{left:25px}
+.nxa input[type=range]{width:100%;accent-color:var(--a)}
+.nxa-in{display:flex;gap:6px}.nxa-in input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:10px;font:inherit}
+.nxa-in button{border:0;background:var(--a);color:#fff;border-radius:10px;padding:0 14px;font:inherit;cursor:pointer}
+.nxa-led{width:22px;height:22px;border-radius:50%;background:var(--line);margin-left:auto;flex:none;transition:all .2s}
+.nxa-img{text-align:center}.nxa-img div{line-height:1.1}
+.nxa-joy{width:180px;height:180px;margin:6px auto;border-radius:50%;background:radial-gradient(circle,var(--card) 0,var(--bg) 100%);border:2px solid var(--line);position:relative;touch-action:none}
+.nxa-joy i{position:absolute;width:64px;height:64px;border-radius:50%;background:var(--a);left:58px;top:58px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.nxa-tabs{display:flex;background:var(--card);border-top:1px solid var(--line);flex:none}
+.nxa-tabs button{flex:1;border:0;background:none;padding:10px 4px 12px;color:var(--mut);font:600 12px system-ui,sans-serif;cursor:pointer}
+.nxa-tabs button.on{color:var(--a)}
+.nxa-toast{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:rgba(20,27,43,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:86%;text-align:center;pointer-events:none;animation:nxaf 2.6s forwards}
+@keyframes nxaf{0%{opacity:0;transform:translate(-50%,8px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+.nxa-empty{grid-column:span 2;text-align:center;color:var(--mut);padding:40px 10px;border:2px dashed var(--line);border-radius:16px}
+.nxa-sheet{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
+.nxa-sheet>div{background:var(--card);width:100%;border-radius:18px 18px 0 0;padding:18px;display:grid;gap:10px}
+.nxa-sheet input{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:10px;font:inherit}
+.nxa.design .nxa-item{cursor:pointer;position:relative;outline:2px dashed transparent;outline-offset:3px;border-radius:16px}
+.nxa.design .nxa-item:hover{outline-color:rgba(127,140,160,.5)}
+.nxa.design .nxa-item.sel{outline:2px solid var(--a)}
+.nxa.design .nxa-item.drop{box-shadow:0 -4px 0 var(--a)}
+.nxa.design .nxa-item *{pointer-events:none}
+`;
+  function injectCss() {
+    if (document.getElementById('nxa-css')) return;
+    const st = document.createElement('style');
+    st.id = 'nxa-css';
+    st.textContent = CSS;
+    document.head.appendChild(st);
+  }
+
+  /* ------------------------------------------------------------------ application */
+  R.mount = function (root, design, opts) {
+    opts = opts || {};
+    injectCss();
+    const design_ = JSON.parse(JSON.stringify(design));
+    const D = design_, mode = opts.mode || 'run', live = mode === 'run';
+    const net = R.net(opts);
+    const vars = {}, hist = {}, meta = {}, timers = [], edges = {};
+    const varDef = {};
+    let screen = opts.screen && D.screens.some((s) => s.id === opts.screen) ? opts.screen : (D.screens[0] || {}).id;
+    const back = [];
+    let updaters = [], destroyed = false, online = false;
+    const log = (msg, kind) => { if (opts.log) opts.log(msg, kind || 'info'); };
+    let s3 = (opts.s3 != null ? opts.s3 : D.s3 || '').replace(/\/+$/, '');
+
+    (D.vars || []).forEach((v) => {
+      varDef[v.name] = v;
+      vars[v.name] = v.type === 'number' ? num(v.default, 0) : v.type === 'bool' ? (v.default === true || v.default === 1 || v.default === '1' ? 1 : 0) : String(v.default == null ? '' : v.default);
+      hist[v.name] = [];
+    });
+    if (opts.sample) Object.keys(opts.sample).forEach((k) => {
+      if (!(k in vars)) return;
+      vars[k] = opts.sample[k];
+      // aperçu : une petite courbe plausible autour de la valeur d'exemple
+      if (typeof vars[k] === 'number') for (let i = 0; i < 40; i++) hist[k].push(vars[k] * (1 + 0.04 * Math.sin(i / 4) + 0.015 * Math.sin(i * 1.7)));
+    });
+
+    function fmt(name, decimals) {
+      const v = name in vars ? vars[name] : meta[name];
+      if (v == null || v === '') return '—';
+      if (typeof v === 'number') return decimals != null && decimals !== '' ? v.toFixed(Math.max(0, Math.min(6, num(decimals, 1)))) : String(Math.round(v * 1000) / 1000);
+      return String(v);
+    }
+    const tpl = (s) => String(s == null ? '' : s).replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, k) => (k in vars || k in meta ? fmt(k) : m));
+    function evalValue(s, name) {
+      const t = tpl(s).trim();
+      const def = varDef[name] || {};
+      if (def.type !== 'text' && /^[\d\s.+\-*/%()]+$/.test(t)) { try { return calc(t); } catch (e) { /* texte */ } }
+      if (def.type === 'bool') return /^(1|true|vrai|on|oui)$/i.test(t) ? 1 : 0;
+      return def.type === 'number' && isFinite(parseFloat(t)) ? parseFloat(t) : t;
+    }
+
+    function setVar(name, value, quiet) {
+      if (!(name in vars)) return;
+      const def = varDef[name] || {};
+      if (def.type === 'number' && typeof value !== 'number') { const n = parseFloat(value); value = isFinite(n) ? n : vars[name]; }
+      const old = vars[name];
+      vars[name] = value;
+      if (typeof value === 'number') { const hh = hist[name]; hh.push(value); if (hh.length > 300) hh.shift(); }
+      if (!quiet) refresh();
+      if (old !== value && live) fireVar(name, old, value);
+    }
+    function refresh() { updaters.forEach((u) => { try { u(); } catch (e) { /* composant */ } }); }
+
+    /* --- blocs « quand » */
+    function fireVar(name, old, value) {
+      (D.rules || []).forEach((r, i) => {
+        const w = r.when;
+        if (w.var !== name) return;
+        let hit = false;
+        if (w.type === 'change') hit = true;
+        else {
+          const th = evalValue(w.value, name);
+          const cond = w.type === 'above' ? value > th : w.type === 'below' ? value < th : String(value) === String(th);
+          hit = cond && !edges[i];
+          edges[i] = cond;
+        }
+        if (hit) run(r.do, 'bloc « quand »');
+      });
+    }
+
+    /* --- actions */
+    async function run(list, where) {
+      for (const a of list || []) {
+        if (destroyed) return;
+        try { await act(a); } catch (e) { log((where ? where + ' : ' : '') + (R.ACTIONS[a.a] || {}).label + ' — ' + e.message, 'bad'); }
+      }
+    }
+    function toast(text) {
+      if (window.NexusNative && window.NexusNative.toast && live && opts.native !== false) { window.NexusNative.toast(text); return; }
+      const t = h(`<div class="nxa-toast">${esc(text)}</div>`);
+      app.appendChild(t);
+      setTimeout(() => t.remove(), 2700);
+    }
+    async function act(a) {
+      if (!live) return;
+      switch (a.a) {
+        case 'set': setVar(a.var, evalValue(a.value, a.var)); break;
+        case 'toggle': setVar(a.var, vars[a.var] && vars[a.var] !== '0' ? 0 : 1); break;
+        case 'goto': go(a.screen, true); break;
+        case 'notify': toast(tpl(a.text)); break;
+        case 'vibrate':
+          if (window.NexusNative && window.NexusNative.vibrate) window.NexusNative.vibrate(num(a.ms, 200));
+          else if (navigator.vibrate) navigator.vibrate(num(a.ms, 200));
+          break;
+        case 'speak': {
+          const text = tpl(a.text);
+          if (window.NexusNative && window.NexusNative.speak) window.NexusNative.speak(text);
+          else if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(text); u.lang = 'fr-FR'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+          break;
+        }
+        case 'listen': setVar(a.var, await listen()); break;
+        case 'http': {
+          const url = tpl(a.url), body = a.body ? tpl(a.body) : '';
+          const r = await net(a.method || 'GET', url, body);
+          log(`${a.method || 'GET'} ${url} → ${r.status}`, r.status < 400 ? 'ok' : 'bad');
+          if (r.status >= 400) throw new Error('réponse ' + r.status);
+          break;
+        }
+        case 'job': {
+          const body = `type=${encodeURIComponent(a.type || 'PING')}&priority=50&worker=${num(a.worker, 0)}`;
+          const r = await net('POST', s3 + '/api/job', body);
+          if (r.status >= 400) throw new Error('le MASTER a refusé (' + r.status + ')');
+          toast('Job ' + (a.type || 'PING') + ' envoyé');
+          break;
+        }
+      }
+    }
+    function listen() {
+      return new Promise((ok, ko) => {
+        if (window.NexusNative && window.NexusNative.listen) {
+          window.__nexusVoice = (good, text) => (good ? ok(text) : ko(new Error(text)));
+          window.NexusNative.listen('fr-FR');
+          return;
+        }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { ko(new Error('reconnaissance vocale absente ici')); return; }
+        const rec = new SR();
+        rec.lang = 'fr-FR';
+        rec.onresult = (e) => ok(e.results[0][0].transcript);
+        rec.onerror = (e) => ko(new Error(e.error || 'micro'));
+        rec.start();
+      });
+    }
+
+    /* --- sources de données */
+    async function pollFeeds() {
+      const feedVars = (D.vars || []).filter((v) => v.source === 'feed');
+      if (!feedVars.length || destroyed) return;
+      try {
+        const r = await net('GET', s3 + '/api/feeds');
+        const feeds = JSON.parse(r.text);
+        setOnline(true);
+        feedVars.forEach((v) => {
+          const [a, b] = v.feed.indexOf('/') > 0 ? v.feed.split('/') : [null, v.feed];
+          const f = (Array.isArray(feeds) ? feeds : []).find((x) => x.key === b && (!a || x.source === a));
+          if (f && f.age_ms < 120000) { meta[v.name + '_ip'] = f.ip; setVar(v.name, num(f.value, vars[v.name]), true); }
+        });
+        refresh();
+      } catch (e) { setOnline(false); }
+    }
+    async function pollHttp(v) {
+      try {
+        const r = await net('GET', tpl(v.url));
+        let val = r.text;
+        try {
+          let o = JSON.parse(r.text);
+          if (v.path) v.path.split('.').forEach((k) => { o = o == null ? o : Array.isArray(o) && !/^\d+$/.test(k) ? o.find((x) => x && (x.label === k || x.key === k || x.name === k)) : o[k]; });
+          val = o && typeof o === 'object' && 'value' in o ? o.value : o;
+        } catch (e) { /* texte brut */ }
+        setVar(v.name, typeof val === 'object' ? JSON.stringify(val) : val);
+      } catch (e) { log(`${v.name} : ${e.message}`, 'bad'); }
+    }
+    function setOnline(on) { online = on; const d = app.querySelector('.nxa-dot'); if (d) d.classList.toggle('on', on); }
+
+    /* --- rendu */
+    const app = h(`<div class="nxa ${mode === 'design' ? 'design' : ''}" data-theme="${esc(D.theme || 'auto')}"></div>`);
+    app.style.setProperty('--a', /^#[0-9a-f]{6}$/i.test(D.color || '') ? D.color : '#2f7cf6');
+    root.innerHTML = '';
+    root.appendChild(app);
+
+    function go(id, push) {
+      if (!D.screens.some((s) => s.id === id)) return;
+      if (push && id !== screen) back.push(screen);
+      screen = id;
+      render();
+      if (live) (D.rules || []).forEach((r) => { if (r.when.type === 'screen' && r.when.screen === id) run(r.do, 'ouverture d\'écran'); });
+      if (opts.onScreen) opts.onScreen(id);
+    }
+
+    function render() {
+      updaters = [];
+      const scr = D.screens.find((s) => s.id === screen) || D.screens[0];
+      if (!scr) { app.innerHTML = '<div class="nxa-body"><div class="nxa-empty">Aucun écran</div></div>'; return; }
+      const multi = D.screens.length > 1;
+      app.innerHTML = `<div class="nxa-top">${back.length && live ? '<button data-back aria-label="Retour">‹</button>' : `<span class="nxa-ic">${esc(D.icon || '📱')}</span>`}
+        <b>${esc(multi ? scr.title : D.name)}</b><span class="nxa-dot${online ? ' on' : ''}" title="MASTER"></span>${live && opts.settings !== false ? '<button data-set aria-label="Réglages">⚙</button>' : ''}</div>
+        <div class="nxa-body"></div>${multi ? `<nav class="nxa-tabs">${D.screens.map((s) => `<button data-tab="${esc(s.id)}" class="${s.id === scr.id ? 'on' : ''}">${esc(s.title)}</button>`).join('')}</nav>` : ''}`;
+      const body = app.querySelector('.nxa-body');
+      if (!scr.items.length) body.innerHTML = `<div class="nxa-empty">${mode === 'design' ? 'Glisse des composants ici depuis la palette' : 'Écran vide'}</div>`;
+      scr.items.forEach((it) => {
+        const wrap = h(`<div class="nxa-item ${it.width === 'half' ? 'half' : ''}" data-id="${esc(it.id)}"></div>`);
+        if (mode === 'design') { wrap.draggable = true; if (opts.selected === it.id) wrap.classList.add('sel'); }
+        try { build(it, wrap); } catch (e) { wrap.innerHTML = `<div class="nxa-card">⚠ ${esc(it.type)}</div>`; }
+        body.appendChild(wrap);
+      });
+      app.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { back.length = 0; go(b.dataset.tab, false); }));
+      const bb = app.querySelector('[data-back]');
+      if (bb) bb.onclick = () => goBack();
+      const sb = app.querySelector('[data-set]');
+      if (sb) sb.onclick = settings;
+      refresh();
+    }
+    function goBack() { if (!back.length) return false; screen = back.pop(); render(); return true; }
+
+    function build(it, wrap) {
+      const card = (inner) => { wrap.innerHTML = `<div class="nxa-card">${inner}</div>`; return wrap.firstElementChild; };
+      switch (it.type) {
+        case 'title': {
+          wrap.innerHTML = `<div class="nxa-h1"></div>${it.sub ? '<div></div>' : ''}`;
+          const [t1, t2] = wrap.children;
+          updaters.push(() => { t1.textContent = tpl(it.text); if (t2) t2.textContent = tpl(it.sub); });
+          break;
+        }
+        case 'text': { wrap.innerHTML = `<div class="nxa-t ${esc(it.size || 'm')}"></div>`; const t = wrap.firstElementChild; updaters.push(() => { t.textContent = tpl(it.text); }); break; }
+        case 'spacer': wrap.style.height = Math.max(0, Math.min(200, num(it.size, 16))) + 'px'; if (mode === 'design') wrap.style.outline = '1px dashed rgba(127,140,160,.35)'; break;
+        case 'image': wrap.innerHTML = `<div class="nxa-img"><div style="font-size:${Math.max(16, Math.min(200, num(it.size, 64)))}px">${esc(it.emoji || '🖼')}</div>${it.caption ? `<div class="nxa-t s">${esc(it.caption)}</div>` : ''}</div>`; break;
+        case 'link': { wrap.innerHTML = `<button class="nxa-btn outline">${esc(it.text || 'Ouvrir')} ↗</button>`; wrap.firstElementChild.onclick = () => { if (live) window.open(tpl(it.url), '_blank'); }; break; }
+        case 'value': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)}</div><div class="nxa-big"></div>`), big = c.lastElementChild;
+          updaters.push(() => {
+            const v = vars[it.var];
+            big.innerHTML = `${esc(it.var ? fmt(it.var, it.decimals) : '—')}<small>${esc(it.unit || (varDef[it.var] || {}).unit || '')}</small>`;
+            big.className = 'nxa-big' + (it.alarm !== '' && it.alarm != null && v > num(it.alarm, Infinity) ? ' bad' : it.warn !== '' && it.warn != null && v > num(it.warn, Infinity) ? ' warn' : '');
+          });
+          break;
+        }
+        case 'gauge': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)}</div><svg viewBox="0 0 120 70" style="width:100%;max-height:120px"><path d="M10 64 A50 50 0 0 1 110 64" fill="none" stroke="var(--line)" stroke-width="11" stroke-linecap="round"/><path class="g" d="M10 64 A50 50 0 0 1 110 64" fill="none" stroke="var(--a)" stroke-width="11" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/><text x="60" y="60" text-anchor="middle" font-size="19" font-weight="700" fill="currentColor"></text></svg>`);
+          const g = c.querySelector('.g'), tx = c.querySelector('text');
+          updaters.push(() => {
+            const mn = num(it.min, 0), mx = num(it.max, 100), v = num(vars[it.var], mn);
+            const p = Math.max(0, Math.min(100, ((v - mn) / (mx - mn || 1)) * 100));
+            g.setAttribute('stroke-dasharray', `${p} 100`);
+            tx.textContent = fmt(it.var, 0) + (it.unit || '');
+          });
+          break;
+        }
+        case 'chart': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)} <span style="float:right"></span></div><svg viewBox="0 0 300 90" preserveAspectRatio="none" style="width:100%;height:90px"><polyline fill="none" stroke="var(--a)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`);
+          const pl = c.querySelector('polyline'), last = c.querySelector('span');
+          updaters.push(() => {
+            const pts = (hist[it.var] || []).slice(-Math.max(5, Math.min(300, num(it.points, 60))));
+            last.textContent = it.var ? fmt(it.var) + ((varDef[it.var] || {}).unit || '') : '';
+            if (pts.length < 2) { pl.setAttribute('points', ''); return; }
+            const mn = Math.min(...pts), mx = Math.max(...pts), span = mx - mn || 1;
+            pl.setAttribute('points', pts.map((v, i) => `${(i / (pts.length - 1)) * 300},${84 - ((v - mn) / span) * 78}`).join(' '));
+          });
+          break;
+        }
+        case 'led': {
+          const c = card(`<div class="nxa-row"><span>${esc(it.label)}</span><i class="nxa-led"></i></div>`), led = c.querySelector('i');
+          updaters.push(() => {
+            const v = vars[it.var], th = evalValue(it.value, it.var);
+            const on = it.op === 'gt' ? v > th : it.op === 'lt' ? v < th : it.op === 'eq' ? String(v) === String(th) : !!(v && v !== '0');
+            led.style.background = on ? it.color || '#ef4444' : '';
+            led.style.boxShadow = on ? `0 0 12px ${it.color || '#ef4444'}` : '';
+          });
+          break;
+        }
+        case 'button': {
+          wrap.innerHTML = `<button class="nxa-btn ${it.style === 'outline' ? 'outline' : ''}">${esc(it.text || 'Bouton')}</button>`;
+          const b = wrap.firstElementChild;
+          if (it.color) b.style.setProperty('--bc', it.color);
+          b.onclick = () => run(it.do, `« ${it.text} »`);
+          updaters.push(() => { b.textContent = tpl(it.text || 'Bouton'); });
+          break;
+        }
+        case 'switch': {
+          const c = card(`<div class="nxa-row"><span>${esc(it.label)}</span><button class="nxa-sw" role="switch" aria-label="${esc(it.label)}"></button></div>`), sw = c.querySelector('button');
+          sw.onclick = () => { if (!live) return; const on = !(vars[it.var] && vars[it.var] !== '0'); if (it.var) setVar(it.var, on ? 1 : 0); else sw.classList.toggle('on', on); run(on ? it.do : it.off, `« ${it.label} »`); };
+          updaters.push(() => { if (it.var) sw.classList.toggle('on', !!(vars[it.var] && vars[it.var] !== '0')); });
+          break;
+        }
+        case 'slider': {
+          const c = card(`<div class="nxa-row"><span class="nxa-lbl" style="margin:0">${esc(it.label)}</span><b style="margin-left:auto"></b></div><input type="range" min="${num(it.min, 0)}" max="${num(it.max, 100)}" step="${num(it.step, 1)}">`);
+          const r = c.querySelector('input'), out = c.querySelector('b');
+          r.oninput = () => { if (it.var) setVar(it.var, parseFloat(r.value)); else out.textContent = r.value; };
+          r.onchange = () => run(it.do, `« ${it.label} »`);
+          updaters.push(() => { if (it.var) { if (document.activeElement !== r) r.value = num(vars[it.var], 0); out.textContent = fmt(it.var); } });
+          break;
+        }
+        case 'input': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)}</div><div class="nxa-in"><input type="${it.kind === 'number' ? 'number' : 'text'}" placeholder="${esc(it.placeholder || '')}"><button>OK</button></div>`);
+          const inp = c.querySelector('input');
+          const submit = () => { if (it.var) setVar(it.var, it.kind === 'number' ? num(inp.value, 0) : inp.value); run(it.do, `« ${it.label} »`); };
+          c.querySelector('button').onclick = submit;
+          inp.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+          break;
+        }
+        case 'joystick': {
+          wrap.innerHTML = '<div class="nxa-card"><div class="nxa-joy"><i></i></div></div>';
+          const pad = wrap.querySelector('.nxa-joy'), knob = pad.firstElementChild;
+          let last = 0, active = false;
+          const send = (x, y, force) => {
+            if (it.var_x) setVar(it.var_x, Math.round(x * 100), true);
+            if (it.var_y) setVar(it.var_y, Math.round(-y * 100), true);
+            refresh();
+            const t = Date.now();
+            if (force || t - last > 200) { last = t; run(it.do, 'joystick'); }
+          };
+          const move = (e) => {
+            if (!active || !live) return;
+            const r = pad.getBoundingClientRect();
+            let x = (e.clientX - r.left - r.width / 2) / (r.width / 2 - 32), y = (e.clientY - r.top - r.height / 2) / (r.height / 2 - 32);
+            const d = Math.hypot(x, y);
+            if (d > 1) { x /= d; y /= d; }
+            knob.style.transform = `translate(${x * (r.width / 2 - 32)}px,${y * (r.height / 2 - 32)}px)`;
+            send(x, y, false);
+          };
+          pad.onpointerdown = (e) => { active = true; pad.setPointerCapture(e.pointerId); move(e); };
+          pad.onpointermove = move;
+          pad.onpointerup = pad.onpointercancel = () => { if (!active) return; active = false; knob.style.transform = ''; send(0, 0, true); };
+          break;
+        }
+      }
+    }
+
+    function settings() {
+      const sh = h(`<div class="nxa-sheet"><div><b>Réglages</b><label class="nxa-lbl">Adresse du MASTER</label><input value="${esc(s3)}"><div class="nxa-t s">${esc(D.name)} · version ${esc(D.version)} · NEXUS LAB</div><button class="nxa-btn">Enregistrer</button></div></div>`);
+      sh.onclick = (e) => { if (e.target === sh) sh.remove(); };
+      sh.querySelector('button').onclick = () => {
+        s3 = sh.querySelector('input').value.trim().replace(/\/+$/, '');
+        try { localStorage.setItem('nxa.' + D.id + '.s3', s3); } catch (e) { /* stockage */ }
+        sh.remove();
+        pollFeeds();
+      };
+      app.appendChild(sh);
+    }
+
+    /* --- démarrage */
+    if (live) {
+      try { const saved = localStorage.getItem('nxa.' + D.id + '.s3'); if (saved && opts.s3 == null) s3 = saved; } catch (e) { /* stockage */ }
+    }
+    render();
+    if (live) {
+      if ((D.vars || []).some((v) => v.source === 'feed')) { pollFeeds(); timers.push(setInterval(pollFeeds, 2000)); }
+      (D.vars || []).filter((v) => v.source === 'http').forEach((v) => { pollHttp(v); timers.push(setInterval(() => pollHttp(v), Math.max(1, num(v.every, 2)) * 1000)); });
+      (D.rules || []).forEach((r) => {
+        if (r.when.type === 'start') run(r.do, 'démarrage');
+        if (r.when.type === 'timer') timers.push(setInterval(() => run(r.do, 'minuterie'), Math.max(1, num(r.when.every, 5)) * 1000));
+        if (r.when.type === 'screen' && r.when.screen === screen) run(r.do, 'ouverture d\'écran');
+      });
+      if (opts.player) window.__nexusBack = goBack;
+    }
+
+    return {
+      el: app,
+      vars,
+      get screen() { return screen; },
+      go: (id) => go(id, false),
+      set: setVar,
+      select(id) { opts.selected = id; app.querySelectorAll('.nxa-item').forEach((w) => w.classList.toggle('sel', w.dataset.id === id)); },
+      destroy() { destroyed = true; timers.forEach(clearInterval); if (window.__nexusBack === goBack) window.__nexusBack = null; root.innerHTML = ''; }
+    };
+  };
+
+  /* ------------------------------------------------------------------ lecteur (APK et appli web) */
+  R.boot = function (root) {
+    const D = window.NEXUS_APP;
+    if (!D) { root.innerHTML = '<p style="font:16px sans-serif;padding:20px;color:#fff">Application vide.</p>'; return; }
+    document.title = D.name;
+    if (window.NexusNative && window.NexusNative.barColor) window.NexusNative.barColor(D.color || '#2f7cf6');
+    const meta = document.querySelector('meta[name=theme-color]');
+    if (meta) meta.content = D.color || '#2f7cf6';
+    const web = !(window.NexusNative && window.NexusNative.player && window.NexusNative.player());
+    R.app = R.mount(root, D, { mode: 'run', player: true, proxy: web && /\/apps\//.test(location.pathname) ? 'proxy' : null });
+  };
+})();
+/* ---- 58_apkstudio.js ---- */
+/* Studio APK : crée une application Android sans coder, à la manière de MIT App Inventor.
+ * Écrans, composants glissés-déposés, variables reliées aux capteurs du labo, blocs « quand… alors… »,
+ * test en direct, puis le Pi fabrique et signe l'APK (aucune compilation) et donne le lien direct + le QR.
+ * Le rendu vient de 57_appruntime.js : l'aperçu est exactement l'application installée. */
+(function () {
+  'use strict';
+  const A = window.APP, $ = A.$, $$ = A.$$, esc = A.esc, icon = A.icon, toast = A.toast, store = A.store;
+  const R = window.NexusAppRuntime;
+  const S = { D: null, sel: null, scr: null, tab: 'design', mode: 'design', inst: null, logs: [], feeds: [], status: null, last: null, el: null };
+
+  /* ------------------------------------------------------------------ modèle */
+  const slug = (t) => {
+    const s = String(t || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'app';
+    return /^[a-z]/.test(s) ? s : ('a' + s).slice(0, 40);
+  };
+  const ident = (t, used) => {
+    let base = String(t || 'v').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 28) || 'v';
+    if (!/^[A-Za-z_]/.test(base)) base = 'v_' + base;
+    let n = base, i = 2;
+    while (used.has(n)) n = base + '_' + i++;
+    used.add(n);
+    return n;
+  };
+  function fix() {
+    const D = S.D;
+    D.vars = D.vars || []; D.rules = D.rules || [];
+    if (!D.screens || !D.screens.length) D.screens = [{ id: 'accueil', title: 'Accueil', items: [] }];
+    D.screens.forEach((s) => (s.items = s.items || []));
+    if (!D.screens.some((s) => s.id === S.scr)) S.scr = D.screens[0].id;
+    D.version = Math.max(1, parseInt(D.version, 10) || 1);
+  }
+  const save = () => store.set('apkstudio.design', S.D);
+  function load() { S.D = store.get('apkstudio.design', null) || R.blank('Mon application'); fix(); }
+  const screen = () => S.D.screens.find((s) => s.id === S.scr) || S.D.screens[0];
+  function findItem(id) {
+    for (let si = 0; si < S.D.screens.length; si++) {
+      const i = S.D.screens[si].items.findIndex((x) => x.id === id);
+      if (i >= 0) return { si, i, it: S.D.screens[si].items[i] };
+    }
+    return null;
+  }
+  const getP = (path) => path.reduce((o, k) => (o == null ? o : o[k]), S.D);
+  function setP(path, v) { const o = getP(path.slice(0, -1)); if (o) o[path[path.length - 1]] = v; }
+
+  /* ------------------------------------------------------------------ modèles d'applications */
+  const TEMPLATES = {
+    dashboard: { name: 'Tableau de bord', icon: '📊', desc: 'Température, humidité, jauge et courbe depuis le MASTER', make() {
+      const d = R.blank('Mon tableau de bord'); d.icon = '📊';
+      d.vars = [{ name: 'temp', source: 'feed', feed: 'temp', unit: '°C', type: 'number', default: 0 }, { name: 'hum', source: 'feed', feed: 'hum', unit: '%', type: 'number', default: 0 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Mon tableau de bord', sub: 'Mesures en direct du labo' },
+        { id: 'c2', type: 'value', label: 'Température', var: 'temp', unit: '°C', decimals: 1, warn: 28, alarm: 35, width: 'half' },
+        { id: 'c3', type: 'gauge', label: 'Humidité', var: 'hum', min: 0, max: 100, unit: '%', width: 'half' },
+        { id: 'c4', type: 'chart', label: 'Température', var: 'temp', points: 60, width: 'full' }];
+      d.rules = [{ when: { type: 'above', var: 'temp', value: '35' }, do: [{ a: 'notify', text: 'Alerte : {temp} °C' }, { a: 'vibrate', ms: 400 }] }];
+      return d; } },
+    remote: { name: 'Télécommande', icon: '🎛', desc: 'Boutons et interrupteurs qui commandent un appareil en HTTP', make() {
+      const d = R.blank('Télécommande'); d.icon = '🎛';
+      d.vars = [{ name: 'ip', source: 'local', type: 'text', default: '192.168.4.20' }, { name: 'lampe', source: 'local', type: 'bool', default: 0 }, { name: 'vitesse', source: 'local', type: 'number', default: 50 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Télécommande', sub: 'Appareil : {ip}' },
+        { id: 'c2', type: 'switch', label: 'Lampe', var: 'lampe', width: 'full', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=1' }], off: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=0' }] },
+        { id: 'c3', type: 'slider', label: 'Vitesse', var: 'vitesse', min: 0, max: 100, step: 5, width: 'full', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?vitesse={vitesse}' }] },
+        { id: 'c4', type: 'button', text: 'Marche', color: '#16a34a', style: 'fill', width: 'half', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?run=1' }, { a: 'vibrate', ms: 60 }] },
+        { id: 'c5', type: 'button', text: 'Arrêt', color: '#ef4444', style: 'fill', width: 'half', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?run=0' }, { a: 'vibrate', ms: 60 }] }];
+      return d; } },
+    car: { name: 'Manette de voiture', icon: '🏎', desc: 'Joystick qui envoie direction et vitesse à une voiture ESP32', make() {
+      const d = R.blank('Ma voiture'); d.icon = '🏎'; d.color = '#ea580c';
+      d.vars = [{ name: 'ip', source: 'local', type: 'text', default: '192.168.4.30' }, { name: 'x', source: 'local', type: 'number', default: 0 }, { name: 'y', source: 'local', type: 'number', default: 0 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Ma voiture', sub: 'Lâche le joystick pour arrêter' },
+        { id: 'c2', type: 'joystick', var_x: 'x', var_y: 'y', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/drive?x={x}&y={y}' }] },
+        { id: 'c3', type: 'value', label: 'Avance', var: 'y', unit: '%', decimals: 0, width: 'half' },
+        { id: 'c4', type: 'value', label: 'Virage', var: 'x', unit: '%', decimals: 0, width: 'half' },
+        { id: 'c5', type: 'button', text: 'STOP', color: '#ef4444', width: 'full', do: [{ a: 'set', var: 'x', value: '0' }, { a: 'set', var: 'y', value: '0' }, { a: 'http', method: 'GET', url: 'http://{ip}/drive?x=0&y=0' }, { a: 'vibrate', ms: 200 }] }];
+      return d; } },
+    voice: { name: 'Commande vocale', icon: '🎙', desc: 'Parle à ton montage : « allume », « éteins »', make() {
+      const d = R.blank('Commande vocale'); d.icon = '🎙'; d.color = '#9333ea';
+      d.vars = [{ name: 'phrase', source: 'local', type: 'text', default: '' }, { name: 'ip', source: 'local', type: 'text', default: '192.168.4.20' }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Commande vocale', sub: 'Dis « allume » ou « éteins »' },
+        { id: 'c2', type: 'button', text: '🎙 Parler', width: 'full', do: [{ a: 'listen', var: 'phrase' }] },
+        { id: 'c3', type: 'text', text: 'J\'ai compris : {phrase}', size: 'l', width: 'full' }];
+      d.rules = [{ when: { type: 'equals', var: 'phrase', value: 'allume' }, do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=1' }, { a: 'speak', text: 'C\'est allumé' }] },
+        { when: { type: 'equals', var: 'phrase', value: 'éteins' }, do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=0' }, { a: 'speak', text: 'C\'est éteint' }] }];
+      return d; } },
+    lab: { name: 'Contrôle du labo', icon: '🧪', desc: 'Lance check-up, scan I2C et clignotement sur les workers', make() {
+      const d = R.blank('Mon labo'); d.icon = '🧪'; d.color = '#0891b2';
+      d.vars = [{ name: 'worker', source: 'local', type: 'number', default: 0 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Mon labo', sub: 'Jobs du MASTER' },
+        { id: 'c2', type: 'button', text: 'Check-up', width: 'half', do: [{ a: 'job', type: 'SYSTEM_TEST', worker: 0 }] },
+        { id: 'c3', type: 'button', text: 'Scan I2C', width: 'half', do: [{ a: 'job', type: 'I2C_SCAN', worker: 0 }] },
+        { id: 'c4', type: 'button', text: 'Faire clignoter', style: 'outline', width: 'full', do: [{ a: 'job', type: 'IDENTIFY', worker: 0 }] }];
+      return d; } }
+  };
+
+  /* Application tirée d'un projet du Studio : une variable par mesure envoyée au MASTER. */
+  function fromSpec(spec, name) {
+    const g = window.LAB.generate(Object.assign({}, spec, { options: Object.assign({}, spec.options || {}, { master: true }) }));
+    const d = R.blank(name || spec.title || 'Mon projet');
+    d.name = String(name || spec.title || 'Mon projet').slice(0, 60);
+    d.icon = '📟';
+    d.description = `Mesures du montage « ${g.title} » (appareil ${g.device}).`;
+    const used = new Set();
+    d.vars = g.outs.slice(0, 24).map((o) => ({ name: ident(o.key, used), source: 'feed', feed: `${g.device}/${o.key}`, unit: o.unit, label: `${o.module} ${o.label}`, type: 'number', default: 0 }));
+    const items = [{ id: 'c1', type: 'title', text: d.name, sub: g.boardName }];
+    d.vars.forEach((v, i) => items.push({ id: 'c' + (i + 2), type: 'value', label: v.label, var: v.name, unit: v.unit, decimals: 1, width: 'half' }));
+    d.vars.slice(0, 2).forEach((v, i) => items.push({ id: 'c' + (d.vars.length + 2 + i), type: 'chart', label: v.label, var: v.name, points: 60, width: 'full' }));
+    if (!d.vars.length) items.push({ id: 'c2', type: 'text', text: 'Ce projet n\'envoie pas de mesure : ajoute des boutons pour le commander.', size: 's' });
+    d.screens[0].items = items;
+    return d;
+  }
+
+  /* ------------------------------------------------------------------ Pi */
+  const piReady = () => !!(A.piBase && A.piBase());
+  const piJ = (path, body) => A.piRequest(path, { method: 'POST', body: JSON.stringify(body || {}) });
+  async function testNet(method, url, body) {
+    if (!/^https?:/i.test(url)) {   // MASTER : mêmes appels que le reste de l'interface (session, mode démo)
+      const data = method === 'GET' ? await A.api(url) : await A.post(url, Object.fromEntries(new URLSearchParams(body || '')));
+      return { status: 200, text: typeof data === 'string' ? data : JSON.stringify(data) };
+    }
+    if (!piReady()) {
+      const r = await fetch(url, Object.assign({ method }, body && method !== 'GET' ? { body, headers: { 'Content-Type': /^[[{]/.test(body.trim()) ? 'application/json' : 'application/x-www-form-urlencoded' } } : {}));
+      return { status: r.status, text: await r.text() };
+    }
+    const r = await fetch(A.piBase() + '/api/v1/appstudio/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + A.piToken() }, body: JSON.stringify({ method, url, body: body || '' }) });
+    return { status: r.status, text: await r.text() };
+  }
+  async function publish(design, quiet) {
+    if (!piReady()) throw new Error('Pi non configuré : ouvre « Compagnon Pi » et renseigne son adresse et son jeton.');
+    const d = JSON.parse(JSON.stringify(design));
+    d.id = d.id || slug(d.name);
+    const saved = await piJ('/api/v1/appstudio/apps', { design: d });
+    const res = await piJ(`/api/v1/appstudio/apps/${saved.id}/build`, {});
+    res.id = saved.id;
+    res.apk_url = A.piBase() + res.apk;
+    res.web_url = A.piBase() + res.web;
+    if (!quiet) toast(`APK prête : ${d.name} v${res.version}`, 'ok');
+    return res;
+  }
+  async function qrUrl(res) {
+    try { const blob = await A.piRequest(res.qr); return blob instanceof Blob ? URL.createObjectURL(blob) : ''; } catch (e) { return ''; }
+  }
+  A.AppStudio = { fromSpec, publish, qrUrl, slug, templates: TEMPLATES };
+
+  /* ------------------------------------------------------------------ champs génériques */
+  const P = (path) => esc(JSON.stringify(path));
+  function field(kind, value, path, label) {
+    const v = value == null ? '' : value;
+    let inp;
+    if (kind === 'textarea') inp = `<textarea class="textarea" rows="3" data-p="${P(path)}">${esc(v)}</textarea>`;
+    else if (kind === 'number') inp = `<input class="input" type="number" step="any" data-num data-p="${P(path)}" value="${esc(v)}">`;
+    else if (kind === 'color') inp = `<div class="row"><input type="color" data-p="${P(path)}" value="${esc(/^#[0-9a-f]{6}$/i.test(v) ? v : S.D.color || '#2f7cf6')}" style="width:48px;height:34px;border:0;background:none">${v ? `<button class="btn sm ghost" data-clear="${P(path)}">Par défaut</button>` : '<span class="hint">couleur du thème</span>'}</div>`;
+    else if (kind === 'var') inp = `<select class="select" data-p="${P(path)}"><option value="">— choisir —</option>${S.D.vars.map((x) => `<option ${x.name === v ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}<option value="__new">＋ Nouvelle variable…</option></select>`;
+    else if (kind === 'screen') inp = `<select class="select" data-p="${P(path)}">${S.D.screens.map((s) => `<option value="${esc(s.id)}" ${s.id === v ? 'selected' : ''}>${esc(s.title)}</option>`).join('')}</select>`;
+    else if (kind.startsWith('select:')) inp = `<select class="select" data-p="${P(path)}">${kind.slice(7).split('|').map((o) => { const j = o.indexOf('='); const k = o.slice(0, j), n = o.slice(j + 1); return `<option value="${esc(k)}" ${String(v) === k ? 'selected' : ''}>${esc(n)}</option>`; }).join('')}</select>`;
+    else inp = `<input class="input" data-p="${P(path)}" value="${esc(v)}">`;
+    return `<label class="field">${label ? `<span>${esc(label)}</span>` : ''}${inp}</label>`;
+  }
+  function actionsEditor(path, title) {
+    const list = getP(path) || [];
+    return `<div class="as-acts"><div class="as-acts-h">${esc(title)}</div>${list.map((a, i) => {
+      const meta = R.ACTIONS[a.a] || R.ACTIONS.notify;
+      return `<div class="as-act"><div class="row"><span class="as-n">${i + 1}</span><select class="select sm grow" data-p="${P(path.concat([i, 'a']))}" data-restruct>${Object.entries(R.ACTIONS).map(([k, m]) => `<option value="${k}" ${k === a.a ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}</select><button class="btn sm icon ghost" data-delact="${P(path)}" data-i="${i}" aria-label="Retirer">${icon('x')}</button></div>
+        ${meta.fields.map(([k, lbl, kind]) => field(kind, a[k], path.concat([i, k]), lbl)).join('')}</div>`;
+    }).join('')}<button class="btn sm" data-addact="${P(path)}">${icon('plus')}Ajouter une action</button></div>`;
+  }
+
+  /* ------------------------------------------------------------------ rendu de la page */
+  function draw() {
+    const el = S.el;
+    if (!el) return;
+    el.innerHTML = `<div class="as-head"><div class="as-app"><span class="as-ico" style="background:${esc(S.D.color)}">${esc(S.D.icon)}</span><div><b>${esc(S.D.name)}</b><div class="small muted">${S.D.screens.length} écran(s) · ${S.D.vars.length} variable(s) · ${S.D.rules.length} bloc(s) · v${S.D.version}</div></div></div>
+      <div class="tabs" id="as-tabs">${[['design', 'Concevoir', 'phone'], ['vars', 'Variables', 'gauge'], ['rules', 'Blocs « quand »', 'zap'], ['settings', 'Application', 'settings'], ['publish', 'Publier', 'download']].map(([k, n, ic]) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${icon(ic)}${n}</button>`).join('')}</div></div>
+      <div id="as-body"></div>`;
+    $$('#as-tabs button', el).forEach((b) => (b.onclick = () => { S.tab = b.dataset.tab; draw(); }));
+    const body = $('#as-body', el);
+    if (S.tab === 'design') drawDesign(body);
+    else if (S.tab === 'vars') drawVars(body);
+    else if (S.tab === 'rules') drawRules(body);
+    else if (S.tab === 'settings') drawSettings(body);
+    else drawPublish(body);
+  }
+
+  function drawDesign(body) {
+    const groups = {};
+    Object.entries(R.COMPONENTS).forEach(([k, c]) => (groups[c.group] = groups[c.group] || []).push([k, c]));
+    body.innerHTML = `<div class="as-layout">
+      <div class="card as-pal"><div class="card-h"><h2>Composants</h2></div><div class="card-b">${Object.entries(groups).map(([g, list]) => `<div class="as-g">${esc(g)}</div><div class="as-pal-list">${list.map(([k, c]) => `<button class="as-pi" draggable="true" data-add="${k}" title="Clique ou glisse dans le téléphone"><span>${esc(c.icon)}</span>${esc(c.label)}</button>`).join('')}</div>`).join('')}</div></div>
+      <div class="as-center">
+        <div class="row wrap as-scr">${S.D.screens.map((s) => `<button class="chip ${s.id === S.scr ? 'on' : ''}" data-scr="${esc(s.id)}">${esc(s.title)}</button>`).join('')}<button class="chip" data-scr-add>${icon('plus')}Écran</button><span class="grow"></span>
+          <div class="seg" id="as-mode"><button data-m="design" class="${S.mode === 'design' ? 'on' : ''}">${icon('edit')}Concevoir</button><button data-m="run" class="${S.mode === 'run' ? 'on' : ''}">${icon('play')}Tester</button></div></div>
+        <div class="as-phone"><div class="as-notch"></div><div class="as-screen" id="as-screen"></div></div>
+        ${S.mode === 'run' ? `<div class="card as-log"><div class="card-h"><h2 class="grow">Journal du test</h2><span class="hint">${piReady() ? 'Requêtes relayées par le Pi' : 'Sans Pi : le navigateur peut bloquer les requêtes vers les appareils'}</span></div><div class="card-b small mono" id="as-log">${S.logs.map((l) => `<div class="${l.k === 'bad' ? 'bad-text' : ''}">${esc(l.m)}</div>`).join('') || '<span class="muted">Appuie sur les boutons du téléphone.</span>'}</div></div>` : ''}
+      </div>
+      <div class="card as-insp"><div class="card-h"><h2 class="grow">Propriétés</h2></div><div class="card-b" id="as-insp"></div></div></div>`;
+    $$('[data-scr]', body).forEach((b) => (b.onclick = () => { S.scr = b.dataset.scr; S.sel = null; draw(); }));
+    $('[data-scr-add]', body).onclick = addScreen;
+    $$('#as-mode button', body).forEach((b) => (b.onclick = () => { S.mode = b.dataset.m; S.logs = []; draw(); }));
+    $$('[data-add]', body).forEach((b) => {
+      b.onclick = () => addItem(b.dataset.add);
+      b.ondragstart = (e) => { e.dataTransfer.setData('text/x-nexus-add', b.dataset.add); e.dataTransfer.effectAllowed = 'copy'; };
+    });
+    preview();
+    inspector();
+  }
+
+  function sample() {
+    const out = {};
+    S.D.vars.forEach((v) => {
+      if (v.source === 'feed') {
+        const [a, b] = v.feed && v.feed.indexOf('/') > 0 ? v.feed.split('/') : [null, v.feed];
+        const f = S.feeds.find((x) => x.key === b && (!a || x.source === a));
+        const typical = { '°C': 21.5, '%': 48, hPa: 1013, m: 120, lx: 350, ppm: 420, V: 3.7, cm: 25 };
+        out[v.name] = f ? Number(f.value) : typical[v.unit] != null ? typical[v.unit] : 42;
+      } else if (v.type === 'number' && !Number(v.default)) out[v.name] = 42;
+    });
+    return out;
+  }
+  function preview() {
+    const host = $('#as-screen', S.el);
+    if (!host) return;
+    if (S.inst) S.inst.destroy();
+    S.inst = R.mount(host, S.D, {
+      mode: S.mode, screen: S.scr, selected: S.sel, sample: S.mode === 'design' ? sample() : null, s3: '', native: false, settings: false, net: testNet,
+      log: (m, k) => { S.logs.push({ m, k }); S.logs = S.logs.slice(-40); const lg = $('#as-log', S.el); if (lg) { lg.innerHTML = S.logs.map((l) => `<div class="${l.k === 'bad' ? 'bad-text' : ''}">${esc(l.m)}</div>`).join(''); lg.scrollTop = 1e6; } },
+      onScreen: (id) => { if (S.scr !== id) { S.scr = id; $$('[data-scr]', S.el).forEach((b) => b.classList.toggle('on', b.dataset.scr === id)); if (S.mode === 'design') { S.sel = null; inspector(); } } }
+    });
+    if (S.mode !== 'design') return;
+    const app = S.inst.el;
+    app.addEventListener('click', (e) => { const w = e.target.closest('.nxa-item'); if (!w) return; S.sel = w.dataset.id; S.inst.select(S.sel); inspector(); if (innerWidth < 760) { const b = $('#as-insp', S.el); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+    let dragId = null;
+    app.addEventListener('dragstart', (e) => { const w = e.target.closest('.nxa-item'); if (!w) return; dragId = w.dataset.id; e.dataTransfer.setData('text/x-nexus-move', dragId); e.dataTransfer.effectAllowed = 'move'; });
+    app.addEventListener('dragover', (e) => { e.preventDefault(); $$('.nxa-item.drop', app).forEach((x) => x.classList.remove('drop')); const w = e.target.closest('.nxa-item'); if (w) w.classList.add('drop'); });
+    app.addEventListener('dragleave', (e) => { if (!app.contains(e.relatedTarget)) $$('.nxa-item.drop', app).forEach((x) => x.classList.remove('drop')); });
+    app.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const w = e.target.closest('.nxa-item'), before = w ? w.dataset.id : null;
+      const add = e.dataTransfer.getData('text/x-nexus-add'), move = e.dataTransfer.getData('text/x-nexus-move') || dragId;
+      if (add) addItem(add, before);
+      else if (move && move !== before) moveItem(move, before);
+      dragId = null;
+    });
+  }
+  function changed(restructure) {
+    save();
+    if (restructure) { draw(); return; }
+    const head = $('.as-app', S.el);
+    if (head) head.innerHTML = `<span class="as-ico" style="background:${esc(S.D.color)}">${esc(S.D.icon)}</span><div><b>${esc(S.D.name)}</b><div class="small muted">${S.D.screens.length} écran(s) · ${S.D.vars.length} variable(s) · ${S.D.rules.length} bloc(s) · v${S.D.version}</div></div>`;
+    clearTimeout(changed.t);
+    changed.t = setTimeout(preview, 180);
+  }
+
+  function addItem(type, before) {
+    const it = R.newItem(type, S.D), list = screen().items;
+    const i = before ? list.findIndex((x) => x.id === before) : -1;
+    if (i >= 0) list.splice(i, 0, it); else list.push(it);
+    if ((it.var === '' || it.var_x === '') && S.D.vars.length && type !== 'joystick') it.var = S.D.vars[0].name;
+    S.sel = it.id;
+    changed(true);
+  }
+  function moveItem(id, before) {
+    const f = findItem(id);
+    if (!f) return;
+    const [it] = S.D.screens[f.si].items.splice(f.i, 1), list = screen().items;
+    const i = before ? list.findIndex((x) => x.id === before) : -1;
+    if (i >= 0) list.splice(i, 0, it); else list.push(it);
+    changed(true);
+  }
+  async function addScreen() {
+    const title = await A.modal({ title: 'Nouvel écran', input: 'Écran ' + (S.D.screens.length + 1), label: 'Nom de l\'écran', ok: 'Créer' });
+    if (!title) return;
+    const used = new Set(S.D.screens.map((s) => s.id));
+    const id = ident(slug(title), used);
+    S.D.screens.push({ id, title: String(title).slice(0, 60), items: [{ id: R.newItem('title', S.D).id, type: 'title', text: String(title).slice(0, 60), sub: '' }] });
+    S.scr = id; S.sel = null;
+    changed(true);
+  }
+
+  function inspector() {
+    const box = $('#as-insp', S.el);
+    if (!box) return;
+    const f = S.sel && findItem(S.sel);
+    if (!f) {
+      const s = screen(), si = S.D.screens.indexOf(s);
+      box.innerHTML = `<p class="small muted">Clique un composant du téléphone pour le régler, ou glisse-le pour le déplacer.</p>
+        ${field('text', s.title, ['screens', si, 'title'], 'Nom de l\'écran')}
+        <div class="row wrap">${si > 0 ? `<button class="btn sm" data-scr-left>${icon('back')}Avancer l'écran</button>` : ''}${S.D.screens.length > 1 ? `<button class="btn sm danger" data-scr-del>${icon('trash')}Supprimer l'écran</button>` : ''}</div>`;
+      const left = $('[data-scr-left]', box);
+      if (left) left.onclick = () => { S.D.screens.splice(si, 1); S.D.screens.splice(si - 1, 0, s); changed(true); };
+      const del = $('[data-scr-del]', box);
+      if (del) del.onclick = async () => { if (!(await A.confirmBox('Supprimer l\'écran', `« ${s.title} » et ses ${s.items.length} composant(s) seront supprimés.`, 'Supprimer', true))) return; S.D.screens.splice(si, 1); S.scr = S.D.screens[0].id; changed(true); };
+      return;
+    }
+    const meta = R.COMPONENTS[f.it.type], base = ['screens', f.si, 'items', f.i];
+    box.innerHTML = `<div class="row"><span class="as-badge">${esc(meta.icon)}</span><b class="grow">${esc(meta.label)}</b><span class="small muted mono">${esc(f.it.id)}</span></div>
+      ${meta.props.map(([k, lbl, kind]) => (kind === 'actions' ? actionsEditor(base.concat([k]), lbl) : field(kind, f.it[k], base.concat([k]), lbl))).join('')}
+      <div class="row wrap as-tools"><button class="btn sm" data-mv="-1">${icon('chevron')}Monter</button><button class="btn sm" data-mv="1">Descendre</button><button class="btn sm" data-dup>${icon('copy')}Dupliquer</button><button class="btn sm danger" data-del>${icon('trash')}Supprimer</button></div>`;
+    $$('[data-mv]', box).forEach((b) => (b.onclick = () => { const list = S.D.screens[f.si].items, j = f.i + Number(b.dataset.mv); if (j < 0 || j >= list.length) return; list.splice(j, 0, list.splice(f.i, 1)[0]); changed(true); }));
+    $('[data-dup]', box).onclick = () => { const c = JSON.parse(JSON.stringify(f.it)); c.id = R.newItem(f.it.type, S.D).id; S.D.screens[f.si].items.splice(f.i + 1, 0, c); S.sel = c.id; changed(true); };
+    $('[data-del]', box).onclick = () => { S.D.screens[f.si].items.splice(f.i, 1); S.sel = null; changed(true); };
+  }
+
+  function drawVars(body) {
+    body.innerHTML = `<div class="card"><div class="card-h"><h2 class="grow">Variables</h2><button class="btn sm" id="as-feeds">${icon('refresh')}Mesures du MASTER</button><button class="btn sm primary" id="as-addvar">${icon('plus')}Variable</button></div>
+      <div class="card-b"><p class="hint">Une variable garde une valeur. Elle peut venir d'un capteur (mesure envoyée au MASTER par ton montage), d'une adresse HTTP d'un appareil (JSON), ou rester locale (réglée par un bouton, un curseur, la voix…). Utilise-la partout avec <code>{nom}</code>.</p>
+      <datalist id="as-feedlist">${S.feeds.map((f) => `<option value="${esc(f.source + '/' + f.key)}">${esc(f.value + ' ' + (f.unit || ''))}</option>`).join('')}</datalist>
+      ${S.D.vars.length ? '' : '<div class="empty">Aucune variable. Ajoute-en une, ou pars d\'un projet (onglet Application).</div>'}
+      <div class="as-vars">${S.D.vars.map((v, i) => {
+        const p = ['vars', i], live = v.source === 'feed' ? S.feeds.find((f) => (v.feed || '').endsWith('/' + f.key) ? (v.feed === f.source + '/' + f.key) : f.key === v.feed) : null;
+        return `<div class="as-var card pad"><div class="row"><b class="mono grow">{${esc(v.name)}}</b>${live ? `<span class="badge ok">${esc(live.value)} ${esc(live.unit || '')}</span>` : ''}<button class="btn sm icon ghost" data-delvar="${i}" aria-label="Supprimer">${icon('trash')}</button></div>
+          <div class="form-grid">${field('text', v.name, p.concat(['name']), 'Nom')}${field('select:local=Locale|feed=Capteur du MASTER|http=Adresse HTTP (JSON)', v.source, p.concat(['source']), 'Source')}
+          ${field('select:number=Nombre|text=Texte|bool=Oui / non', v.type, p.concat(['type']), 'Type')}${field('text', v.unit, p.concat(['unit']), 'Unité')}
+          ${v.source === 'feed' ? `<label class="field"><span>Mesure (appareil/clé)</span><input class="input" list="as-feedlist" data-p="${P(p.concat(['feed']))}" value="${esc(v.feed || '')}" placeholder="serre/temp"></label>` : ''}
+          ${v.source === 'http' ? field('text', v.url, p.concat(['url']), 'Adresse (ex. http://192.168.4.23/api)') + field('text', v.path, p.concat(['path']), 'Chemin dans le JSON (ex. values.0)') + field('number', v.every || 2, p.concat(['every']), 'Toutes les N secondes') : ''}
+          ${v.source === 'local' ? field('text', v.default, p.concat(['default']), 'Valeur de départ') : ''}</div>
+          ${v.source === 'feed' ? '<div class="hint">L\'adresse IP de l\'appareil est aussi disponible : <code>{' + esc(v.name) + '_ip}</code>.</div>' : ''}</div>`;
+      }).join('')}</div></div></div>`;
+    $('#as-addvar', body).onclick = () => { const used = new Set(S.D.vars.map((v) => v.name)); S.D.vars.push({ name: ident('valeur', used), source: S.feeds.length ? 'feed' : 'local', feed: S.feeds.length ? S.feeds[0].source + '/' + S.feeds[0].key : '', type: 'number', unit: '', default: 0 }); changed(true); };
+    $('#as-feeds', body).onclick = async () => { await loadFeeds(); draw(); toast(S.feeds.length ? `${S.feeds.length} mesure(s) reçue(s) par le MASTER` : 'Aucune mesure reçue : ton montage doit envoyer au MASTER (option du Studio).', S.feeds.length ? 'ok' : 'warn'); };
+    $$('[data-delvar]', body).forEach((b) => (b.onclick = () => { S.D.vars.splice(Number(b.dataset.delvar), 1); changed(true); }));
+  }
+
+  function drawRules(body) {
+    body.innerHTML = `<div class="card"><div class="card-h"><h2 class="grow">Blocs « quand… alors… »</h2><button class="btn sm primary" id="as-addrule">${icon('plus')}Bloc</button></div>
+      <div class="card-b"><p class="hint">Comme les blocs d'App Inventor : choisis un événement, puis les actions à faire. Les seuils ne se déclenchent qu'au franchissement (pas en boucle).</p>
+      ${S.D.rules.length ? '' : '<div class="empty">Aucun bloc. Exemple : quand {temp} dépasse 30, afficher « Trop chaud » et vibrer.</div>'}
+      ${S.D.rules.map((r, i) => {
+        const w = R.WHEN[r.when.type] || R.WHEN.start, p = ['rules', i];
+        return `<div class="card pad as-rule"><div class="row"><span class="rule-kw">QUAND</span><select class="select sm grow" data-p="${P(p.concat(['when', 'type']))}" data-restruct>${Object.entries(R.WHEN).map(([k, m]) => `<option value="${k}" ${k === r.when.type ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}</select><button class="btn sm icon ghost" data-delrule="${i}" aria-label="Supprimer">${icon('trash')}</button></div>
+          <div class="form-grid">${(w.fields || []).map(([k, lbl, kind]) => field(kind, r.when[k], p.concat(['when', k]), lbl)).join('')}</div>
+          ${actionsEditor(p.concat(['do']), 'ALORS')}</div>`;
+      }).join('')}</div></div>`;
+    $('#as-addrule', body).onclick = () => { S.D.rules.push({ when: S.D.vars.length ? { type: 'above', var: S.D.vars[0].name, value: '30' } : { type: 'timer', every: 10 }, do: [{ a: 'notify', text: 'Bloc déclenché' }] }); changed(true); };
+    $$('[data-delrule]', body).forEach((b) => (b.onclick = () => { S.D.rules.splice(Number(b.dataset.delrule), 1); changed(true); }));
+  }
+
+  function drawSettings(body) {
+    body.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2>Application</h2></div><div class="card-b form-grid">
+        ${field('text', S.D.name, ['name'], 'Nom affiché sur le téléphone')}${field('text', S.D.icon, ['icon'], 'Icône (emoji)')}
+        ${field('color', S.D.color, ['color'], 'Couleur principale')}${field('select:auto=Selon le téléphone|light=Clair|dark=Sombre', S.D.theme, ['theme'], 'Thème')}
+        ${field('text', S.D.s3, ['s3'], 'Adresse du MASTER')}${field('number', S.D.version, ['version'], 'Version (augmente à chaque APK)')}
+        ${field('textarea', S.D.description, ['description'], 'Description')}
+        <div class="hint">Identifiant Android : <code>local.nexus.apps.${esc(S.D.id || slug(S.D.name))}</code>${S.D.id ? ' (fixé : garde-le pour mettre à jour l\'appli installée)' : ''}</div></div></div>
+      <div class="card"><div class="card-h"><h2>Partir de…</h2></div><div class="card-b">
+        <div class="as-tpl">${Object.entries(TEMPLATES).map(([k, t]) => `<button class="as-tplb" data-tpl="${k}"><span>${esc(t.icon)}</span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></button>`).join('')}
+        <button class="as-tplb" data-from-studio><span>🧩</span><b>Projet du Studio</b><small>Une valeur et une courbe par mesure du montage ouvert dans le Studio</small></button>
+        <button class="as-tplb" data-tpl-blank><span>⬜</span><b>Vide</b><small>Un écran, rien d'autre</small></button></div>
+        <div class="row wrap" style="margin-top:12px"><button class="btn sm" id="as-export">${icon('download')}Exporter (.json)</button><label class="btn sm">${icon('upload')}Importer<input type="file" accept=".json,application/json" id="as-import" hidden></label></div></div></div></div>`;
+    $$('[data-tpl]', body).forEach((b) => (b.onclick = () => replace(TEMPLATES[b.dataset.tpl].make())));
+    $('[data-tpl-blank]', body).onclick = () => replace(R.blank('Mon application'));
+    $('[data-from-studio]', body).onclick = () => {
+      const spec = store.get('studio.spec', null);
+      if (!spec || !(spec.modules || []).length) { toast('Le Studio est vide : assemble d\'abord ton montage.', 'warn'); return; }
+      try { replace(fromSpec(spec)); } catch (e) { toast(e.message, 'bad'); }
+    };
+    $('#as-export', body).onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S.D, null, 1)], { type: 'application/json' })); a.download = (S.D.id || slug(S.D.name)) + '.nexusapp.json'; a.click(); };
+    $('#as-import', body).onchange = async (e) => { try { const d = JSON.parse(await e.target.files[0].text()); if (d.format !== R.FORMAT) throw new Error('Ce fichier n\'est pas une application NEXUS'); replace(d, true); } catch (err) { toast(err.message, 'bad'); } };
+  }
+  async function replace(d, keepId) {
+    const used = (S.D.screens || []).some((s) => s.items.length > 1) || S.D.vars.length;
+    if (used && !(await A.confirmBox('Remplacer l\'application ?', `« ${S.D.name} » sera remplacée dans l'éditeur (elle reste sur le Pi si tu l'as publiée).`, 'Remplacer'))) return;
+    if (!keepId) delete d.id;
+    S.D = d; S.sel = null; S.scr = null; fix(); S.tab = 'design';
+    changed(true);
+  }
+
+  async function drawPublish(body) {
+    body.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2 class="grow">Créer l'APK</h2><span class="badge" id="as-pistate">…</span></div><div class="card-b">
+        <p>Le Pi assemble l'application dans l'APK NEXUS et la signe avec la clé du labo, <b>sans compiler</b> : quelques secondes, même sur le Raspberry Pi 4.</p>
+        <button class="btn primary" id="as-build" style="width:100%;min-height:48px">${icon('rocket')}Créer l'APK de « ${esc(S.D.name)} »</button>
+        <div id="as-result"></div>
+        <p class="hint">Sur le téléphone : ouvre le lien ou scanne le QR, puis autorise l'installation depuis cette source. Une nouvelle version s'installe par-dessus l'ancienne (même clé, même identifiant).</p></div></div>
+      <div class="card"><div class="card-h"><h2 class="grow">Mes applications sur le Pi</h2><button class="btn sm" id="as-reload">${icon('refresh')}</button></div><div class="card-b flush" id="as-apps"><div class="empty">…</div></div></div></div>`;
+    $('#as-build', body).onclick = build;
+    $('#as-reload', body).onclick = () => drawPublish(body);
+    if (S.last) showResult(S.last);
+    const st = $('#as-pistate', body), apps = $('#as-apps', body);
+    if (!piReady()) { st.className = 'badge warn'; st.textContent = 'Pi non configuré'; apps.innerHTML = `<div class="empty">Renseigne l'adresse et le jeton du Pi dans <a href="#companion">Compagnon Pi</a>.</div>`; return; }
+    try {
+      S.status = await A.piRequest('/api/v1/appstudio');
+      st.className = 'badge ' + (S.status.base.ok ? 'ok' : 'warn');
+      st.textContent = S.status.base.ok ? 'Pi prêt · ' + S.status.signature : 'APK de base absente';
+      if (!S.status.base.ok) {
+        $('#as-result', body).innerHTML = `<div class="banner warn">${icon('alert')}<div>${esc(S.status.base.reason)}.<br>Une seule fois : construis l'APK NEXUS sur un PC (<code>scripts\\build_android.bat</code>), puis envoie-la ici. En attendant, l'<b>appli web</b> fonctionne déjà.
+          <label class="btn sm" style="margin-top:8px">${icon('upload')}Envoyer app-debug.apk au Pi<input type="file" accept=".apk" id="as-base" hidden></label></div></div>`;
+        $('#as-base', body).onchange = async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          try {
+            const r = await fetch(A.piBase() + '/api/v1/appstudio/base', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken() }, body: f });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+            toast('APK NEXUS installée sur le Pi : le Studio APK est prêt', 'ok');
+            drawPublish(body);
+          } catch (err) { toast('Envoi refusé : ' + err.message, 'bad', 8000); }
+        };
+      }
+      const list = (await A.piRequest('/api/v1/appstudio/apps')).items || [];
+      apps.innerHTML = list.length ? list.map((a) => `<div class="list-item"><span class="as-ico sm" style="background:${esc(a.color)}">${esc(a.icon)}</span><div class="grow"><b>${esc(a.name)}</b><div class="small muted">v${esc(a.version)} · ${esc((a.updated || '').replace('T', ' '))}${a.last_build ? ' · APK prête' : ''}</div></div>
+        <button class="btn sm" data-open="${esc(a.id)}">Ouvrir</button>${a.last_build ? `<a class="btn sm" href="${esc(A.piBase() + a.last_build.apk)}" download>${icon('download')}</a>` : ''}<a class="btn sm" href="${esc(A.piBase() + '/apps/' + a.id + '/')}" target="_blank" rel="noopener" title="Appli web">${icon('globe')}</a><button class="btn sm icon ghost" data-rm="${esc(a.id)}" aria-label="Supprimer">${icon('trash')}</button></div>`).join('') : '<div class="empty">Aucune application enregistrée sur le Pi.</div>';
+      $$('[data-open]', apps).forEach((b) => (b.onclick = async () => { try { const d = await A.piRequest('/api/v1/appstudio/apps/' + b.dataset.open); delete d.last_build; replace(d, true); } catch (e) { toast(e.message, 'bad'); } }));
+      $$('[data-rm]', apps).forEach((b) => (b.onclick = async () => { if (!(await A.confirmBox('Supprimer du Pi', 'La conception est supprimée ; les APK déjà installées continuent de fonctionner.', 'Supprimer', true))) return; try { await piJ(`/api/v1/appstudio/apps/${b.dataset.rm}/delete`); drawPublish(body); } catch (e) { toast(e.message, 'bad'); } }));
+    } catch (e) { st.className = 'badge bad'; st.textContent = 'Pi injoignable'; apps.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  async function build() {
+    const btn = $('#as-build', S.el);
+    btn.disabled = true;
+    btn.innerHTML = `${icon('refresh')}Fabrication sur le Pi…`;
+    try {
+      const res = await publish(S.D, true);
+      S.D.id = res.id;
+      S.D.version = res.version + 1;
+      save();
+      S.last = res;
+      changed();
+      showResult(res);
+      toast('APK prête à installer', 'ok');
+    } catch (e) {
+      $('#as-result', S.el).innerHTML = `<div class="banner warn">${icon('alert')}<div><b>APK non créée.</b> ${esc(e.message)}</div></div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `${icon('rocket')}Créer l'APK de « ${esc(S.D.name)} »`;
+    }
+  }
+  async function showResult(res) {
+    const box = $('#as-result', S.el);
+    if (!box) return;
+    box.innerHTML = `<div class="as-done"><div class="as-qr" id="as-qr"><span class="muted small">QR…</span></div><div class="grow">
+      <b>${esc(res.package)}</b> · v${esc(res.version)} · ${(res.size / 1024).toFixed(0)} Ko · signature ${esc(res.signature)}
+      <a class="btn primary" href="${esc(res.apk_url)}" download style="margin:8px 0;width:100%">${icon('download')}Télécharger l'APK</a>
+      <div class="row"><input class="input sm mono grow" readonly value="${esc(res.apk_url)}" id="as-link"><button class="btn sm" id="as-copy">${icon('copy')}</button></div>
+      <div class="small" style="margin-top:6px">Appli web (sans installer) : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">${esc(res.web_url)}</a></div>
+      <div class="tiny muted mono">SHA-256 ${esc(res.sha256.slice(0, 16))}…</div></div></div>`;
+    $('#as-copy', box).onclick = () => { const i = $('#as-link', box); i.select(); try { navigator.clipboard.writeText(i.value); } catch (e) { document.execCommand('copy'); } toast('Lien copié', 'ok'); };
+    const url = await qrUrl(res);
+    const q = $('#as-qr', box);
+    if (q) q.innerHTML = url ? `<img src="${url}" alt="QR de téléchargement">` : '<span class="small muted">QR indisponible (python3-qrcode absent sur le Pi)</span>';
+  }
+
+  async function loadFeeds() { try { const f = await A.api('/api/feeds'); S.feeds = Array.isArray(f) ? f : []; } catch (e) { S.feeds = []; } }
+
+  /* ------------------------------------------------------------------ liaisons des champs */
+  function bindFields(el) {
+    const onEdit = (e) => {
+      const t = e.target;
+      if (!t.dataset || !t.dataset.p) return;
+      const path = JSON.parse(t.dataset.p);
+      let v = t.value;
+      if (v === '__new') {
+        const used = new Set(S.D.vars.map((x) => x.name));
+        A.modal({ title: 'Nouvelle variable', input: ident('valeur', new Set(used)), label: 'Nom (lettres, chiffres, _)', ok: 'Créer' }).then((name) => {
+          if (!name) { draw(); return; }
+          const n = ident(name, used);
+          S.D.vars.push({ name: n, source: 'local', type: 'number', default: 0, unit: '' });
+          setP(path, n);
+          changed(true);
+        });
+        return;
+      }
+      if ('num' in t.dataset) v = v === '' ? '' : Number(v);
+      const last = path[path.length - 1];
+      if (path[0] === 'vars' && last === 'name') { // renommer partout
+        const old = getP(path);
+        v = String(v).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 32);
+        if (!/^[A-Za-z_]/.test(v) || S.D.vars.some((x, i) => i !== path[1] && x.name === v)) { if (e.type === 'change') { toast('Nom invalide ou déjà pris', 'warn'); draw(); } return; }
+        renameVar(old, v);
+      }
+      setP(path, v);
+      if (path.length === 1 && last === 'name' && !S.D.id) { /* l'identifiant suit le nom tant qu'il n'est pas publié */ }
+      const restruct = 'restruct' in t.dataset || (path[0] === 'vars' && last === 'source') || (path[0] === 'screens' && last === 'title');
+      if (e.type === 'change' || !restruct) changed(restruct && e.type === 'change');
+    };
+    el.addEventListener('input', (e) => { if (e.target.tagName !== 'SELECT') onEdit(e); });
+    el.addEventListener('change', onEdit);
+    el.addEventListener('click', (e) => {
+      const add = e.target.closest('[data-addact]'), del = e.target.closest('[data-delact]'), clr = e.target.closest('[data-clear]');
+      if (add) { const list = getP(JSON.parse(add.dataset.addact)) || []; list.push({ a: 'notify', text: 'Bonjour' }); setP(JSON.parse(add.dataset.addact), list); changed(true); }
+      if (del) { getP(JSON.parse(del.dataset.delact)).splice(Number(del.dataset.i), 1); changed(true); }
+      if (clr) { setP(JSON.parse(clr.dataset.clear), ''); changed(true); }
+    });
+  }
+  function renameVar(old, nu) {
+    if (!old || old === nu) return;
+    const re = new RegExp('\\{' + old + '(_ip)?\\}', 'g');
+    const walk = (o) => {
+      if (Array.isArray(o)) return o.forEach(walk);
+      if (!o || typeof o !== 'object') return;
+      Object.keys(o).forEach((k) => {
+        if (typeof o[k] === 'string') { if (['var', 'var_x', 'var_y'].includes(k) && o[k] === old) o[k] = nu; else o[k] = o[k].replace(re, (m, ip) => '{' + nu + (ip || '') + '}'); } else walk(o[k]);
+      });
+    };
+    walk(S.D.screens); walk(S.D.rules);
+  }
+
+  /* ------------------------------------------------------------------ page */
+  A.page({
+    id: 'apkstudio', title: 'Studio APK', short: 'APK', icon: 'phone', group: 'build', mobile: true,
+    desc: 'Crée ton application Android sans coder : écrans, capteurs, blocs, lien direct',
+    render(el, q) {
+      if (!R) { el.innerHTML = '<div class="banner warn">Moteur d\'application absent.</div>'; return null; }
+      S.el = el;
+      if (!S.D) load();
+      el.classList.add('as-page');
+      bindFields(el);
+      A.setTopActions(`<button class="btn" data-act="as-new">${icon('plus')}<span class="lbl">Nouvelle</span></button><button class="btn primary" data-act="as-publish">${icon('rocket')}<span class="lbl">Créer l'APK</span></button>`);
+      draw();
+      start(q);
+      // nettoyage à la sortie de la page : le mode test interroge le MASTER toutes les 2 s
+      return () => { if (S.inst) { S.inst.destroy(); S.inst = null; } S.el = null; };
+    }
+  });
+  async function start(q) {
+      await loadFeeds();
+      if (q && q.p) {
+        try {
+          const p = A.projectById && A.projectById(q.p);
+          let spec = p && p.spec;
+          if (!spec && piReady()) { const r = await A.piRequest('/api/v1/patricia/memory'); const pp = (r.projects || []).find((x) => x.id === q.p); if (pp) spec = { title: pp.title, board: pp.board || 'esp32', modules: (pp.modules || []).map((id) => ({ id })) }; }
+          if (spec) { S.D = fromSpec(spec, (p && p.title) || spec.title); S.sel = null; S.scr = null; fix(); save(); toast('Application préparée depuis le projet', 'ok'); }
+        } catch (e) { toast('Projet non chargé : ' + e.message, 'warn'); }
+        history.replaceState(null, '', '#apkstudio');
+      }
+      if (S.el) draw();
+  }
+  Object.assign(A.actions, {
+    'as-new': () => { S.tab = 'settings'; draw(); },
+    'as-publish': () => { S.tab = 'publish'; draw(); setTimeout(() => { const b = $('#as-build', S.el); if (b) b.click(); }, 50); }
+  });
+  A.commands.push({ title: 'Créer une application Android (Studio APK)', group: 'Action', icon: 'phone', run: () => A.go('apkstudio') });
 })();
 /* ---- 90_demo.js ---- */
 /* Mode démonstration : simule un MASTER complet (workers, jobs, capteurs, microSD, USB) quand l'API

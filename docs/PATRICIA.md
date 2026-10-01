@@ -13,7 +13,7 @@ Patricia vit sur le Raspberry Pi (`pi/patricia/`) et s'affiche dans l'interface 
 | « Note : commander des résistances 2 kΩ », « Rappelle-toi que ma carte est un S3 » | Notes et faits gardés en mémoire, recherche plein texte |
 | « Où en est mon arrosage ? », « Améliore mon projet » | Historique du projet, prochaine étape, idées d'amélioration (elle demande si tu veux les appliquer) |
 | « Lance un check-up sur tous les workers » | Job S3 proposé, exécuté après confirmation |
-| « Fais une APK pour la station météo » | Proposition de build APK (sur PC : le Pi 4 ARM64 ne la compile pas) |
+| « Fais une APK pour la station météo » | Le Pi crée l'application (une valeur et une courbe par mesure) et répond avec le lien direct et le QR ; à personnaliser dans le **Studio APK** ([STUDIO_APK.md](STUDIO_APK.md)) |
 | « Voiture 2 va en 1,5 2 », « toutes les voitures en ligne », « stop » | Pilotage de la flotte (voir plus bas). **« stop » / « arrête tout » est immédiat**, sans confirmation |
 
 Toute action matérielle (flash, job, déplacement, installation) est une **proposition** avec Confirmer / Annuler, valable 5 minutes. Rien ne part tout seul, et Patricia ne lance jamais la compilation complète des 320 projets.
