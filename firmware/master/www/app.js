@@ -1,4 +1,4 @@
-/* ESP32 LAB — app.js généré depuis www/src (13 fichiers). Ne pas modifier : éditez www/src. */
+/* ESP32 LAB — app.js généré depuis www/src (20 fichiers). Ne pas modifier : éditez www/src. */
 /* ---- 10_core.js ---- */
 /* ESP32 LAB 6 — application web du MASTER (PC, tablette, téléphone).
  * Fichier source : les fichiers de www/src/ sont concaténés dans www/app.js par tools/bundle_www.py
@@ -159,7 +159,13 @@
     resistor: '<path d="M2 12h4l1.5-4 3 8 3-8 3 8 1.5-4h4"/>',
     wave: '<path d="M2 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0"/>',
     box: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
-    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/>'
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
+    'mic-off': '<path d="M3 3l18 18"/><path d="M9 9v2a3 3 0 0 0 5 2.2M15 9.3V6a3 3 0 0 0-5.7-1.3"/><path d="M5 11a7 7 0 0 0 11.5 5.4M19 11a7 7 0 0 1-.6 2.8M12 18v3M8 21h8"/>',
+    volume: '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+    car: '<path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13.5" r="1"/><circle cx="16.5" cy="13.5" r="1"/><path d="M5 19v2M19 19v2"/>',
+    brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>',
+    phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'
   };
   function icon(name, cls) {
     return `<svg class="${cls || ''}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.info}</svg>`;
@@ -264,7 +270,7 @@
   function modal(opts) {
     return new Promise((resolve) => {
       const m = document.createElement('div');
-      m.className = 'modal';
+      m.className = 'modal' + (opts.wide ? ' wide' : '');
       m.setAttribute('role', 'dialog');
       m.setAttribute('aria-modal', 'true');
       m.innerHTML = `<div class="modal-h"><h2>${esc(opts.title || '')}</h2></div>
@@ -466,7 +472,8 @@
     const st = S.state;
     const dot = $('#conn-dot'), txt = $('#conn-text');
     if (dot) {
-      if (S.demo) { dot.className = 'dot warn'; txt.textContent = 'Mode démonstration'; }
+      if (S.phone) { dot.className = 'dot warn'; txt.innerHTML = '<a href="#phone">Téléphone · hors ligne</a>'; }
+      else if (S.demo) { dot.className = 'dot warn'; txt.textContent = 'Mode démonstration'; }
       else if (!S.online) { dot.className = 'dot bad'; txt.textContent = 'MASTER injoignable'; }
       else { dot.className = 'dot ok'; txt.textContent = (S.wsOk ? 'Temps réel' : 'Connecté') + (st && st.master ? ' · ' + st.master.ap_ip : ''); }
     }
@@ -726,7 +733,7 @@
     document.getElementById('app').innerHTML = shellHtml();
     window.addEventListener('hashchange', route);
     let sess = null;
-    const forceDemo = /[?&]demo\b/.test(location.search) || location.protocol === 'file:' || window.LAB_FORCE_DEMO;
+    const forceDemo = /[?&]demo\b/.test(location.search) || location.protocol === 'file:' || window.LAB_FORCE_DEMO || !!(APP.Phone && APP.Phone.offline);
     if (!forceDemo) {
       try { sess = await api('/api/session'); } catch (e) { sess = null; }
     }
@@ -742,7 +749,8 @@
     }
     renderShellState();
     route();
-    if (S.demo) setTimeout(() => toast('Mode démonstration : MASTER non détecté, les données sont simulées.', 'warn', 6000), 400);
+    if (S.demo && !S.phone) setTimeout(() => toast('Mode démonstration : MASTER non détecté, les données sont simulées.', 'warn', 6000), 400);
+    if (APP.Phone) APP.Phone.afterBoot();
     if (location.hash === '#admin' && S.admin) toast('Session administrateur ouverte', 'ok');
   };
 })();
@@ -827,7 +835,7 @@
         <div class="grid g-2" style="margin-top:16px">
           <div class="card"><div class="card-h"><div class="grow"><h2>Autodiagnostic</h2><div class="card-sub">10 vérifications de la carte MASTER</div></div><button class="btn sm" data-act="selftest">${icon('play')}Lancer</button></div><div class="card-b" id="selftest"><div class="small muted">Lancez le diagnostic pour vérifier mémoire, microSD, Internet, capteur, portail captif…</div></div></div>
           <div class="card"><div class="card-h"><div class="grow"><h2>Raccourcis</h2></div></div><div class="card-b"><div class="grid g-2" style="gap:10px">
-            ${[['studio', 'wand', 'Créer un projet', 'Assemblez capteurs + règles, code généré'], ['library', 'book', 'Bibliothèque', `${(A.catalogCount && A.catalogCount()) || '300+'} projets prêts à flasher`], ['sensors', 'activity', 'Capteurs en direct', 'Mesures envoyées par vos montages'], ['tools', 'calc', 'Outils', 'Brochage, calculateurs, I2C'], ['usb', 'usb', 'USB & Arduino', 'Moniteur série, flash AVR'], ['assistant', 'chat', 'Assistant', 'Posez une question au labo']].map(([to, ic, t, d]) => `<a class="list-item click" href="#${to}" style="border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none"><div class="icon-tile accent">${icon(ic)}</div><div class="grow"><div style="font-weight:600">${t}</div><div class="small muted ellipsis">${d}</div></div></a>`).join('')}
+            ${[['studio', 'wand', 'Créer un projet', 'Assemblez capteurs + règles, code généré'], ['library', 'book', 'Bibliothèque', `${(A.catalogCount && A.catalogCount()) || '300+'} projets prêts à flasher`], ['sensors', 'activity', 'Capteurs en direct', 'Mesures envoyées par vos montages'], ['tools', 'calc', 'Outils', 'Brochage, calculateurs, I2C'], ['usb', 'usb', 'USB & Arduino', 'Moniteur série, flash AVR'], ['assistant', 'sparkles', 'Patricia', 'Assistante : projets, flash, capteurs, voix']].map(([to, ic, t, d]) => `<a class="list-item click" href="#${to}" style="border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none"><div class="icon-tile accent">${icon(ic)}</div><div class="grow"><div style="font-weight:600">${t}</div><div class="small muted ellipsis">${d}</div></div></a>`).join('')}
           </div></div></div>
         </div>`;
       let mode = store.get('dash.chart', 'heap');
@@ -1411,7 +1419,7 @@
     let board = store.get('lib.board', 'esp32');
     if (!p.boards.includes(board)) board = p.boards[0];
     const opt = Object.assign({ web: false, master: false, mqtt: false }, p.spec ? p.spec.options : {});
-    let tab = 'code';
+    let tab = p.kind === 'classic' ? 'code' : 'wiring';   // le montage s'affiche dès qu'on choisit un projet
     const favs = new Set(store.get('favs', []));
     const d = drawer(p.title, '', {
       sub: `${esc(cat(p.cat).name)} · ${p.kind === 'module' ? 'capteur / module' : p.kind === 'recipe' ? 'projet complet' : 'classique'}`,
@@ -1431,7 +1439,8 @@
         </div>
         ${(res.warnings || []).map((w) => `<div class="banner warn">${icon('alert')}<div>${esc(w)}</div></div>`).join('')}
         <div class="row wrap" style="margin-bottom:12px">
-          <button class="btn primary" data-pa="zip">${icon('download')}Projet .zip</button>
+          ${p.kind !== 'classic' ? `<button class="btn primary" data-pa="ota" title="Compilé si besoin par le Pi, flashé par le S3, moniteur vérifié">${icon('zap')}Flasher sur un worker</button>` : ''}
+          <button class="btn" data-pa="zip">${icon('download')}Projet .zip</button>
           <button class="btn" data-pa="ino">${icon('file')}.ino</button>
           <button class="btn" data-pa="copy">${icon('copy')}Copier</button>
           ${p.kind !== 'classic' ? `<button class="btn" data-pa="studio">${icon('wand')}Modifier dans le Studio</button>` : ''}
@@ -1439,7 +1448,7 @@
           <button class="btn" data-pa="sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}Enregistrer sur la microSD</button>
           ${p.kind !== 'classic' || p.boards.includes(board) ? `<button class="btn" data-pa="flash" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('usb')}Flasher par câble</button>` : ''}
         </div>
-        <div class="tabs" id="pj-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['info', 'Infos & bibliothèques']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <div class="tabs" id="pj-tabs">${[['wiring', 'Montage'], ['code', 'Code'], ['pins', 'Brochage'], ['info', 'Infos & bibliothèques']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div>
         <div class="tab-panel">${tab === 'code' ? A.codeBlock(res.code, '62vh')
           : tab === 'wiring' ? (LAB.montageSvg && res.wiring && res.wiring.length ? `<div class="montage">${LAB.montageSvg(res, { id: p.id, title: p.title }).svg}</div><div class="row" style="margin:10px 0"><button class="btn sm" data-pa="svg">${icon('download')}Schéma .svg</button></div>` : '') + wiringTable(res)
           : tab === 'pins' ? boardView(res.board, usedFromWiring(res.board, res.wiring))
@@ -1461,6 +1470,12 @@
         else if (k === 'sd') A.saveProjectToSd(p.id, p, res);
         else if (k === 'svg') download(`montage_${p.id}_${board}.svg`, LAB.montageSvg(res, { id: p.id, title: p.title }).svg, 'image/svg+xml');
         else if (k === 'flash') { A.flashPreselect = { board, path: `/sd/PROJECTS/LIBRARY/${p.id}/bin/${board}/${p.id}.bin`, ctx: { kind: 'esp', id: p.id, board } }; d.close(); A.go('usb'); }
+        else if (k === 'ota') {
+          const base = Object.assign({ web: false, master: false, mqtt: false }, p.spec.options || {});
+          const custom = ['web', 'master', 'mqtt'].some((o) => !!opt[o] !== !!base[o]);   // options changées : nouveau firmware à compiler
+          d.close();
+          A.flashPipeline(custom ? { spec: Object.assign({}, p.spec, { options: Object.assign({}, p.spec.options, opt) }), title: p.title + ' (perso)' } : { id: p.id, title: p.title });
+        }
         else if (k === 'bench') { const spec = JSON.parse(JSON.stringify(p.spec)); spec.board = board; d.close(); A.openBench(spec, p.id); }
         else if (k === 'studio') { const spec = JSON.parse(JSON.stringify(p.spec)); spec.board = board; spec.options = Object.assign({}, spec.options, opt); d.close(); A.openInStudio(spec); }
       };
@@ -1556,7 +1571,7 @@
 
   const BOARD_LABEL = { esp32: 'ESP32', esp32s3: 'ESP32-S3', esp32c3: 'ESP32-C3' };
   const OPS = [['<', 'est inférieur à'], ['>', 'est supérieur à'], ['<=', '≤'], ['>=', '≥'], ['==', 'est égal à'], ['!=', 'est différent de'], ['map', 'pilote proportionnellement']];
-  const blank = () => ({ board: 'esp32', title: 'Mon projet ESP32', description: '', modules: [], rules: [], options: { web: false, master: false, mqtt: false } });
+  const blank = () => ({ board: 'esp32', title: 'Mon projet ESP32', description: '', modules: [], rules: [], vars: [], options: { web: false, master: false, mqtt: false } });
   let spec = null;
   let tab = 'code';
   let open = -1;
@@ -1564,8 +1579,8 @@
   const b64e = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const b64d = (s) => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
   function saveSpec() { store.set('studio.spec', spec); }
-  function loadSpec() { spec = store.get('studio.spec', null) || blank(); spec.rules = spec.rules || []; spec.options = spec.options || {}; }
-  A.openInStudio = (s, initialTab) => { spec = JSON.parse(JSON.stringify(s)); spec.rules = spec.rules || []; spec.options = spec.options || {}; tab = ['code', 'wiring', 'pins', 'power', 'bom'].includes(initialTab) ? initialTab : 'code'; saveSpec(); open = -1; if (S.route === 'studio') draw(); else A.go('studio'); };
+  function loadSpec() { spec = store.get('studio.spec', null) || blank(); spec.rules = spec.rules || []; spec.vars = spec.vars || []; spec.options = spec.options || {}; }
+  A.openInStudio = (s, initialTab) => { spec = JSON.parse(JSON.stringify(s)); spec.rules = spec.rules || []; spec.vars = spec.vars || []; spec.options = spec.options || {}; tab = ['code', 'wiring', 'pins', 'power', 'bom', 'app'].includes(initialTab) ? initialTab : 'code'; saveSpec(); open = -1; if (S.route === 'studio') draw(); else A.go('studio'); };
 
   const modOf = (m) => LAB.module(typeof m === 'string' ? m : m.id);
   const labelOf = (i) => { const m = spec.modules[i], mod = modOf(m); return `${i + 1}. ${m.alias || (mod ? mod.name : m.id)}`; };
@@ -1599,6 +1614,45 @@
     setTimeout(() => $('#pk-q', d.el).focus(), 60);
   }
 
+  /* ---------- Variables liées aux capteurs ---------- */
+  const varName = (v) => LAB.sanitize(v.name || 'var');
+  function varsHtml() {
+    const outs = sensorOuts();
+    return (spec.vars.length ? spec.vars.map((v, i) => {
+      const src = v.from && v.from.m != null ? `${v.from.m}:${v.from.out}` : '';
+      return `<div class="rule var-row"><div class="row between"><code class="small">v_${esc(varName(v))}</code><button class="btn sm icon ghost" data-var-del="${i}" aria-label="Supprimer">${icon('trash')}</button></div>
+        <div class="rule-line"><span class="rule-kw">Nom</span><input class="input sm" data-v="${i}" data-vf="name" value="${esc(v.name || '')}" placeholder="consigne" maxlength="24"><input class="input sm" data-v="${i}" data-vf="unit" value="${esc(v.unit || '')}" placeholder="unité" style="max-width:80px"></div>
+        <div class="rule-line"><span class="rule-kw">Lié à</span><select class="select sm" data-v="${i}" data-vf="src"><option value="">(aucun : valeur réglable)</option>${outs.map((o) => `<option value="${o.m}:${o.k}" ${src === o.m + ':' + o.k ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
+        ${src ? `<div class="rule-line"><span class="rule-kw">Calcul</span><span class="small">mesure ×</span><input class="input sm" type="number" step="any" data-v="${i}" data-vf="k" value="${esc(v.k != null ? v.k : 1)}" style="max-width:90px"><span class="small">+</span><input class="input sm" type="number" step="any" data-v="${i}" data-vf="b" value="${esc(v.b || 0)}" style="max-width:90px"></div>`
+          : `<div class="rule-line"><span class="rule-kw">Départ</span><input class="input sm" type="number" step="any" data-v="${i}" data-vf="init" value="${esc(v.init || 0)}" style="max-width:110px"></div>`}
+        <label class="switch small"><input type="checkbox" data-v="${i}" data-vf="app" ${v.app ? 'checked' : ''}><span class="track"></span>Réglable depuis l'application (APK / page web)</label>
+      </div>`;
+    }).join('') : `<div class="small muted">Une variable garde une valeur dans le programme. Liée à un capteur, elle suit sa mesure (avec conversion, ex. × 1,8 + 32 pour des °F). Libre, elle sert de consigne réglable par l'application et de seuil dans les automatismes.</div>`) +
+      `<button class="btn sm" data-var-add>${icon('plus')}Ajouter une variable</button>`;
+  }
+  function addVar() {
+    const outs = sensorOuts();
+    const used = new Set(spec.vars.map(varName));
+    let n = outs.length && !spec.vars.length ? LAB.sanitize(outs[0].k) : 'consigne';
+    for (let k = 2; used.has(n); k++) n = (outs.length && !spec.vars.length ? LAB.sanitize(outs[0].k) : 'consigne') + k;
+    spec.vars.push(outs.length && !spec.vars.length ? { name: n, from: { m: outs[0].m, out: outs[0].k }, k: 1, b: 0 } : { name: n, init: 0, app: true });
+  }
+  function setVarField(i, f, v, checked) {
+    const x = spec.vars[i];
+    if (!x) return;
+    if (f === 'name') {
+      const old = varName(x);
+      x.name = v.trim();
+      const now = varName(x);
+      spec.rules.forEach((r) => { if (r.if.var && LAB.sanitize(r.if.var) === old) r.if.var = now; if (r.if.vv && LAB.sanitize(r.if.vv) === old) r.if.vv = now; });
+    } else if (f === 'src') {
+      if (!v) delete x.from;
+      else { const [m, k] = v.split(':'); x.from = { m: Number(m), out: k }; x.k = x.k == null ? 1 : x.k; x.b = x.b || 0; }
+    } else if (f === 'app') x.app = !!checked;
+    else if (f === 'unit') x.unit = v;
+    else x[f] = v === '' ? 0 : Number(v);
+  }
+
   /* ---------- Règles ---------- */
   function sensorOuts() {
     const r = [];
@@ -1614,31 +1668,42 @@
     return `<select class="select sm" data-r="${idx}" data-f="${kind}.m"><option value="">${kind === 'else' ? '(rien)' : 'actionneur…'}</option>${acts.map((a) => `<option value="${a.i}" ${t && t.m === a.i ? 'selected' : ''}>${esc(labelOf(a.i))}</option>`).join('')}</select>
       ${t && t.m != null && t.m !== '' ? `<select class="select sm" data-r="${idx}" data-f="${kind}.act">${actOpts.map((k) => `<option value="${k}" ${t.act === k ? 'selected' : ''}>${names[k] || k}</option>`).join('')}</select>${t.act === 'set' && mod && mod.mod.act.set ? `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="${kind}.v" value="${esc(t.v != null ? t.v : mod.mod.act.set.max)}" style="max-width:110px" title="${esc(mod.mod.act.set.unit || '')}"><span class="small muted">${esc(mod.mod.act.set.unit || '')}</span>` : ''}` : ''}`;
   }
+  function ruleSources() {
+    return sensorOuts().map((o) => ({ value: `${o.m}:${o.k}`, label: o.label }))
+      .concat(spec.vars.map((v) => ({ value: 'var:' + varName(v), label: `Variable ${varName(v)}${v.unit ? ' (' + v.unit + ')' : ''}` })));
+  }
+  const ruleSrc = (r) => (r.if.var ? 'var:' + LAB.sanitize(r.if.var) : `${r.if.m}:${r.if.out}`);
   function rulesHtml() {
-    const outs = sensorOuts(), acts = actuators();
+    const outs = ruleSources(), acts = actuators();
     if (!outs.length || !acts.length) return `<div class="small muted">${!outs.length ? 'Ajoutez un capteur' : 'Ajoutez un actionneur (relais, LED, servo, buzzer, moteur…)'} pour créer un automatisme : « si la température &lt; 19 °C alors allumer le chauffage ».</div>`;
     return spec.rules.map((r, idx) => {
       const isMap = r.if.op === 'map';
       const dst = acts.find((a) => a.i === r.then.m);
       return `<div class="rule"><div class="row between"><b class="small">Règle ${idx + 1}</b><button class="btn sm icon ghost" data-rule-del="${idx}" aria-label="Supprimer">${icon('trash')}</button></div>
-        <div class="rule-line"><span class="rule-kw">Si</span><select class="select sm" data-r="${idx}" data-f="src">${outs.map((o) => `<option value="${o.m}:${o.k}" ${r.if.m === o.m && r.if.out === o.k ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
+        <div class="rule-line"><span class="rule-kw">Si</span><select class="select sm" data-r="${idx}" data-f="src">${outs.map((o) => `<option value="${esc(o.value)}" ${ruleSrc(r) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></div>
         <div class="rule-line"><span class="rule-kw"></span><select class="select sm" data-r="${idx}" data-f="op">${OPS.filter(([k]) => k !== 'map' || acts.some((a) => a.mod.act.set)).map(([k, n]) => `<option value="${k}" ${r.if.op === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
           ${isMap ? `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="in0" value="${esc((r.if.in || [0, 100])[0])}" title="début de plage"><span class="small">→</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="in1" value="${esc((r.if.in || [0, 100])[1])}" title="fin de plage">`
-            : `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="v" value="${esc(r.if.v)}" title="seuil"><input class="input sm" type="number" step="any" min="0" data-r="${idx}" data-f="hyst" value="${esc(r.if.hyst || 0)}" title="hystérésis (évite les oscillations)" style="max-width:90px">`}</div>
+            : `${spec.vars.length ? `<select class="select sm" data-r="${idx}" data-f="vv" title="seuil fixe ou variable" style="max-width:150px"><option value="">valeur</option>${spec.vars.map((v) => `<option value="${esc(varName(v))}" ${r.if.vv && LAB.sanitize(r.if.vv) === varName(v) ? 'selected' : ''}>variable ${esc(varName(v))}</option>`).join('')}</select>` : ''}${r.if.vv ? '' : `<input class="input sm" type="number" step="any" data-r="${idx}" data-f="v" value="${esc(r.if.v)}" title="seuil">`}<input class="input sm" type="number" step="any" min="0" data-r="${idx}" data-f="hyst" value="${esc(r.if.hyst || 0)}" title="hystérésis (évite les oscillations)" style="max-width:90px">`}</div>
         ${isMap ? `<div class="rule-line"><span class="rule-kw">Alors</span><select class="select sm" data-r="${idx}" data-f="then.m">${acts.filter((a) => a.mod.act.set).map((a) => `<option value="${a.i}" ${r.then.m === a.i ? 'selected' : ''}>${esc(labelOf(a.i))}</option>`).join('')}</select></div>
           <div class="rule-line"><span class="rule-kw"></span><span class="small">de</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out0" value="${esc((r.then.out || [0, 100])[0])}"><span class="small">à</span><input class="input sm" type="number" step="any" data-r="${idx}" data-f="out1" value="${esc((r.then.out || [0, 100])[1])}"><span class="small muted">${esc(dst && dst.mod.act.set ? dst.mod.act.set.unit : '')}</span></div>`
           : `<div class="rule-line"><span class="rule-kw">Alors</span>${actSelect(r.then, 'then', idx)}</div><div class="rule-line"><span class="rule-kw">Sinon</span>${actSelect(r.else, 'else', idx)}</div>`}
-        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}
+        ${!isMap ? `<div class="hint">Hystérésis ${fmtNum(r.if.hyst || 0, 2)} : la règle bascule à ${esc(r.if.vv ? 'la variable ' + r.if.vv : r.if.v)} et revient à ${r.if.op && r.if.op.includes('<') ? '+' : '−'}${fmtNum(r.if.hyst || 0, 2)} au-delà.</div>` : '<div class="hint">La consigne suit la mesure linéairement (bornée aux extrémités).</div>'}
       </div>`;
     }).join('') + `<button class="btn sm" data-rule-add>${icon('plus')}Ajouter une règle</button>`;
   }
   function addRule() {
-    const outs = sensorOuts(), acts = actuators();
+    const outs = ruleSources(), acts = actuators();
     if (!outs.length || !acts.length) return;
-    spec.rules.push({ if: { m: outs[0].m, out: outs[0].k, op: '>', v: 25, hyst: 0.5 }, then: { m: acts[0].i, act: 'on' }, else: { m: acts[0].i, act: 'off' } });
+    const r = { if: { op: '>', v: 25, hyst: 0.5 }, then: { m: acts[0].i, act: 'on' } };
+    setRuleField(r, 'src', outs[0].value);
+    spec.rules.push(Object.assign(r, { then: { m: acts[0].i, act: 'on' }, else: { m: acts[0].i, act: 'off' } }));
   }
   function setRuleField(r, f, v) {
-    if (f === 'src') { const [m, k] = v.split(':'); r.if.m = Number(m); r.if.out = k; }
+    if (f === 'src') {
+      if (v.startsWith('var:')) { r.if.var = v.slice(4); delete r.if.m; delete r.if.out; }
+      else { const [m, k] = v.split(':'); r.if.m = Number(m); r.if.out = k; delete r.if.var; }
+    }
+    else if (f === 'vv') { if (v) r.if.vv = v; else delete r.if.vv; }
     else if (f === 'op') {
       r.if.op = v;
       if (v === 'map') { const a = actuators().find((x) => x.mod.act.set); r.if.in = r.if.in || [0, 100]; r.then = { m: a ? a.i : r.then.m, act: 'set', out: a ? [a.mod.act.set.min, a.mod.act.set.max] : [0, 100] }; delete r.else; }
@@ -1660,10 +1725,12 @@
   }
   /* Renumérote les règles après suppression / déplacement d'un module. */
   function remapRules(mapFn) {
+    spec.vars.forEach((v) => { if (v.from) { const m = mapFn(v.from.m); if (m < 0) delete v.from; else v.from.m = m; } });
     spec.rules = spec.rules.map((r) => {
-      const a = mapFn(r.if.m), b = mapFn(r.then.m);
+      const a = r.if.var ? 0 : mapFn(r.if.m), b = mapFn(r.then.m);
       if (a < 0 || b < 0) return null;
-      r.if.m = a; r.then.m = b;
+      if (!r.if.var) r.if.m = a;
+      r.then.m = b;
       if (r.else) { const c = mapFn(r.else.m); if (c < 0) delete r.else; else r.else.m = c; }
       return r;
     }).filter(Boolean);
@@ -1720,13 +1787,15 @@
                   <div class="small muted">${esc(mod.desc || '')}</div>${(mod.notes || []).length ? `<ul class="small" style="margin:0;padding-left:18px;color:var(--text-2)">${mod.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>` : ''}</div>`;
             }).join('') : `<div class="empty" style="padding:18px">${icon('box')}<div class="small">Ajoutez des capteurs, afficheurs et actionneurs.<br>Les broches sont choisies automatiquement, sans conflit.</div></div>`}
           </div></div>
+          <div class="card"><div class="card-h"><h2 class="grow">Variables <span class="badge">${spec.vars.length}</span></h2></div><div class="card-b stack" style="gap:10px" id="st-vars">${varsHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Automatismes</h2></div><div class="card-b stack" style="gap:10px" id="st-rules">${rulesHtml()}</div></div>
           <div class="card"><div class="card-h"><h2 class="grow">Connectivité</h2></div><div class="card-b stack" style="gap:12px">
-            <label class="switch"><input type="checkbox" data-opt="web" ${o.web ? 'checked' : ''}><span class="track"></span>Page web locale (mesures + commandes)</label>
+            <label class="switch"><input type="checkbox" data-opt="web" ${o.web || o.app ? 'checked' : ''} ${o.app ? 'disabled' : ''}><span class="track"></span>Page web locale (mesures + commandes)</label>
+            <label class="switch"><input type="checkbox" data-opt="app" ${o.app ? 'checked' : ''}><span class="track"></span>Pilotage par application (APK, page web : actionneurs et variables)</label>
             <label class="switch"><input type="checkbox" data-opt="master" ${o.master ? 'checked' : ''}><span class="track"></span>Envoyer les mesures au MASTER</label>
             <label class="switch"><input type="checkbox" data-opt="mqtt" ${o.mqtt ? 'checked' : ''}><span class="track"></span>Publier en MQTT (Home Assistant, Node-RED…)</label>
             <label class="switch"><input type="checkbox" data-opt="home" ${o.home !== false ? 'checked' : ''}><span class="track"></span>Retour au mode worker (projet chargé depuis le MASTER)</label>
-            ${o.web || o.master || o.mqtt ? `<div class="form-grid"><div class="field"><label>Wi-Fi (SSID)</label><input class="input sm" data-o="wifi_ssid" value="${esc(o.wifi_ssid || 'ESP32-LAB')}"></div><div class="field"><label>Mot de passe</label><input class="input sm" data-o="wifi_pass" type="password" value="${esc(o.wifi_pass || '')}" placeholder="ESP32-LAB-Setup2026!"></div>
+            ${o.web || o.app || o.master || o.mqtt ? `<div class="form-grid"><div class="field"><label>Wi-Fi (SSID)</label><input class="input sm" data-o="wifi_ssid" value="${esc(o.wifi_ssid || 'ESP32-LAB')}"></div><div class="field"><label>Mot de passe</label><input class="input sm" data-o="wifi_pass" type="password" value="${esc(o.wifi_pass || '')}" placeholder="ESP32-LAB-Setup2026!"></div>
               <div class="field"><label>Nom de l'appareil</label><input class="input sm" data-o="device" value="${esc(o.device || '')}" placeholder="${esc(LAB.sanitize(spec.title).slice(0, 20))}"></div>${o.mqtt ? `<div class="field"><label>Serveur MQTT</label><input class="input sm" data-o="mqtt_host" value="${esc(o.mqtt_host || '192.168.4.2')}"></div>` : ''}</div>` : ''}
           </div></div>
         </div>
@@ -1734,8 +1803,8 @@
           ${err ? `<div class="banner warn">${icon('alert')}<div>${esc(err)}</div></div>` : ''}
           ${res ? res.warnings.map((w) => `<div class="banner warn" style="margin:0">${icon('alert')}<div>${esc(w)}</div></div>`).join('') : ''}
           <div class="card"><div class="card-h"><div class="grow"><h2 class="ellipsis">${esc(spec.title)}</h2><div class="card-sub">${res ? `${res.code.split('\n').length} lignes · ${res.libs.length} bibliothèque(s) · ${res.power.total_mA} mA` : ''}</div></div>
-            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm primary" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
-            <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Câblage'], ['pins', 'Brochage'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
+            <div class="btn-group"><button class="btn sm" data-act="st-copy">${icon('copy')}<span class="hide-sm">Copier</span></button><button class="btn sm" data-act="st-ino">${icon('file')}.ino</button><button class="btn sm" data-act="st-zip">${icon('download')}.zip</button><button class="btn sm" data-act="st-sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}<span class="hide-sm">microSD</span></button><button class="btn sm primary" data-act="st-flash" title="Le Pi compile, le S3 flashe un worker et vérifie le moniteur">${icon('zap')}Flasher</button><button class="btn sm" data-act="st-bench" title="Test matériel automatique par deux workers">${icon('target')}<span class="hide-sm">Banc</span></button></div></div>
+            <div class="card-b"><div class="tabs" id="st-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['app', 'Application'], ['power', 'Alimentation'], ['bom', 'Matériel']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="tab-panel">${res ? panel(res) : ''}</div></div></div>
         </div></div>`;
       A.studioResult = res;
       const side2 = $('.studio-side', root);
@@ -1747,7 +1816,11 @@
 
   function panel(res) {
     if (tab === 'code') return A.codeBlock(res.code, 'calc(100vh - 260px)');
-    if (tab === 'wiring') return A.wiringTable(res);
+    if (tab === 'wiring') {
+      const m = LAB.montageSvg && res.wiring && res.wiring.length ? LAB.montageSvg(res, { id: projId(), title: spec.title }) : null;
+      return (m ? `<div class="montage">${m.svg}</div><div class="row" style="margin:10px 0"><button class="btn sm" data-act="st-svg">${icon('download')}Schéma .svg</button></div>` : '') + A.wiringTable(res);
+    }
+    if (tab === 'app') return appPanel(res);
     if (tab === 'pins') return A.boardView(res.board, A.usedFromWiring(res.board, res.wiring)) + `<div class="small muted" style="margin-top:10px">${(LAB.BOARDS[res.board].notes || []).map(esc).join('<br>')}</div>`;
     if (tab === 'power') {
       const rows = spec.modules.map((m, i) => { const mod = modOf(m); return mod ? [labelOf(i), mod.vcc || '3V3', mod.mA || 1, mod.peak_mA || mod.mA || 1] : null; }).filter(Boolean);
@@ -1773,12 +1846,30 @@
       ${res.outs.length ? `<div class="card pad span-2"><h3 style="margin-bottom:10px">Mesures publiées</h3><div class="row wrap">${res.outs.map((x) => `<span class="badge outline"><span class="mono">${esc(x.key)}</span>${x.unit ? ' · ' + esc(x.unit) : ''}</span>`).join('')}</div><p class="hint" style="margin-top:8px">Visibles dans le moniteur/traceur série${spec.options.master ? ', sur la page Capteurs du MASTER' : ''}${spec.options.web ? ', sur la page web du montage' : ''}${spec.options.mqtt ? ', et en MQTT (lab/&lt;appareil&gt;/&lt;mesure&gt;)' : ''}.</p></div>` : ''}</div>`;
   }
 
+  /* Onglet Application : ce que l'APK peut lire et commander sur ce montage. */
+  function appPanel(res) {
+    const o = spec.options;
+    const ctl = res.controls || [];
+    const vars = res.vars || [];
+    return `<div class="stack" style="gap:12px">
+      ${o.app ? '' : `<div class="banner">${icon('info')}<div>Active « Pilotage par application » dans Connectivité : le montage ouvre alors <code>/api</code> (mesures et variables) et <code>/set</code> (commandes) pour l'APK et la page web.</div></div>`}
+      <div class="grid g-2">
+        <div class="card pad"><h3 style="margin-bottom:10px">Lu par l'application</h3><div class="statlist">${res.outs.map((x) => `<div><span>${esc(x.module === 'Variable' ? 'Variable ' + x.label : x.label + ' · ' + x.module)}</span><span class="badge outline mono">${esc(x.key)}${x.unit ? ' ' + esc(x.unit) : ''}</span></div>`).join('') || '<div><span class="muted">Aucune mesure</span></div>'}</div>
+          <p class="hint" style="margin-top:8px">${o.master ? 'Via le MASTER : source « Capteur du MASTER » <code>' + esc(res.device) + '/&lt;clé&gt;</code> dans le Studio APK.' : 'Active « Envoyer les mesures au MASTER » pour les lire depuis n\'importe quelle APK du labo.'}${o.app ? ' En direct : <code>http://&lt;ip&gt;/api</code>.' : ''}</p></div>
+        <div class="card pad"><h3 style="margin-bottom:10px">Commandé par l'application</h3>${o.app ? `<div class="statlist">${ctl.map((c) => `<div><span>${esc(c.var ? 'Variable ' + c.name : c.name)}</span><span class="badge outline mono">/set?${esc(c.key)}=${c.set && !c.on ? '&lt;nombre&gt;' : [c.on ? 'on' : '', c.off ? 'off' : '', c.toggle ? 'toggle' : '', c.set ? (c.set.min != null ? c.set.min + '…' + c.set.max : '&lt;n&gt;') : ''].filter(Boolean).join('|')}</span></div>`).join('') || '<div><span class="muted">Ajoute un actionneur ou une variable réglable</span></div>'}</div>
+          <p class="hint" style="margin-top:8px">Les actionneurs commandés par l'application n'exécutent plus leur programme de démonstration.</p>` : '<div class="small muted">Pilotage désactivé.</div>'}</div>
+      </div>
+      <div class="row wrap"><button class="btn primary" data-act="st-apk">${icon('phone')}Créer l'application dans le Studio APK</button>${vars.length ? `<span class="small muted">${vars.length} variable(s) : ${vars.map((v) => `<code>${esc(v.c)}</code>`).join(', ')}</span>` : ''}</div>
+    </div>`;
+  }
+
   function bind(el) {
     const rerender = A.debounce(() => { saveSpec(); draw(); }, 300);
     el.addEventListener('input', (e) => {
       const t = e.target;
       if (t.dataset.s) { spec[t.dataset.s] = t.value; rerender(); }
       else if (t.dataset.o) { spec.options[t.dataset.o] = t.value; rerender(); }
+      else if (t.dataset.v != null && t.type !== 'checkbox' && t.tagName !== 'SELECT') { setVarField(Number(t.dataset.v), t.dataset.vf, t.value); rerender(); }
       else if (t.dataset.malias != null) { spec.modules[Number(t.dataset.malias)].alias = t.value.trim() || undefined; rerender(); }
       else if (t.id === 'pw-cap') { store.set('studio.batt', Number(t.value) || 2000); rerender(); }
       else if (t.id === 'pw-sleep') { $('#pw-sv').textContent = t.value; store.set('studio.sleep', Number(t.value)); rerender(); }
@@ -1788,6 +1879,7 @@
       if (t.dataset.opt) { spec.options[t.dataset.opt] = t.checked; saveSpec(); draw(); }
       else if (t.dataset.mparam != null) { const m = spec.modules[Number(t.dataset.mparam)]; m.params = m.params || {}; m.params[t.dataset.k] = t.value; saveSpec(); draw(); }
       else if (t.dataset.r != null) { setRuleField(spec.rules[Number(t.dataset.r)], t.dataset.f, t.value); saveSpec(); draw(); }
+      else if (t.dataset.v != null && (t.type === 'checkbox' || t.tagName === 'SELECT')) { setVarField(Number(t.dataset.v), t.dataset.vf, t.value, t.checked); saveSpec(); draw(); }
     });
     el.addEventListener('click', (e) => {
       const t = e.target.closest('button,[data-mopen]');
@@ -1805,6 +1897,14 @@
       } else if (t.dataset.mopen != null && !e.target.closest('button')) { const i = Number(t.dataset.mopen); open = open === i ? -1 : i; draw(); }
       else if (t.hasAttribute('data-rule-add')) { addRule(); saveSpec(); draw(); }
       else if (t.dataset.ruleDel != null) { spec.rules.splice(Number(t.dataset.ruleDel), 1); saveSpec(); draw(); }
+      else if (t.hasAttribute('data-var-add')) { addVar(); saveSpec(); draw(); }
+      else if (t.dataset.varDel != null) {
+        const gone = varName(spec.vars[Number(t.dataset.varDel)] || {});
+        spec.vars.splice(Number(t.dataset.varDel), 1);
+        spec.rules = spec.rules.filter((r) => !(r.if.var && LAB.sanitize(r.if.var) === gone));
+        spec.rules.forEach((r) => { if (r.if.vv && LAB.sanitize(r.if.vv) === gone) delete r.if.vv; });
+        saveSpec(); draw();
+      }
     });
   }
 
@@ -1828,6 +1928,13 @@
       spec.title = title.trim(); saveSpec(); draw();
       try { const result = LAB.generate(spec); A.studioResult = result; await A.saveProjectToSd(clean, asProject(), result); }
       catch (e) { A.toast(e.message || String(e), 'bad'); }
+    },
+    'st-flash': () => { if (!spec.modules.length) return toast('Ajoute au moins un module avant de flasher.', 'warn'); A.flashPipeline({ spec: JSON.parse(JSON.stringify(spec)), title: spec.title }); },
+    'st-svg': () => A.studioResult && LAB.montageSvg && download(`montage_${projId()}_${A.studioResult.board}.svg`, LAB.montageSvg(A.studioResult, { id: projId(), title: spec.title }).svg, 'image/svg+xml'),
+    'st-apk': () => {
+      if (!A.AppStudio) return toast('Studio APK non chargé', 'bad');
+      store.set('apkstudio.fromStudio', JSON.parse(JSON.stringify(spec)));
+      A.go('apkstudio', { studio: '1' });
     },
     'st-bench': () => A.openBench(JSON.parse(JSON.stringify(spec)), projId()),
     'st-new': async () => { if (spec.modules.length && !(await confirmBox('Nouveau projet', 'Le projet en cours sera remplacé (pensez à le télécharger).', 'Nouveau'))) return; spec = blank(); saveSpec(); open = -1; draw(); },
@@ -1876,7 +1983,7 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function pollJob(jobId,el,target){let last=null;for(let n=0;n<360;n++){const {data:j}=await pi('/api/v1/jobs/'+encodeURIComponent(jobId));if(last!==j.stage||n%5===0){last=j.stage;target.innerHTML=`<div class="row"><b>${esc(j.stage||j.status)}</b><span class="grow"></span><span>${Math.max(0,Number(j.progress)||0)}%</span></div><progress max="100" value="${Math.max(0,Number(j.progress)||0)}" style="width:100%"></progress><div class="muted">${esc(j.status)} · ${Number(j.elapsed||0).toFixed(1)} s écoulées</div>${j.error?`<div class="banner bad">${esc(j.error)}</div>`:''}${j.log?`<details><summary>Journal de construction</summary><pre class="small mono">${esc(j.log.slice(-12000))}</pre></details>`:''}`;}if(['success','failed','canceled'].includes(j.status))return j;await delay(1800);}throw new Error('Délai de surveillance dépassé. Le job continue peut-être sur le Pi.');}
 async function buildFirmware(el){const id=$('#pi-project',el).value;if(!id)return toast('Choisis un projet enregistré.','warn');const box=$('#pi-build-status',el);try{if(!cfg.token)throw new Error('Saisis le jeton du Pi.');box.textContent='Lecture du projet enregistré…';const files=await projectFiles(id);const meta=JSON.parse(files['project.json']);const board=meta.board||meta.spec?.board||'esp32';box.textContent='Envoi des sources au Pi…';const {data}=await pi('/api/v1/build',{method:'POST',body:JSON.stringify({project_id:id,board,files})});const job=await pollJob(data.id,el,box);if(job.status!=='success')return;const signed=await pi('/api/v1/jobs/'+data.id+'/firmware-link');const fw=signed.data;const fwUrl=new URL(fw.url);if(fwUrl.protocol!=='http:'||fwUrl.port!=='8088'||!/^192\.168\.4\.\d+$/.test(fwUrl.hostname))throw new Error('Le lien du Pi doit utiliser son adresse Wi‑Fi ESP32-LAB (192.168.4.x:8088).');box.innerHTML+=`<div class="banner ok">Firmware sur la microSD du Pi · ${Number(fw.size||0).toLocaleString()} octets · SHA‑256 ${esc(fw.sha256.slice(0,16))}… · lien temporaire signé (5 min).</div>`;await offerFlash(el,id,data.id,fw.sha256,board,box);}catch(e){box.innerHTML=`<div class="banner bad">${esc(e.message)}</div>`;}}
 async function offerFlash(el,id,jobId,digest,board,box){let state;try{state=await A.api('/api/state');}catch(e){box.innerHTML+='<div class="hint">MASTER S3 non joignable; le binaire reste stocké sur la carte du Pi.</div>';return;}const workers=state.workers||[];const choices=workers.filter(w=>!['OFFLINE','PROJECT'].includes(w.state));if(!choices.length){box.innerHTML+='<div class="hint">Aucun worker disponible. Binaire conservé sur la microSD du Pi.</div>';return;}const row=document.createElement('div');row.className='row';const sel=document.createElement('select');sel.className='input';choices.forEach(w=>{const o=document.createElement('option');o.value=w.id;o.textContent='Worker '+w.id+' · '+(w.state||'disponible');sel.append(o);});const b=document.createElement('button');b.className='btn danger';b.textContent='Vérifier la carte et flasher';row.append(sel,b);box.append(row);b.onclick=async()=>{try{const info=await A.api('/api/worker/info?id='+encodeURIComponent(sel.value));const chip=String(info.chip||'').toLowerCase();if((board==='esp32s3'&&!chip.includes('s3'))||(board==='esp32c3'&&!chip.includes('c3'))||(board==='esp32'&&(!chip.includes('esp32')||chip.includes('s3')||chip.includes('c3'))))throw new Error('Carte incompatible : '+(info.chip||'modèle inconnu'));if(!await A.confirmBox('Confirmer le flash',`Le Pi a compilé ${id}; le worker téléchargera l’artefact depuis la microSD Pi et revérifiera SHA‑256 (${digest.slice(0,12)}…). Le MASTER S3 va autoriser le flash du worker ${sel.value}.`,'Flasher',true))return;const fresh=await pi('/api/v1/jobs/'+encodeURIComponent(jobId)+'/firmware-link');const remoteUrl=fresh.data.url;const target=new URL(remoteUrl);if(target.protocol!=='http:'||target.port!=='8088'||!/^192\.168\.4\.\d+$/.test(target.hostname))throw new Error('Adresse Pi non autorisée pour le réseau ESP32-LAB.');await A.post('/api/worker/flash/remote',{id:sel.value,url:remoteUrl,sha256:digest,mode:'project'});b.disabled=true;b.textContent='Flash envoyé';await monitorFlash(sel.value,box);}catch(e){toast(e.message,'bad');}};}
-async function monitorFlash(id,box){const started=performance.now();const row=document.createElement('div');row.className='hint';row.textContent='Surveillance S3 : démarrage du transfert…';box.append(row);let since=0;for(let i=0;i<50;i++){await delay(1200);try{const log=await A.api(`/api/worker/log?id=${encodeURIComponent(id)}&since=${since}`);since=log.last||since;if(log.data)row.textContent=log.data.slice(-900);const state=await A.api('/api/state');const w=(state.workers||[]).find(x=>String(x.id)===String(id));if(w&&['ONLINE','READY','IDLE'].includes(w.state)){row.textContent='Worker revenu en ligne après le flash · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées. Vérifie ses valeurs et son câblage au banc.';return;}}catch(e){}}row.textContent+=' · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées sans retour final. Consulte le journal et l’état du worker sur le S3.';}
+async function monitorFlash(id,box){const started=performance.now();const row=document.createElement('div');row.className='hint';row.textContent='Surveillance S3 : démarrage du transfert…';box.append(row);let since=0;for(let i=0;i<50;i++){await delay(1200);try{const log=await A.api(`/api/worker/log?id=${encodeURIComponent(id)}&since=${since}`);since=log.last||since;const txt=(log.lines||[]).map(x=>x.text||'').join('\n');if(txt)row.textContent=txt.slice(-900);const state=await A.api('/api/state');const w=(state.workers||[]).find(x=>String(x.id)===String(id));if(w&&['ONLINE','READY','IDLE'].includes(w.state)){row.textContent='Worker revenu en ligne après le flash · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées. Vérifie ses valeurs et son câblage au banc.';return;}}catch(e){}}row.textContent+=' · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées sans retour final. Consulte le journal et l’état du worker sur le S3.';}
 async function buildApk(el){const id=$('#pi-project',el).value;if(!id)return toast('Choisis un projet enregistré.','warn');const box=$('#pi-apk-result',el);try{const files=await projectFiles(id);const {data}=await pi('/api/v1/android/build',{method:'POST',body:JSON.stringify({project_id:id,files})});const job=await pollJob(data.id,el,box);if(job.status!=='success')return;const url=cleanUrl(cfg.url)+'/download/apps/'+encodeURIComponent(id)+'/'+encodeURIComponent(data.id)+'.apk';const qr=await pi('/api/v1/jobs/'+encodeURIComponent(data.id)+'/qr');const object=URL.createObjectURL(qr.data);box.innerHTML=`<div class="banner ok">APK du projet prête · SHA‑256 ${esc((job.sha256||'').slice(0,16))}… · durée ${Number(job.elapsed||0).toFixed(1)} s.</div><div class="row" style="align-items:flex-start;gap:18px;flex-wrap:wrap"><a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">Télécharger l’APK</a><img src="${object}" alt="QR de téléchargement de l’APK" width="180" height="180" style="background:#fff;padding:8px;border-radius:12px"><span class="small muted">Scanne sur le même Wi‑Fi que le Pi. Cette APK debug doit être installée manuellement sur Android.</span></div>`;}catch(e){box.innerHTML=`<div class="banner bad">${esc(e.message)}</div>`;}}
 async function uploadApk(el){const id=$('#pi-project',el).value,file=$('#pi-apk-file',el).files[0],box=$('#pi-apk-result',el);if(!id)return toast('Choisis d’abord un projet enregistré.','warn');if(!file)return toast('Choisis l’APK projet créée sur Windows.','warn');if(file.size>40*1024*1024)return toast('APK trop grande (limite 40 Mo).','bad');try{box.textContent='Envoi et vérification de l’APK sur le Pi…';const r=await fetch(cleanUrl(cfg.url)+'/api/v1/android/import',{method:'POST',headers:{Authorization:'Bearer '+cfg.token,'X-Nexus-Project':id,'Content-Type':'application/vnd.android.package-archive'},body:file,cache:'no-store'});const data=await r.json();if(!r.ok)throw new Error(data.error||('Pi HTTP '+r.status));renderApkResult(el,data.id,id,data.sha256,data.size,0);}catch(e){box.innerHTML=`<div class="banner bad">${esc(e.message)}</div>`;}}
 async function renderApkResult(el,jobId,id,digest,size,elapsed){const box=$('#pi-apk-result',el);try{const url=cleanUrl(cfg.url)+'/download/apps/'+encodeURIComponent(id)+'/'+encodeURIComponent(jobId)+'.apk';const qr=await pi('/api/v1/jobs/'+encodeURIComponent(jobId)+'/qr');if(box._qrObject)URL.revokeObjectURL(box._qrObject);box._qrObject=URL.createObjectURL(qr.data);box.innerHTML=`<div class="banner ok">APK projet prête · ${(Number(size)||0).toLocaleString()} octets · SHA‑256 ${esc((digest||'').slice(0,16))}… · ${Number(elapsed||0).toFixed(1)} s.</div><div class="row" style="align-items:flex-start;gap:18px;flex-wrap:wrap"><a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">Télécharger l’APK</a><img src="${box._qrObject}" alt="QR de téléchargement de l’APK projet" width="180" height="180" style="background:#fff;padding:8px;border-radius:12px"><span class="small muted">Scanne sur le même Wi‑Fi que le Pi. Android demandera de confirmer l’installation.</span></div>`;}catch(e){box.innerHTML=`<div class="banner bad">APK importée, mais QR indisponible : ${esc(e.message)}</div>`;}}
@@ -1888,7 +1995,8 @@ A.piProjects=async()=>{const {data}=await pi('/api/v1/projects');return data.ite
 A.piReadProject=async id=>{const {data}=await pi('/api/v1/projects/'+encodeURIComponent(id)+'/files');return data.files||{};};
 A.piSaveProject=async(id,files)=>{const {data}=await pi('/api/v1/projects/save',{method:'POST',body:JSON.stringify({project_id:id,files})});return data;};
 A.piRequest=async(path,opts)=>{const {data}=await pi(path,opts);return data;};
-A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
+A.piBase=()=>cleanUrl(cfg.url);A.piToken=()=>cfg.token;
+A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
 })();
 /* ---- 37_project_builder.js ---- */
 /* Créateur de projet guidé, local et explicable */
@@ -2632,6 +2740,59 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     }
   });
 })();
+/* ---- 43_link.js ---- */
+/* Liaison S3 ↔ Pi : résultats des tests réguliers du canal Wi-Fi, dans les deux sens.
+ * Le S3 sonde le Pi toutes les 20 s (/api/link) ; le Pi s'annonce au S3 toutes les 30 s et mesure sa réponse (/api/v1/link). */
+(function () {
+  'use strict';
+  const A = window.APP;
+  const { $, esc, icon, api, lineChart, toast } = A;
+  const fmt = (v, u) => (v == null ? '—' : `${v} ${u}`);
+  const quality = (l) => (!l || !l.samples ? ['', 'aucune mesure'] : !l.up && !l.ok ? ['bad', 'coupée'] : l.loss_pct > 20 || l.rtt_ms > 300 ? ['warn', 'instable'] : ['ok', 'bonne']);
+
+  function side(title, sub, l, err) {
+    if (err) return `<section class="card"><div class="card-h"><h2 class="grow">${title}</h2><span class="badge">indisponible</span></div><div class="card-b small muted">${esc(err)}</div></section>`;
+    const [cls, word] = quality(l);
+    const hist = (l.history || []).map((v) => (v == null || v < 0 ? null : v));
+    const lost = (l.history || []).filter((v) => v == null || v < 0).length;
+    return `<section class="card"><div class="card-h"><h2 class="grow">${title}</h2><span class="badge ${cls}">${word}</span></div><div class="card-b">
+      <div class="small muted">${sub}</div>
+      <div class="grid g-4" style="margin:12px 0">
+        <div><div class="eyebrow">LATENCE</div><b>${fmt(l.rtt_ms, 'ms')}</b></div>
+        <div><div class="eyebrow">GIGUE</div><b>${fmt(l.jitter_ms, 'ms')}</b></div>
+        <div><div class="eyebrow">PERTE</div><b>${fmt(l.loss_pct, '%')}</b></div>
+        <div><div class="eyebrow">MIN / MAX</div><b>${l.min_ms == null ? '—' : l.min_ms + ' / ' + l.max_ms + ' ms'}</b></div>
+      </div>
+      ${hist.some((v) => v != null) ? lineChart([{ data: hist, fill: true, width: 1.6 }], { w: 600, h: 90, axis: false, dots: false, label: 'latence' }) : ''}
+      <div class="hint">${l.samples || 0} sonde(s) récentes, ${lost} perdue(s) · une série toutes les ${l.period_s || '?'} s</div></div></section>`;
+  }
+
+  async function load(el, now) {
+    let s3 = null, pi = null, e3 = '', ep = '';
+    try { s3 = await api('/api/link'); } catch (e) { e3 = 'Le MASTER ne répond pas : ' + e.message; }
+    try {
+      if (!A.piRequest || !(A.piToken && A.piToken())) throw new Error('configure le Pi dans Compagnon Pi');
+      pi = await A.piRequest('/api/v1/link' + (now ? '?now=1' : ''));
+    } catch (e) { ep = 'Pi injoignable : ' + e.message; }
+    const box = $('#lk-body', el); if (!box) return;
+    const piName = s3 && s3.pi ? `Pi annoncé en ${esc(s3.pi)}` : 'Le Pi ne s\'est pas encore annoncé au S3 (il le fait toutes les 30 s).';
+    box.innerHTML = `<div class="grid g-2">${side('S3 → Pi', piName, s3, e3)}${side('Pi → S3', pi ? `Le Pi interroge ${esc(pi.s3)}` : '', pi, ep)}</div>`;
+  }
+
+  A.page({
+    id: 'link', title: 'Liaison S3 ↔ Pi', icon: 'wifi', group: 'sys',
+    desc: 'Tests réguliers du canal Wi-Fi entre le MASTER et le Raspberry Pi',
+    render(el) {
+      el.innerHTML = `<div class="stack"><div class="hero"><div><div class="eyebrow">NEXUS · CANAL WI-FI</div><h1>Liaison S3 ↔ Pi</h1>
+        <p>Le S3 teste le Pi toutes les 20 s et le Pi teste le S3 toutes les 30 s. Une liaison perdue ou rétablie est notée dans le journal d'événements.</p></div>
+        <div><button class="btn primary" id="lk-now">${icon('refresh')}Tester maintenant</button></div></div><div id="lk-body"><div class="card pad muted">Mesure…</div></div></div>`;
+      $('#lk-now', el).onclick = async () => { await load(el, true); toast('Liaison testée', 'ok'); };
+      load(el, false);
+      const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); return; } load(el, false); }, 10000);
+    }
+  });
+  A.commands.push({ title: 'Tester la liaison S3 ↔ Pi', group: 'Page', icon: 'wifi', run: () => A.go('link') });
+})();
 /* ---- 46_flash.js ---- */
 /* Flash & montages : page « USB & Flash » (Arduino, ESP32, ESP32-S3, ESP32-C3 par câble) avec moniteur de flash,
  * flash d'un worker par Wi-Fi avec moniteur, aperçu du montage de chaque firmware, onglets Moniteur et GPIO
@@ -3132,6 +3293,213 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     return () => clearInterval(timer);
   };
 })();
+/* ---- 47_flashpipe.js ---- */
+/* Flash en un clic : projet du Studio ou de la bibliothèque → worker.
+ *   1. choix du worker (carte détectée) et montage à vérifier ;
+ *   2. firmware : déjà compilé sur la microSD du S3 (marche sans le Pi), sinon compilé par le Pi
+ *      avec le temps prévu et la progression ;
+ *   3. flash OTA autorisé par le S3, puis lecture du moniteur et verdict (Patricia sur le Pi, ou
+ *      analyse locale du S3 si le Pi est absent). */
+(function () {
+  'use strict';
+  const A = window.APP, LAB = window.LAB;
+  const { $, esc, icon, toast, drawer, api, post, download, S } = A;
+  const BOARD_NAMES = { esp32: 'ESP32', esp32s3: 'ESP32-S3', esp32c3: 'ESP32-C3' };
+  const chipBoard = (chip) => (/S3/i.test(chip || '') ? 'esp32s3' : /C3/i.test(chip || '') ? 'esp32c3' : 'esp32');
+  const espBin = (id, board) => `/sd/PROJECTS/LIBRARY/${id}/bin/${board}/${id}.bin`;
+  const piReady = () => !!(A.piBase && A.piBase() && A.piToken && A.piToken());
+  const piJ = (path, body) => A.piRequest(path, body === undefined ? undefined : { method: 'POST', body: JSON.stringify(body) });
+
+  function mmss(s) {
+    s = Math.max(0, Math.round(s));
+    return s >= 60 ? `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s` : `${s} s`;
+  }
+  A.fmtEta = mmss;
+
+  async function sdHas(path) {
+    if (S.demo) return true;
+    try {
+      const r = await api('/api/sd/list?path=' + encodeURIComponent(path.replace(/\/[^/]+$/, '')));
+      return (r.items || []).some((x) => x.name === path.split('/').pop());
+    } catch (e) { return false; }
+  }
+
+  /* Analyse locale du moniteur (sans le Pi) : mêmes repères que Patricia, en plus court. */
+  const BAD = [[/Guru Meditation|abort\(\) was called|Backtrace:/i, 'le programme plante (Guru Meditation)'], [/Brownout detector/i, 'chute de tension (brownout) : alimentation trop faible'],
+    [/non détecté|not found|Could not find|Failed to/i, 'un module n\'est pas détecté : vérifie le câblage'], [/rst:0x[0-9a-f]+[^\n]*\n[\s\S]*rst:0x[0-9a-f]+[^\n]*\n[\s\S]*rst:0x/i, 'redémarrages en boucle'],
+    [/task_wdt|Task watchdog/i, 'chien de garde déclenché : une boucle bloque le programme']];
+  A.localVerdict = function (text, expect) {
+    const reasons = BAD.filter(([re]) => re.test(text)).map(([, why]) => why);
+    const samples = (text.match(/^[A-Za-z_][\w.-]{0,30}:-?\d+(\.\d+)?(\t|$)/gm) || []).length;
+    const missing = (expect || []).filter((k) => !new RegExp('(^|\\t)' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':', 'm').test(text));
+    if (reasons.length) return { verdict: 'echec', reasons };
+    if (samples >= 2 && !missing.length) return { verdict: 'ok', reasons: [`${samples} mesure(s) valides lues`] };
+    if (samples >= 2) return { verdict: 'incertain', reasons: ['mesures absentes : ' + missing.join(', ')] };
+    return { verdict: 'incertain', reasons: [text.trim() ? 'le programme écrit sur le port série mais aucune mesure reconnue' : 'aucune sortie série reçue'] };
+  };
+
+  /* Journal du worker (relayé par le S3) + port USB du S3 si une carte y est branchée. */
+  A.readWorkerSerial = async function (worker, seconds, onTick) {
+    let since = 0, text = '', usbPos = 0;
+    try { const l = await api(`/api/worker/log?id=${encodeURIComponent(worker)}&since=999999999`); since = l.last || 0; } catch (e) { /* ignoré */ }
+    try { if (S.admin) { const u = await api('/api/usb/serial?since=0'); usbPos = u.pos || 0; } } catch (e) { /* pas d'USB */ }
+    const t0 = Date.now();
+    let state = '';
+    while (Date.now() - t0 < seconds * 1000) {
+      await A.sleep(1500);
+      try { const l = await api(`/api/worker/log?id=${encodeURIComponent(worker)}&since=${since}`); since = l.last || since; (l.lines || []).forEach((x) => { text += (x.text || '') + '\n'; }); } catch (e) { /* redémarrage */ }
+      try { if (S.admin) { const u = await api('/api/usb/serial?since=' + usbPos); usbPos = u.pos || usbPos; if (u.data) text += u.data; } } catch (e) { /* ignoré */ }
+      const w = ((S.state && S.state.workers) || []).find((x) => String(x.id) === String(worker));
+      state = w ? w.state : state;
+      if (onTick) onTick(Math.round((Date.now() - t0) / 1000), text, state);
+    }
+    return { text, state };
+  };
+
+  /* opts : { spec } (projet du Studio) ou { id } (projet de la bibliothèque), title, worker (facultatif) */
+  A.flashPipeline = async function (opts) {
+    const lib = opts.id && A.projectById ? A.projectById(opts.id) : null;
+    const baseSpec = opts.spec ? JSON.parse(JSON.stringify(opts.spec)) : lib && lib.spec ? JSON.parse(JSON.stringify(lib.spec)) : null;
+    const title = opts.title || (lib && lib.title) || (baseSpec && baseSpec.title) || 'Projet';
+    let cancelled = false;
+    const d = drawer('Flasher « ' + title + ' »', '<div class="skel"></div>', { sub: 'Compilation, flash et vérification', onClose: () => { cancelled = true; } });
+    const workers = ((S.state && S.state.workers) || []).filter((w) => w.state !== 'OFFLINE');
+    let worker = opts.worker != null ? String(opts.worker) : workers[0] ? String(workers[0].id) : '';
+    let board = (baseSpec && baseSpec.board) || 'esp32', res = null, source = null;
+    const pid = lib ? lib.id : 'studio_' + LAB.sanitize(title).slice(0, 40);
+
+    d.body.innerHTML = `<div class="stack fp">
+      <ol class="fp-steps"><li data-s="1" class="on">Worker</li><li data-s="2">Montage</li><li data-s="3">Firmware</li><li data-s="4">Flash</li><li data-s="5">Vérification</li></ol>
+      <div class="field"><label>Worker</label><select class="select" id="fp-w">${workers.map((w) => `<option value="${w.id}" ${String(w.id) === worker ? 'selected' : ''}>W${w.id}${w.label ? ' · ' + esc(w.label) : ''} · ${esc(w.state)}</option>`).join('') || '<option value="">Aucun worker en ligne</option>'}</select><div class="hint" id="fp-chip"></div></div>
+      <div id="fp-montage"></div>
+      <label class="switch"><input type="checkbox" id="fp-ready"><span class="track"></span>Le montage est câblé comme sur le schéma</label>
+      <div id="fp-src" class="card pad small"></div>
+      <button class="btn primary lg" id="fp-go" disabled>${icon('zap')}Compiler, flasher et vérifier</button>
+      <div class="card" id="fp-run" hidden><div class="card-b stack" style="gap:10px">
+        <div class="row between"><b id="fp-stage">…</b><span class="num muted" id="fp-time"></span></div>
+        <div class="meter" id="fp-meter"><i style="width:0"></i></div>
+        <pre class="fl-log" id="fp-log" style="max-height:220px"></pre><div id="fp-res"></div></div></div></div>`;
+    const step = (n) => d.body.querySelectorAll('.fp-steps li').forEach((li) => { li.className = Number(li.dataset.s) < n ? 'done' : Number(li.dataset.s) === n ? 'on' : ''; });
+    const stage = (t, pct, time) => { $('#fp-stage', d.body).textContent = t; if (pct != null) $('#fp-meter i', d.body).style.width = pct + '%'; $('#fp-time', d.body).textContent = time || ''; };
+    const logBox = $('#fp-log', d.body);
+    const goBtn = $('#fp-go', d.body);
+
+    async function prepare() {
+      goBtn.disabled = true;
+      worker = $('#fp-w', d.body).value;
+      if (!worker) { $('#fp-src', d.body).innerHTML = `${icon('alert')} Allume un worker : il apparaît ici dès qu'il rejoint le Wi-Fi du MASTER.`; return; }
+      try { const info = await api('/api/worker/info?id=' + encodeURIComponent(worker)); board = chipBoard(info.chip); $('#fp-chip', d.body).textContent = `Carte détectée : ${BOARD_NAMES[board]}${info.chip ? ' (' + info.chip + ')' : ''}. Le code est adapté à cette carte.`; } catch (e) { $('#fp-chip', d.body).textContent = 'Carte non identifiée : ESP32 supposé.'; }
+      if (cancelled) return;
+      // montage pour la carte du worker
+      if (baseSpec) {
+        try {
+          res = LAB.generate(Object.assign({}, baseSpec, { board }));
+          const m = LAB.montageSvg ? LAB.montageSvg(res, { id: pid, title }) : null;
+          $('#fp-montage', d.body).innerHTML = `<h3 style="margin:4px 0 8px">Montage à réaliser sur W${esc(worker)}</h3>${m ? `<div class="montage">${m.svg}</div>` : ''}<details style="margin-top:8px"><summary class="small">Tableau de câblage</summary>${A.wiringTable(res)}</details>` +
+            (res.warnings || []).map((w) => `<div class="banner warn" style="margin-top:8px">${icon('alert')}<div>${esc(w)}</div></div>`).join('');
+        } catch (e) { $('#fp-montage', d.body).innerHTML = `<div class="banner warn">${icon('alert')}<div>${esc(e.message)}</div></div>`; return; }
+      } else if (lib) $('#fp-montage', d.body).innerHTML = await A.montageHtml({ kind: 'esp', id: lib.id, board });
+      step(2);
+      // source du firmware : microSD du S3 (projet de la bibliothèque déjà compilé) → Pi → rien
+      source = null;
+      const src = $('#fp-src', d.body);
+      if (lib && !opts.spec && (await sdHas(espBin(lib.id, board)))) {
+        source = { kind: 'sd', path: espBin(lib.id, board) };
+        src.innerHTML = `${icon('sd')} <b>Firmware déjà compilé</b> sur la microSD du S3 : flash immédiat, le Pi n'est pas nécessaire.`;
+      } else if (piReady()) {
+        try {
+          const est = await A.piRequest(`/api/v1/build/estimate?project=${encodeURIComponent(pid)}&board=${board}`);
+          source = { kind: 'pi', est };
+          const how = est.basis === 'cache' ? 'déjà dans le cache du Pi' : est.basis === 'project' ? 'd\'après la dernière compilation de ce projet' : est.basis === 'board' ? `d'après ${est.samples} compilation(s) ${BOARD_NAMES[board]}` : 'première compilation sur ce Pi : estimation prudente';
+          src.innerHTML = `${icon('cpu')} <b>Nouveau firmware compilé par le Pi</b> · temps prévu <b>≈ ${mmss(est.total_s)}</b> <span class="muted">(${how}${est.ahead ? `, ${est.ahead} compilation(s) avant la tienne` : ''})</span>${est.arduino_cli ? '' : `<div class="banner warn" style="margin-top:8px">${icon('alert')}<div>arduino-cli n'est pas installé sur le Pi : lance <code>sudo bash pi/setup_arduino.sh</code>.</div></div>`}`;
+        } catch (e) { src.innerHTML = `${icon('alert')} Pi injoignable (${esc(e.message)}).`; }
+      }
+      if (!source) {
+        $('#fp-src', d.body).innerHTML = `<div class="banner warn" style="margin:0">${icon('alert')}<div>Ce projet n'est pas encore compilé et le Pi n'est pas connecté. Branche le Pi (écran Compagnon Pi), lance <code>scripts\\compile_all.bat</code> sur un PC, ou télécharge le code pour l'Arduino IDE.</div></div><button class="btn sm" id="fp-ino" style="margin-top:8px">${icon('download')}Code .ino</button>`;
+        const b = $('#fp-ino', d.body); if (b && res) b.onclick = () => download(pid + '.ino', res.code);
+      }
+      goBtn.disabled = !source || !$('#fp-ready', d.body).checked;
+    }
+
+    async function compileOnPi() {
+      const files = res ? { [pid + '.ino']: res.code, 'project.json': JSON.stringify({ id: pid, title, board, spec: Object.assign({}, baseSpec, { board }), generator: 'ESP32 LAB Studio' }, null, 1) } : null;
+      const body = { project_id: pid, board, priority: 70 };
+      if (files && !lib) body.files = files;
+      const q = await piJ('/api/v1/build', body);
+      const eta = source.est ? source.est.total_s : 300;
+      const t0 = Date.now();
+      for (;;) {
+        if (cancelled) return null;
+        await A.sleep(2000);
+        let j; try { j = await A.piRequest('/api/v1/jobs/' + encodeURIComponent(q.id)); } catch (e) { continue; }
+        const el = (Date.now() - t0) / 1000;
+        const pct = j.status === 'success' ? 100 : Math.max(j.progress || 0, Math.min(95, Math.round(100 * el / Math.max(eta, 1))));
+        stage(j.status === 'queued' || j.status === 'claimed' ? 'En attente dans la file du Pi' : `Compilation sur le Pi : ${j.stage || j.status}`, pct, `${mmss(el)} écoulées · reste ≈ ${mmss(Math.max(0, eta - el))}`);
+        if (j.log) logBox.textContent = j.log.split('\n').slice(-12).join('\n');
+        if (j.status === 'success') return { job: q.id, sha256: j.sha256, elapsed: el };
+        if (j.status === 'failed' || j.status === 'canceled') {
+          let diag = '';
+          try { const r = await piJ('/api/v1/patricia/diagnose', { log: j.log || '', kind: 'compile' }); diag = (r.findings || []).map((f) => `<li><b>${esc(f.title)}</b> ${esc((f.fixes || [])[0] || f.explanation || '')}</li>`).join(''); } catch (e) { /* Patricia absente */ }
+          throw new Error(`Compilation échouée${j.error ? ' : ' + j.error : ''}${diag ? `<ul class="small" style="margin:6px 0 0;padding-left:18px">${diag}</ul>` : ''}`);
+        }
+      }
+    }
+
+    async function run() {
+      goBtn.disabled = true; $('#fp-w', d.body).disabled = true;
+      $('#fp-run', d.body).hidden = false; $('#fp-res', d.body).innerHTML = '';
+      $('#fp-run', d.body).scrollIntoView({ behavior: 'smooth' });
+      const expect = res ? res.outs.filter((o) => o.module !== 'Variable').slice(0, 4).map((o) => o.key) : [];
+      try {
+        step(3);
+        if (source.kind === 'sd') {
+          stage('Firmware lu sur la microSD du S3', 30);
+          await post('/api/worker/flash', { id: worker, path: source.path, mode: 'project' });
+        } else {
+          const b = await compileOnPi();
+          if (!b) return;
+          step(4); stage('Le S3 autorise l\'OTA, le worker télécharge le firmware…', 96, `compilé en ${mmss(b.elapsed)}`);
+          const link = await A.piRequest('/api/v1/jobs/' + encodeURIComponent(b.job) + '/firmware-link');
+          await post('/api/worker/flash/remote', { id: worker, url: link.url, sha256: b.sha256, mode: 'project' });
+        }
+        step(4);
+        logBox.textContent = '';
+        const secs = 25;
+        const { text, state } = await A.readWorkerSerial(worker, secs, (s, t, st) => {
+          stage(st === 'FLASHING' ? 'Flash du worker en cours' : `Lecture du moniteur de W${worker}`, Math.min(100, Math.round(100 * s / secs)), `${s}/${secs} s`);
+          if (s > 3) step(5);
+          logBox.textContent = t.split('\n').slice(-14).join('\n');
+        });
+        if (cancelled) return;
+        step(6);
+        let v = null;
+        if (piReady()) { try { v = await piJ('/api/v1/patricia/verify', { log: text, expect: expect.map((k) => '(^|\\t)' + k + ':') }); } catch (e) { v = null; } }
+        if (!v) v = A.localVerdict(text, expect);
+        const ok = v.verdict === 'ok', fail = v.verdict === 'echec';
+        $('#fp-meter', d.body).className = 'meter ' + (ok ? 'ok' : fail ? 'bad' : 'warn');
+        stage(ok ? 'Ça fonctionne' : fail ? 'Échec' : 'Résultat incertain', 100, state ? 'worker ' + state : '');
+        $('#fp-res', d.body).innerHTML = `<div class="banner ${ok ? '' : 'warn'}" style="margin:0">${icon(ok ? 'check' : 'alert')}<div><b>${ok ? `« ${esc(title)} » tourne sur W${esc(worker)}.` : fail ? 'Le moniteur montre un problème.' : 'Je n\'ai pas pu confirmer que tout marche.'}</b><ul class="small" style="margin:6px 0 0;padding-left:18px">${(v.reasons || []).map((r) => `<li>${esc(r)}</li>`).join('')}</ul>
+          ${!text.trim() ? '<div class="hint">Aucune sortie reçue : active « Envoyer les mesures au MASTER » dans le Studio, ou branche la carte en USB au S3.</div>' : ''}</div></div>
+          <div class="row wrap" style="margin-top:10px">${ok ? '' : `<button class="btn sm" id="fp-ask">${icon('sparkles')}Demander à Patricia</button>`}<a class="btn sm" href="#sensors">${icon('activity')}Capteurs en direct</a><a class="btn sm" href="#workers">${icon('cpu')}Workers</a></div>`;
+        const ask = $('#fp-ask', d.body);
+        if (ask) ask.onclick = () => { d.close(); A.go('assistant'); setTimeout(() => A.Patricia && A.Patricia.ask && A.Patricia.ask(`Le projet « ${title} » flashé sur W${worker} ne marche pas. Moniteur :\n${text.slice(-1500)}`), 400); };
+        if (piReady() && !lib) piJ('/api/v1/patricia/notes', { text: `Flash de « ${title} » sur W${worker} (${BOARD_NAMES[board]}) : ${ok ? 'fonctionne' : fail ? 'échec' : 'incertain'}.`, project: pid, kind: 'journal' }).catch(() => {});
+      } catch (e) {
+        $('#fp-meter', d.body).className = 'meter bad';
+        stage('Arrêté', null);
+        $('#fp-res', d.body).innerHTML = `<div class="banner warn" style="margin:0">${icon('alert')}<div>${String(e.message || e).includes('<ul') ? e.message : esc(e.message || String(e))}</div></div>`;
+        goBtn.disabled = false; $('#fp-w', d.body).disabled = false;
+      }
+    }
+
+    $('#fp-w', d.body).onchange = prepare;
+    $('#fp-ready', d.body).onchange = (e) => { goBtn.disabled = !source || !e.target.checked; if (e.target.checked) step(3); };
+    goBtn.onclick = run;
+    prepare();
+  };
+
+  A.commands.push({ title: 'Flasher le projet du Studio sur un worker', group: 'Action', icon: 'zap', run: () => A.actions['st-flash'] && A.actions['st-flash']() });
+})();
 /* ---- 50_sys.js ---- */
 /* Pages système : fichiers microSD, USB & Arduino, assistant, réglages. */
 (function () {
@@ -3295,62 +3663,9 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
 
   /* La page « USB & Flash » (moniteur série + programmation Arduino/ESP32) est dans 46_flash.js. */
 
-  /* ================================================================ */
-  /* Assistant                                                        */
-  /* ================================================================ */
-  const SUGGEST = ['Quel est l\'état du labo ?', 'Lance un check-up de tous les workers', 'Comment brancher un BME280 ?', 'Pourquoi mon DHT22 renvoie nan ?', 'Quelle broche pour un capteur analogique ?', 'Benchmark de la flotte'];
-  A.page({
-    id: 'assistant', title: 'Assistant', icon: 'chat', group: 'build',
-    desc: 'Questions sur le labo, le câblage et les capteurs',
-    render(el) {
-      const hist = store.get('chat', []);
-      el.innerHTML = `<div class="grid g-3"><div class="card span-2" style="display:flex;flex-direction:column"><div class="chat" id="ch-log"></div>
-        <div class="chips scroll" style="padding:0 12px 10px" id="ch-sug">${SUGGEST.map((s) => `<button class="chip">${esc(s)}</button>`).join('')}</div>
-        <form class="chat-input" id="ch-form"><input class="input" id="ch-in" placeholder="Posez votre question…" maxlength="500" autocomplete="off"><button class="btn primary" type="submit">${icon('play')}<span class="hide-sm">Envoyer</span></button></form></div>
-        <div class="stack"><div class="card pad small"><h3 style="margin-bottom:8px">Ce que sait faire l'assistant</h3><ul style="margin:0;padding-left:18px;color:var(--text-2)"><li>Résumer l'état du laboratoire (workers, jobs, mémoire, microSD).</li><li>Lancer des actions sûres : « check-up », « benchmark », « scan i2c », « ping », « identifie ».</li><li>Répondre sur les capteurs du catalogue : câblage, bibliothèques, pièges.</li><li>Avec une IA en ligne configurée (Réglages) : réponses complètes, réservées à l'administrateur.</li></ul></div>
-          <div class="card pad small"><h3 style="margin-bottom:8px">Confidentialité</h3><p class="muted">En mode local, rien ne quitte le MASTER. Le mode en ligne n'envoie que votre question et un résumé de l'état du labo.</p><button class="btn sm" style="margin-top:10px" id="ch-clear">${icon('trash')}Effacer la conversation</button></div></div></div>`;
-      const log = $('#ch-log', el);
-      const push = (who, text, extra) => {
-        const m = document.createElement('div');
-        m.className = 'msg ' + who;
-        m.innerHTML = linkify(esc(text)) + (extra ? `<span class="mode">${esc(extra)}</span>` : '');
-        log.appendChild(m);
-        log.scrollTop = log.scrollHeight;
-        return m;
-      };
-      if (!hist.length) push('bot', 'Bonjour ! Je connais l\'état du laboratoire et les ' + ((window.LAB.MODULES || []).length) + ' modules du catalogue. Posez une question ou choisissez une suggestion.');
-      hist.forEach((h) => push(h.who, h.text, h.extra));
-      const ask = async (q) => {
-        q = q.trim();
-        if (!q) return;
-        push('me', q);
-        const wait = push('bot', '…');
-        let r = null;
-        const local = catalogAnswer(q);
-        try {
-          if (A.piRequest) r = await A.piRequest('/api/v1/assistant/chat', { method: 'POST', body: JSON.stringify({ q }) });
-        } catch (e) { /* Le Pi peut être arrêté : le MASTER garde ses réponses locales. */ }
-        if (!r) {
-          try { r = await api('/api/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ q }).toString() }); }
-          catch (e) { r = { answer: e.status === 429 ? 'Patientez une seconde entre deux questions.' : 'Assistant injoignable : ' + e.message, mode: 'erreur' }; }
-        }
-        let answer = r.answer || '';
-        if (local && (r.mode === 'local' || r.mode === 'erreur')) answer = local + (answer && r.mode === 'local' ? '\n\n' + answer : '');
-        const extra = [r.mode === 'online' ? 'IA en ligne' : r.mode === 'research' ? 'recherche web' : r.mode === 'local' ? 'mode local' : r.mode].concat(r.actions || []).filter(Boolean).join(' · ');
-        wait.innerHTML = linkify(esc(answer)) + `<span class="mode">${esc(extra)}</span>`;
-        log.scrollTop = log.scrollHeight;
-        const h = store.get('chat', []).concat([{ who: 'me', text: q }, { who: 'bot', text: answer, extra }]).slice(-40);
-        store.set('chat', h);
-        if (r.actions && r.actions.length) A.refreshState();
-      };
-      $('#ch-form', el).addEventListener('submit', (e) => { e.preventDefault(); const i = $('#ch-in', el); ask(i.value); i.value = ''; });
-      $('#ch-sug', el).addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) ask(b.textContent); });
-      $('#ch-clear', el).onclick = () => { store.set('chat', []); A.refresh(); };
-      setTimeout(() => $('#ch-in', el).focus(), 50);
-    }
-  });
-  const linkify = (h) => h.replace(/(#library\?p=[a-z0-9_]+)/g, '<a href="$1" style="color:inherit;text-decoration:underline">ouvrir la fiche</a>');
+  /* La page « Patricia » (assistante) est dans 55_patricia.js ; elle réutilise catalogAnswer ci-dessous. */
   /* Réponses immédiates tirées du catalogue embarqué (fonctionne sans Internet). */
+  A.catalogAnswer = catalogAnswer;
   function catalogAnswer(q) {
     const LAB = window.LAB, nq = A.norm(q);
     if (!LAB.MODULES) return null;
@@ -3571,6 +3886,1973 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
         <div class="card pad small"><h3 style="margin-bottom:8px">Mode démonstration</h3><p class="muted">Ouvrez l'interface avec <code>?demo</code> pour la parcourir sans matériel (données simulées). Le fichier <code>index.html</code> fonctionne aussi hors de la carte.</p>
           <h3 style="margin:14px 0 8px">Protocole capteurs</h3><p class="muted">UDP port 4213 : <code>LAB|appareil|clé|valeur|unité</code> — publiez depuis n'importe quel microcontrôleur.</p><div class="row" style="margin-top:14px"><a class="btn" href="?demo#dash">${icon('eye')}Voir la démo</a></div></div></div>`;
     }
+  };
+})();
+/* ---- 55_patricia.js ---- */
+/* Patricia — assistante du laboratoire (remplace l'ancienne page « Assistant »).
+ * Le cerveau tourne sur le Raspberry Pi (pi/patricia) : mémoire durable, diagnostic, IA locale ou en ligne,
+ * pilotage de flotte. Sans Pi, la page garde les réponses locales du catalogue et l'agent du MASTER.
+ * Voix : pont natif de l'APK NEXUS (reconnaissance Android), sinon Web Speech du navigateur (HTTPS ou
+ * localhost requis par les navigateurs pour le micro), sinon enregistrement WAV transcrit par Vosk sur le Pi. */
+(function () {
+  'use strict';
+  const A = window.APP, $ = A.$, $$ = A.$$, esc = A.esc, icon = A.icon, toast = A.toast, store = A.store;
+  const P = (A.Patricia = {});
+  const SESSION = store.get('patricia.session', null) || ('s' + Date.now().toString(36));
+  store.set('patricia.session', SESSION);
+  const prefs = Object.assign({ speak: false, handsfree: false, voice: '', rate: 0.92, style: 'scientifique' }, store.get('patricia.prefs', {}));
+  const savePrefs = () => store.set('patricia.prefs', prefs);
+  let piOk = null, voiceCaps = { stt: false, tts: false };
+
+  /* ------------------------------------------------------------ appels Pi */
+  /* Délai maximal : 8 s pour la mémoire, 150 s pour une réponse d'IA locale sur le Pi 4. */
+  async function pi(path, opts, ms) {
+    if (!A.piRequest) throw new Error('Compagnon Pi non chargé');
+    const ctl = window.AbortController ? new AbortController() : null;
+    const t = ctl ? setTimeout(() => ctl.abort(), ms || 8000) : null;
+    try { return await A.piRequest(path, Object.assign({}, opts || {}, ctl ? { signal: ctl.signal } : {})); }
+    catch (e) { throw e.name === 'AbortError' ? new Error('le Pi ne répond pas (' + Math.round((ms || 8000) / 1000) + ' s)') : e; }
+    finally { if (t) clearTimeout(t); }
+  }
+  const piJSON = (path, body, ms) => pi(path, { method: 'POST', body: JSON.stringify(body || {}) }, ms);
+  P.pi = pi; P.piJSON = piJSON;
+
+  function labContext() {
+    const st = A.S.state || {};
+    return { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label, ip: w.ip, job: w.job })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+  }
+
+  /* ------------------------------------------------------------ texte riche */
+  function rich(text) {
+    let h = esc(text || '');
+    h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => `<pre class="pa-code">${code}</pre>`);
+    h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    h = h.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+    h = h.replace(/(#library\?p=[a-z0-9_]+)/g, '<a href="$1">ouvrir la fiche</a>');
+    return h;
+  }
+
+  /* ------------------------------------------------------------ voix */
+  const Voice = (P.voice = {
+    native: () => !!(window.NexusNative && window.NexusNative.listen),
+    web: () => !!(window.SpeechRecognition || window.webkitSpeechRecognition) && window.isSecureContext,
+    rec: () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext && voiceCaps.stt,
+    available() { return this.native() || this.web() || this.rec(); },
+    why() {
+      if (!window.isSecureContext) return 'Les navigateurs n\'ouvrent le micro que sur une page sécurisée (HTTPS). Utilise l\'application Android NEXUS (micro natif), ou dans Chrome : chrome://flags → « Insecure origins treated as secure » → ajoute http://192.168.4.1.';
+      return 'Ce navigateur n\'a pas de reconnaissance vocale. Essaie Chrome, l\'application Android NEXUS, ou installe Vosk sur le Pi (pi/setup_patricia.sh --voice).';
+    },
+    listening: false,
+    stopFn: null,
+    listen(onText, onState) {
+      if (this.listening) { this.stop(); return; }
+      if (this.native()) {
+        window.__nexusVoice = (ok, text) => { this.listening = false; onState(false); if (ok && text) onText(text); else if (!ok) toast(text || 'Rien entendu', 'warn'); };
+        this.listening = true; onState(true);
+        window.NexusNative.listen('fr-FR');
+        this.stopFn = () => { try { window.NexusNative.stopListening(); } catch (e) { /* ignoré */ } };
+        return;
+      }
+      if (this.web()) {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const r = new SR();
+        r.lang = 'fr-FR'; r.interimResults = true; r.maxAlternatives = 1; r.continuous = false;
+        let final = '';
+        r.onresult = (e) => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) final += e.results[i][0].transcript; else interim += e.results[i][0].transcript; } onState(true, final + interim); };
+        r.onerror = (e) => { if (e.error !== 'no-speech' && e.error !== 'aborted') toast('Micro : ' + (e.error === 'not-allowed' ? 'accès refusé' : e.error), 'warn'); };
+        r.onend = () => { this.listening = false; onState(false); if (final.trim()) onText(final.trim()); };
+        this.listening = true; onState(true);
+        r.start();
+        this.stopFn = () => r.stop();
+        return;
+      }
+      if (this.rec()) { this.recordWav(onText, onState); return; }
+      toast(this.why(), 'warn', 9000);
+    },
+    stop() { if (this.stopFn) this.stopFn(); this.stopFn = null; },
+    /* Enregistrement PCM 16 kHz mono → WAV → Vosk sur le Pi (fonctionne sans Internet). */
+    async recordWav(onText, onState) {
+      let stream;
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } }); }
+      catch (e) { toast('Micro refusé : ' + e.message, 'warn'); return; }
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ctx.createMediaStreamSource(stream);
+      const proc = ctx.createScriptProcessor(4096, 1, 1);
+      const chunks = []; let silent = 0, heard = false;
+      proc.onaudioprocess = (e) => {
+        const d = e.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d));
+        let rms = 0; for (let i = 0; i < d.length; i++) rms += d[i] * d[i]; rms = Math.sqrt(rms / d.length);
+        if (rms > 0.02) { heard = true; silent = 0; } else if (heard && ++silent > Math.ceil(ctx.sampleRate * 1.4 / 4096)) finish();
+      };
+      src.connect(proc); proc.connect(ctx.destination);
+      this.listening = true; onState(true, 'J\'écoute… (silence = fin)');
+      const timer = setTimeout(() => finish(), 15000);
+      const self = this;
+      let done = false;
+      async function finish() {
+        if (done) return; done = true; clearTimeout(timer);
+        proc.disconnect(); src.disconnect(); stream.getTracks().forEach((t) => t.stop());
+        const rate = ctx.sampleRate; ctx.close();
+        self.listening = false; onState(false);
+        const wav = encodeWav(chunks, rate, 16000);
+        try {
+          const r = await fetch(A.piBase() + '/api/v1/patricia/stt', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'audio/wav' }, body: wav });
+          const j = await r.json(); if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+          if (j.text) onText(j.text); else toast('Rien compris, réessaie plus près du micro.', 'warn');
+        } catch (e) { toast('Transcription : ' + e.message, 'bad'); }
+      }
+      this.stopFn = finish;
+    },
+    speak(text) {
+      text = String(text || '').replace(/[•#*`]/g, ' ').slice(0, 600);
+      if (!text.trim()) return Promise.resolve();
+      const pitch = prefs.style === 'complice' ? 1.12 : 1.03;
+      if (window.NexusNative && window.NexusNative.speakWith) { window.NexusNative.speakWith(text, prefs.rate, pitch); return new Promise((r) => setTimeout(r, Math.min(20000, 66 * text.length / prefs.rate))); }
+      if (window.NexusNative && window.NexusNative.speak) { window.NexusNative.speak(text); return new Promise((r) => setTimeout(r, Math.min(15000, 60 * text.length))); }
+      if (window.speechSynthesis) {
+        return new Promise((res) => {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'fr-FR'; u.rate = prefs.rate; u.pitch = pitch;
+          const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
+          const v = vs.find((x) => x.name === prefs.voice) || vs.find((x) => /female|amelie|audrey|julie|denise|hortense|google/i.test(x.name)) || vs[0];
+          if (v) u.voice = v;
+          u.onend = res; u.onerror = res;
+          speechSynthesis.cancel(); speechSynthesis.speak(u);
+        });
+      }
+      if (voiceCaps.tts) {
+        return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text, speed: 1 / prefs.rate }) })
+          .then((r) => r.blob()).then((b) => new Promise((res) => { const a = new Audio(URL.createObjectURL(b)); a.onended = res; a.onerror = res; a.play().catch(res); }));
+      }
+      return Promise.resolve();
+    }
+  });
+  function encodeWav(chunks, inRate, outRate) {
+    const total = chunks.reduce((n, c) => n + c.length, 0), ratio = inRate / outRate, n = Math.floor(total / ratio);
+    const flat = new Float32Array(total); let o = 0; chunks.forEach((c) => { flat.set(c, o); o += c.length; });
+    const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (p, s) => { for (let i = 0; i < s.length; i++) v.setUint8(p + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, outRate, true); v.setUint32(28, outRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, flat[Math.floor(i * ratio)])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+
+  /* ------------------------------------------------------------ cartes */
+  const STATUS_LABEL = { idee: 'idée', conception: 'conception', cablage: 'câblage', code: 'code', test: 'essais', termine: 'terminé', pause: 'en pause' };
+  function cardHtml(c, i) {
+    switch (c.type) {
+      case 'projects': return `<div class="pa-card"><div class="pa-card-h">${icon('folder')}Projets</div>${(c.items || []).map((p) => `<button class="pa-row" data-say="On reprend ${esc(p.title)}"><b>${esc(p.title)}</b><span class="badge">${esc(p.status_label || STATUS_LABEL[p.status] || p.status)}</span><span class="muted small grow ellipsis">${esc(p.next_step || '')}</span></button>`).join('')}</div>`;
+      case 'project': { const p = c.project || {}; return `<div class="pa-card"><div class="pa-card-h">${icon('folder')}${esc(p.title)} <span class="badge accent">${esc(p.status_label || '')}</span></div><div class="small">${esc(p.goal || '')}</div>${p.modules && p.modules.length ? `<div class="chips" style="margin-top:6px">${p.modules.map((m) => `<span class="chip">${esc(m)}</span>`).join('')}</div>` : ''}${p.next_step ? `<div class="hint" style="margin-top:6px">Prochaine étape : ${esc(p.next_step)}</div>` : ''}</div>`; }
+      case 'note': return `<div class="pa-card"><div class="pa-card-h">${icon('pin')}Note enregistrée</div><div class="small">${esc(c.note.body)}</div></div>`;
+      case 'notes': return `<div class="pa-card"><div class="pa-card-h">${icon('pin')}Notes</div>${c.items.slice(0, 12).map((n) => `<div class="pa-row"><span class="badge">${esc(n.kind)}</span><span class="grow small">${esc(n.body.slice(0, 180))}</span><span class="muted small">${esc((n.at || '').slice(0, 10))}</span></div>`).join('')}</div>`;
+      case 'memory': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('history')}Souvenirs</div>${c.items.map((h) => `<div class="pa-row"><span class="badge">${esc(h.kind)}</span><span class="grow small"><b>${esc(h.title)}</b> — ${esc(h.snippet || '')}</span></div>`).join('')}</div>` : '';
+      case 'catalog': return `<div class="pa-card"><div class="pa-card-h">${icon('book')}Bibliothèque</div>${(c.items || []).map((p) => `<a class="pa-row" href="#library?p=${esc(p.id)}"><b>${esc(p.title)}</b><span class="muted small grow ellipsis">${esc((p.boards || []).join(' · '))}</span>${icon('chevron')}</a>`).join('')}</div>`;
+      case 'diagnosis': return `<div class="pa-card ${c.severity === 'bad' ? 'bad' : ''}"><div class="pa-card-h">${icon('alert')}Diagnostic (${esc(c.kind)})</div>${(c.findings || []).map((f) => `<details class="pa-find" ${f.severity === 'bad' ? 'open' : ''}><summary><span class="badge ${f.severity === 'bad' ? 'bad' : f.severity === 'warn' ? 'warn' : 'info'}">${f.severity === 'bad' ? 'erreur' : f.severity === 'warn' ? 'attention' : 'info'}</span> ${esc(f.title)}${f.line ? ` · ligne ${f.line}` : ''}</summary><div class="small">${esc(f.explanation)}</div>${(f.fixes || []).length ? `<ul class="small">${f.fixes.map((x) => `<li>${rich(x)}</li>`).join('')}</ul>` : ''}${f.evidence ? `<pre class="pa-code">${esc(f.evidence)}</pre>` : ''}</details>`).join('') || '<div class="small muted">Aucune signature connue.</div>'}</div>`;
+      case 'generate': return `<div class="pa-card" data-gen="${i}"><div class="pa-card-h">${icon('code')}${esc(c.title || 'Projet')} · ${esc(c.board)}</div><div class="pa-gen-body small muted">Génération…</div></div>`;
+      case 'fleet': return `<div class="pa-card"><div class="pa-card-h">${icon('car')}Flotte</div><div class="row wrap"><a class="btn sm" href="#vehicles">${icon('radar')}Ouvrir l'écran Flotte</a><button class="btn sm danger" data-estop>${icon('stop')}ARRÊT</button></div></div>`;
+      case 'lab': { const st = A.S.state || {}; const ws = st.workers || []; return `<div class="pa-card"><div class="pa-card-h">${icon('cpu')}Workers</div><div class="pa-workers">${ws.map((w) => `<span class="pa-w ${w.state === 'OFFLINE' ? 'off' : ''}" title="${esc(w.state)}">W${w.id}<small>${esc(w.state || '')}</small></span>`).join('') || '<span class="muted small">Aucun</span>'}</div></div>`; }
+      case 'pi_projects': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('sd')}Sur la microSD du Pi</div><div class="chips">${c.items.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : '';
+      default: return '';
+    }
+  }
+  function renderGenerate(box, c) {
+    const body = $('.pa-gen-body', box);
+    let res;
+    try { res = window.LAB.generate({ board: c.board || 'esp32', title: c.title || 'Projet', modules: (c.modules || []).map((id) => ({ id })) }); }
+    catch (e) { body.textContent = 'Génération impossible : ' + e.message; return; }
+    const mont = window.LAB.montageSvg ? window.LAB.montageSvg(res, { title: c.title }) : null;
+    body.className = 'pa-gen-body';
+    body.innerHTML = `<div class="seg" style="margin-bottom:8px"><button data-t="wiring" class="${c.show === 'code' ? '' : 'on'}">Câblage</button><button data-t="code" class="${c.show === 'code' ? 'on' : ''}">Code</button><button data-t="libs">Bibliothèques</button></div>
+      <div data-p="wiring" ${c.show === 'code' ? 'hidden' : ''}>${mont ? `<div class="pa-svg">${mont.svg}</div>` : ''}<table class="pa-wire"><tbody>${res.wiring.map((w) => `<tr><td>${esc(w.mod || '')}</td><td>${esc(w.pin)}</td><td>→</td><td><b>${esc(w.to)}</b></td></tr>`).join('')}</tbody></table>${res.warnings.length ? `<div class="banner warn small">${icon('alert')}<div>${res.warnings.map(esc).join('<br>')}</div></div>` : ''}</div>
+      <div data-p="code" ${c.show === 'code' ? '' : 'hidden'}>${A.codeBlock(res.code, '360px')}</div>
+      <div data-p="libs" hidden><ul class="small">${(res.libs || []).map((l) => `<li>${esc(l.name || l)} ${esc(l.ver || '')}</li>`).join('') || '<li>Aucune bibliothèque externe</li>'}</ul><div class="hint">Variables publiées : ${(res.outs || []).map((o) => `<code>${esc(o.key)}</code> (${esc(o.unit || '')})`).join(', ') || '—'}</div></div>
+      <div class="row wrap" style="margin-top:8px"><button class="btn sm" data-a="copy">${icon('copy')}Copier le code</button><button class="btn sm" data-a="dl">${icon('download')}.ino</button><button class="btn sm" data-a="studio">${icon('wand')}Ouvrir dans le Studio</button><button class="btn sm primary" data-a="save">${icon('save')}Enregistrer sur le Pi</button></div>`;
+    body.addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-t]');
+      if (t) { $$('[data-t]', body).forEach((b) => b.classList.toggle('on', b === t)); $$('[data-p]', body).forEach((p) => { p.hidden = p.dataset.p !== t.dataset.t; }); return; }
+      const a = e.target.closest('[data-a]'); if (!a) return;
+      if (a.dataset.a === 'copy') A.copyText(res.code);
+      if (a.dataset.a === 'dl') A.download((c.project || 'projet') + '.ino', res.code);
+      if (a.dataset.a === 'studio') A.openInStudio({ title: c.title, board: c.board || 'esp32', modules: (c.modules || []).map((id) => ({ id })), rules: [], options: {} }, 'wiring');
+      if (a.dataset.a === 'save') await saveToPi(c, res);
+    });
+  }
+  async function saveToPi(c, res) {
+    const id = (c.project || A.norm(c.title || 'projet').replace(/[^a-z0-9]+/g, '_')).slice(0, 60).replace(/^_+|_+$/g, '') || 'projet';
+    const meta = { title: c.title, board: res.board, spec: { board: res.board, title: c.title, modules: (c.modules || []).map((x) => ({ id: x })) }, outs: res.outs, wiring: res.wiring, created_by: 'Patricia' };
+    const readme = `# ${c.title}\n\nCarte : ${res.boardName}\n\n## Câblage\n\n${res.wiring.map((w) => `- ${w.mod || ''} ${w.pin} → ${w.to}`).join('\n')}\n\n## Bibliothèques\n\n${(res.libs || []).map((l) => `- ${l.name || l} ${l.ver || ''}`).join('\n') || '- aucune'}\n`;
+    try { await A.piSaveProject(id, { [id + '.ino']: res.code, 'project.json': JSON.stringify(meta, null, 2), 'README.md': readme }); toast('Projet « ' + id + ' » enregistré sur la microSD du Pi', 'ok'); return id; }
+    catch (e) { toast('Pi : ' + e.message, 'bad'); return null; }
+  }
+
+  /* ------------------------------------------------------------ actions confirmées */
+  const RISK = { aucun: '', faible: 'info', moyen: 'warn', 'élevé': 'bad' };
+  function actionHtml(a) {
+    return `<div class="pa-action" data-aid="${esc(a.id)}"><div class="grow"><div class="small"><b>${esc(a.summary)}</b></div><div class="hint">${a.executor === 'ui' ? 'Exécuté par le MASTER S3' : 'Exécuté par le Pi'}${a.risk && a.risk !== 'aucun' ? ` · risque ${esc(a.risk)}` : ''}</div></div>
+      <button class="btn sm" data-cancel>Annuler</button><button class="btn sm ${a.risk === 'élevé' ? 'danger' : 'primary'}" data-confirm>${a.needs_confirm ? 'Confirmer' : 'Faire'}</button></div>`;
+  }
+  async function runAction(el, a, log) {
+    const row = el.closest('.pa-action');
+    const status = (t, cls) => { row.innerHTML = `<div class="small ${cls || ''}">${t}</div>`; };
+    let res;
+    try { res = await piJSON(`/api/v1/patricia/actions/${a.id}/confirm`, {}, 300000); }
+    catch (e) { status(esc(e.message), 'bad-text'); return; }
+    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); if (a.kind === 'github_push' && res.result && /^https:\/\/github\.com\//.test(res.result.url || '')) row.insertAdjacentHTML('beforeend', `<div class="small"><a href="${esc(res.result.url)}" target="_blank" rel="noopener">${esc(res.result.repo)}</a> · ${res.result.files} fichier(s) · ${res.result.created ? 'dépôt créé' : 'mis à jour'}</div>`); return; }
+    const p = res.params || a.params;
+    try {
+      if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
+      else if (a.kind === 'open_page') { A.go(p.page, p.q || undefined); }
+      else if (a.kind === 'apk') { await apkFlow(p, row, a); }
+      else if (a.kind === 'save_project') { const card = log.querySelector('[data-gen]'); status('Enregistrement…'); const c = card && P._cards[card.dataset.gen]; if (c) { const res2 = window.LAB.generate({ board: c.board, title: c.title, modules: c.modules.map((id) => ({ id })) }); const id = await saveToPi(c, res2); status(id ? `${icon('check')} Enregistré : ${esc(id)}` : 'Échec'); report(a.id, !!id, { id }); } }
+      else if (a.kind === 'flash') { await flashFlow(p, row, a, log); }
+      else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
+    } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
+  }
+  /* APK créée par le Pi depuis un projet de la mémoire : lien direct + QR dans la conversation. */
+  async function apkFlow(p, row, a) {
+    if (!A.AppStudio) throw new Error('Studio APK non chargé');
+    row.innerHTML = '<div class="small">Préparation de l\'application…</div>';
+    const spec = { title: p.title, board: p.board || 'esp32', modules: (p.modules || []).map((id) => ({ id })) };
+    const design = A.AppStudio.fromSpec(spec, p.title);
+    design.id = A.AppStudio.slug(p.project || p.title);
+    row.innerHTML = '<div class="small">Le Pi assemble et signe l\'APK…</div>';
+    const res = await A.AppStudio.publish(design, true);
+    const qr = await A.AppStudio.qrUrl(res);
+    row.innerHTML = `<div class="pa-card"><div class="pa-card-h">${icon('phone')}<b class="grow">${esc(p.title)} · APK v${esc(res.version)}</b></div>
+      <div class="row wrap" style="gap:12px;align-items:flex-start">${qr ? `<img src="${qr}" alt="QR" width="120" height="120" style="background:#fff;border-radius:8px">` : ''}
+      <div class="grow" style="min-width:0"><a class="btn primary" href="${esc(res.apk_url)}" download>${icon('download')}Télécharger l'APK</a>
+      <div class="small" style="margin-top:6px;word-break:break-all">${esc(res.apk_url)}</div>
+      <div class="small">Appli web : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">ouvrir</a> · <a href="#apkstudio?p=${encodeURIComponent(p.project)}">personnaliser dans le Studio APK</a></div></div></div></div>`;
+    report(a.id, true, { apk: res.apk_url, sha256: res.sha256 });
+  }
+  async function report(aid, ok, details, serial) {
+    try { return await piJSON(`/api/v1/patricia/actions/${aid}/report`, { ok, details, serial_log: serial || '' }); } catch (e) { return null; }
+  }
+  async function watchBuild(jid, row, log) {
+    for (let i = 0; i < 400; i++) {
+      await A.sleep(2500);
+      let j; try { j = await pi('/api/v1/jobs/' + encodeURIComponent(jid)); } catch (e) { continue; }
+      row.innerHTML = `<div class="small">Compilation ${esc(j.project)} (${esc(j.board)}) : ${esc(j.stage || j.status)} · ${j.progress || 0} %</div>`;
+      if (j.status === 'success') { row.innerHTML = `<div class="small">${icon('check')} Compilation réussie · SHA-256 ${esc((j.sha256 || '').slice(0, 12))}…</div>`; return j; }
+      if (j.status === 'failed' || j.status === 'canceled') {
+        row.innerHTML = `<div class="small">Compilation échouée : ${esc(j.error || '')}</div>`;
+        if (j.log) P.ask(j.log.split('\n').slice(-60).join('\n'), { silent: true, label: 'Journal de compilation envoyé à Patricia' });
+        return j;
+      }
+    }
+    return null;
+  }
+  /* Compile sur le Pi → vérifie la puce → OTA autorisée par le S3 → lit le journal → verdict. */
+  async function flashFlow(p, row, a, log) {
+    const say = (t) => { row.innerHTML = `<div class="small">${t}</div>`; };
+    const info = await A.api('/api/worker/info?id=' + encodeURIComponent(p.worker));
+    const chip = String(info.chip || '').toLowerCase(), board = p.board || 'esp32';
+    if ((board === 'esp32s3' && !chip.includes('s3')) || (board === 'esp32c3' && !chip.includes('c3')) || (board === 'esp32' && (chip.includes('s3') || chip.includes('c3'))))
+      throw new Error(`Le worker ${p.worker} est un ${info.chip || 'modèle inconnu'}, le projet vise ${board}.`);
+    say('Compilation sur le Pi…');
+    const q = await piJSON('/api/v1/build', { project_id: p.project, board, priority: 70 });
+    const j = await watchBuild(q.id, row, log);
+    if (!j || j.status !== 'success') { report(a.id, false, { stage: 'build' }); return; }
+    const ok = await A.modal({ title: 'Flasher le worker ' + p.worker, wide: true, danger: true, ok: 'Le montage est prêt, flasher',
+      html: `<p>« ${esc(p.title || p.project)} » (${esc(board)}), SHA-256 ${esc(String(j.sha256).slice(0, 16))}… Le worker quitte le mode labo pendant le projet (BOOT 3 s pour revenir).</p><h3 style="margin:10px 0 8px">Vérifie le montage avant de flasher</h3>${await montageFor(p, board)}` });
+    if (!ok) { say('Flash annulé.'); report(a.id, false, { stage: 'annule' }); return; }
+    const link = await pi('/api/v1/jobs/' + encodeURIComponent(q.id) + '/firmware-link');
+    await A.post('/api/worker/flash/remote', { id: p.worker, url: link.url, sha256: j.sha256, mode: 'project' });
+    say('OTA autorisée par le S3 ; transfert et redémarrage du worker…');
+    await verifyFlow(p.worker, 25, row, a, log, true);
+  }
+  /* Schéma + tableau de câblage du projet : catalogue du S3 si connu, sinon généré depuis les modules en mémoire. */
+  async function montageFor(p, board) {
+    try {
+      if (A.projectById && A.projectById(p.project)) return await A.montageHtml({ kind: 'esp', id: p.project, board });
+      if (!(p.modules || []).length || !window.LAB.generate) return '<div class="small muted">Montage inconnu pour ce projet : vérifie le câblage avec la fiche du projet.</div>';
+      const res = window.LAB.generate({ board, title: p.title || p.project, modules: p.modules.map((id) => (typeof id === 'string' ? { id } : id)) });
+      const m = window.LAB.montageSvg ? window.LAB.montageSvg(res, { title: p.title }) : null;
+      return (m ? `<div class="montage">${m.svg}</div>` : '') + `<div style="margin-top:10px">${A.wiringTable(res)}</div>` +
+        (res.warnings || []).map((w) => `<div class="banner warn" style="margin-top:8px">${icon('alert')}<div>${esc(w)}</div></div>`).join('');
+    } catch (e) { return `<div class="banner warn">${icon('alert')}<div>${esc(e.message)}</div></div>`; }
+  }
+  async function readSerial(worker, seconds, onTick) {
+    let since = 0, text = '', usbPos = 0;
+    try { const l = await A.api(`/api/worker/log?id=${encodeURIComponent(worker)}&since=0`); since = l.last || 0; } catch (e) { /* ignoré */ }
+    try { if (A.S.admin) { const u = await A.api('/api/usb/serial?since=0'); usbPos = u.pos || 0; } } catch (e) { /* pas d'USB */ }
+    const t0 = Date.now();
+    while (Date.now() - t0 < seconds * 1000) {
+      await A.sleep(1500);
+      try { const l = await A.api(`/api/worker/log?id=${encodeURIComponent(worker)}&since=${since}`); since = l.last || since; (l.lines || []).forEach((x) => { text += (x.text || '') + '\n'; }); } catch (e) { /* worker en redémarrage */ }
+      try { if (A.S.admin) { const u = await A.api('/api/usb/serial?since=' + usbPos); usbPos = u.pos || usbPos; if (u.data) text += u.data; } } catch (e) { /* ignoré */ }
+      if (onTick) onTick(Math.round((Date.now() - t0) / 1000), text);
+    }
+    return text;
+  }
+  async function verifyFlow(worker, seconds, row, a, log, afterFlash) {
+    const text = await readSerial(worker, seconds, (s, t) => { row.innerHTML = `<div class="small">${afterFlash ? 'Flash envoyé. ' : ''}Lecture du moniteur du worker ${worker} : ${s}/${seconds} s</div>${t ? `<pre class="pa-code">${esc(t.slice(-600))}</pre>` : ''}`; });
+    const r = await report(a.id, true, { worker }, text || '');
+    const v = r && r.verdict ? r.verdict.verdict : 'incertain';
+    row.innerHTML = `<div class="small"><span class="badge ${v === 'ok' ? 'ok' : v === 'echec' ? 'bad' : 'warn'}">${v === 'ok' ? 'fonctionne' : v === 'echec' ? 'échec' : 'incertain'}</span> ${esc(r ? r.answer : 'Verdict indisponible')}</div>${!text ? '<div class="hint">Aucune sortie reçue. Pour une vérification fiable, branche la carte en USB au S3 (moniteur série) ou active « Envoyer au MASTER » dans le Studio.</div>' : ''}`;
+    if (r && prefs.speak) Voice.speak(r.speak || r.answer);
+  }
+
+  /* ------------------------------------------------------------ conversation */
+  P._cards = [];
+  function bubble(log, who, html, extra) {
+    const m = document.createElement('div');
+    m.className = 'msg ' + who + (who === 'bot' ? ' pa-msg' : '');
+    m.innerHTML = html + (extra ? `<span class="mode">${esc(extra)}</span>` : '');
+    log.appendChild(m); log.scrollTop = log.scrollHeight;
+    return m;
+  }
+  function renderReply(log, m, r) {
+    const cards = (r.cards || []).map((c) => { P._cards.push(c); return cardHtml(c, P._cards.length - 1); }).join('');
+    const acts = (r.actions || []).map(actionHtml).join('');
+    const fu = r.followup ? `<div class="pa-follow"><div class="small"><b>${esc(r.followup.question)}</b></div><div class="chips">${(r.followup.choices || []).map((c) => `<button class="chip" data-say="${esc(c)}" ${r.followup.id ? `data-fu="${r.followup.id}"` : ''}>${esc(c)}</button>`).join('')}</div></div>` : '';
+    const sugg = (r.suggestions || []).length ? `<div class="chips pa-sugg">${r.suggestions.map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : '';
+    const mode = [r.mode === 'ia' ? 'IA' : r.mode === 'local' ? 'hors ligne' : r.mode, r.notice].filter(Boolean).join(' · ');
+    m.innerHTML = `<div>${rich(r.answer)}</div>${cards}${acts}${fu}${sugg}<span class="mode">${esc(mode)}</span>`;
+    $$('[data-gen]', m).forEach((box) => renderGenerate(box, P._cards[box.dataset.gen]));
+    (r.actions || []).forEach((a) => {
+      const row = m.querySelector(`[data-aid="${a.id}"]`);
+      row.querySelector('[data-confirm]').onclick = (e) => runAction(e.target, a, log);
+      row.querySelector('[data-cancel]').onclick = () => { piJSON(`/api/v1/patricia/actions/${a.id}/cancel`, {}).catch(() => {}); row.innerHTML = '<div class="small muted">Annulé.</div>'; };
+    });
+    if (r.project) P.project = r.project;
+    log.scrollTop = log.scrollHeight;
+  }
+  async function localAnswer(q) {
+    let answer = '', mode = 'local';
+    const cat = A.catalogAnswer ? A.catalogAnswer(q) : null;
+    try { const r = await A.api('/api/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ q }).toString() }); answer = r.answer || ''; mode = r.mode || mode; }
+    catch (e) { answer = ''; }
+    return { answer: [cat, answer].filter(Boolean).join('\n\n') || 'Le Pi est injoignable et je n\'ai pas de réponse locale. Vérifie la connexion dans « Compagnon Pi ».', mode: 'MASTER seul · ' + mode, cards: [], actions: [] };
+  }
+  P.ask = async function (q, opts) {
+    opts = opts || {};
+    const log = P.log; if (!log) { store.set('patricia.pending', q); A.go('assistant'); return; }
+    q = String(q || '').trim(); if (!q) return;
+    bubble(log, 'me', esc(opts.label || (q.length > 400 ? q.slice(0, 400) + '…' : q)));
+    const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
+    let r;
+    const context = labContext();
+    try { const f = await A.api('/api/feeds'); context.feeds = (Array.isArray(f) ? f : f.feeds || []).slice(0, 80).map((x) => ({ device: x.source || x.device, key: x.key, value: x.value, unit: x.unit, ip: x.ip, age_ms: x.age_ms })); } catch (e) { /* MASTER injoignable */ }
+    try { r = await piJSON('/api/v1/patricia/chat', { q, session: SESSION, context }, 150000); piOk = true; }
+    catch (e) { piOk = false; r = await localAnswer(q); }
+    renderReply(log, m, r);
+    setPiState();
+    if (prefs.speak && !opts.silent) { await Voice.speak(r.speak || r.answer); if (prefs.handsfree && !Voice.listening) startMic(); }
+  };
+
+  /* ------------------------------------------------------------ page */
+  let micBtn = null, inputEl = null;
+  function startMic() {
+    if (!micBtn) return;
+    Voice.listen((text) => { inputEl.value = ''; P.ask(text); }, (on, partial) => {
+      micBtn.classList.toggle('listening', on); document.body.classList.toggle('pa-listening', on);
+      if (partial != null && inputEl) inputEl.placeholder = partial || 'Je t\'écoute…';
+      if (!on && inputEl) inputEl.placeholder = 'Parle-moi ou écris… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)';
+    });
+  }
+  function setPiState() {
+    const b = $('#pa-state'); if (!b) return;
+    b.className = 'badge ' + (piOk ? 'ok' : piOk === false ? 'warn' : '');
+    b.textContent = piOk ? 'Pi connecté' : piOk === false ? 'Pi injoignable · mode MASTER' : 'Connexion…';
+  }
+
+  function chatTab(el) {
+    el.innerHTML = `<div class="grid g-3 pa-layout"><div class="card span-2 pa-chatcard"><div class="chat pa-chat" id="pa-log"></div>
+      <form class="pa-input" id="pa-form"><button type="button" class="pa-mic" id="pa-mic" title="Parler à Patricia" aria-label="Activer le micro">${icon('mic')}</button>
+      <textarea class="input" id="pa-in" rows="1" maxlength="8000" placeholder="Parle-moi ou écris… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"></textarea>
+      <button class="btn primary" type="submit" aria-label="Envoyer">${icon('play')}<span class="hide-sm">Envoyer</span></button></form>
+      <div class="row wrap pa-toggles"><label class="switch"><input type="checkbox" id="pa-speak" ${prefs.speak ? 'checked' : ''}><span class="track"></span>${icon('volume')} Réponses à voix haute</label>
+      <label class="switch"><input type="checkbox" id="pa-hands" ${prefs.handsfree ? 'checked' : ''}><span class="track"></span>Conversation mains libres</label>
+      <button class="btn sm ghost" id="pa-paste" type="button">${icon('terminal')}Coller un journal d'erreur</button></div></div>
+      <div class="stack"><div class="card pad small"><h3 style="margin-bottom:8px">Patricia peut</h3><ul class="pa-list">
+        <li>${icon('wand')}Concevoir tes projets : composants, câblage sans conflit, code, bibliothèques.</li>
+        <li>${icon('history')}Se souvenir de tout : notes, mesures, décisions, prochaines étapes.</li>
+        <li>${icon('alert')}Trouver la cause d'une erreur de compilation, de flash ou du moniteur série.</li>
+        <li>${icon('zap')}Compiler sur le Pi, flasher un worker et vérifier qu'il fonctionne.</li>
+        <li>${icon('car')}Piloter jusqu'à 9 voitures avec anticollision ; « stop » arrête tout.</li>
+        <li>${icon('phone')}Préparer l'application Android de ton projet.</li></ul>
+        <p class="hint" style="margin-top:8px">Toute action sur le matériel te demande une confirmation. L'arrêt d'urgence, lui, est immédiat.</p></div>
+        <div class="card pad small"><h3 style="margin-bottom:8px">Essaie</h3><div class="chips" id="pa-try">${['Je veux faire une serre connectée avec un ESP32-S3', 'Comment brancher un HC-SR04 ?', 'Note que la pompe consomme 300 mA', 'On reprend', 'État du labo', 'Toutes les voitures en ligne'].map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div></div></div></div>`;
+    const log = (P.log = $('#pa-log', el));
+    micBtn = $('#pa-mic', el); inputEl = $('#pa-in', el);
+    const send = () => { const v = inputEl.value; inputEl.value = ''; inputEl.style.height = ''; P.ask(v); };
+    $('#pa-form', el).addEventListener('submit', (e) => { e.preventDefault(); send(); });
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(200, inputEl.scrollHeight) + 'px'; });
+    micBtn.onclick = () => { if (Voice.listening) Voice.stop(); else startMic(); };
+    if (!Voice.available()) micBtn.classList.add('pa-mic-off');
+    $('#pa-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak && window.speechSynthesis) speechSynthesis.cancel(); };
+    $('#pa-hands', el).onchange = (e) => { prefs.handsfree = e.target.checked; if (prefs.handsfree) prefs.speak = true; $('#pa-speak', el).checked = prefs.speak; savePrefs(); };
+    $('#pa-paste', el).onclick = async () => { const t = await A.modal({ title: 'Journal à analyser', html: '<textarea class="textarea" id="pa-logtxt" rows="12" placeholder="Colle ici la sortie de compilation, d\'esptool ou du moniteur série"></textarea>', ok: 'Analyser', onOpen: (m) => $('#pa-logtxt', m).focus() }).then((ok) => ok && $('#pa-logtxt') ? $('#pa-logtxt').value : null); if (t) P.ask(t, { label: 'Journal d\'erreur (' + t.split('\n').length + ' lignes)' }); };
+    el.addEventListener('click', (e) => {
+      const s = e.target.closest('[data-say]'); if (s) { if (s.dataset.fu) piJSON('/api/v1/patricia/followups/' + s.dataset.fu, { status: /plus tard|non/i.test(s.dataset.say) ? 'dismissed' : 'done' }).catch(() => {}); P.ask(s.dataset.say); return; }
+      if (e.target.closest('[data-estop]')) A.fleetStop && A.fleetStop();
+    });
+    const pending = store.get('patricia.pending', null);
+    (async () => {
+      const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
+      try { const r = await pi('/api/v1/patricia/hello'); piOk = true; renderReply(log, m, r); if (prefs.speak) Voice.speak(r.speak || r.answer); }
+      catch (e) { piOk = false; if (A.S.phone) { renderReply(log, m, { answer: 'Bonjour ! Je suis Patricia, en mode téléphone. Je réponds avec le catalogue embarqué, et si tu écris « note que … », je garde ta note sur le téléphone et je l\'envoie au box dès que tu le rejoins.', cards: [], actions: [], mode: 'téléphone', suggestions: ['Comment brancher un BME280 ?', 'Note que '] }); } else renderReply(log, m, { answer: 'Bonjour ! Je suis Patricia. Le Raspberry Pi n\'est pas joignable : je réponds avec le catalogue du MASTER en attendant. Configure le Pi dans « Compagnon Pi » pour la mémoire, l\'IA et le pilotage.', cards: [], actions: [], mode: 'MASTER seul', suggestions: ['Comment brancher un BME280 ?', 'État du labo'] }); }
+      setPiState();
+      try { voiceCaps = await pi('/api/v1/patricia/voice'); if (Voice.available()) micBtn.classList.remove('pa-mic-off'); } catch (e) { /* voix du Pi indisponible */ }
+      if (pending) { store.set('patricia.pending', null); P.ask(pending); }
+    })();
+    setTimeout(() => inputEl.focus(), 60);
+  }
+
+  /* ------------------------------------------------------------ mémoire */
+  async function memoryTab(el) {
+    el.innerHTML = '<div class="card pad muted">Chargement de la mémoire…</div>';
+    let d;
+    try { d = await pi('/api/v1/patricia/memory'); }
+    catch (e) { el.innerHTML = `<div class="banner warn">${icon('alert')}<div>La mémoire vit sur le Pi : ${esc(e.message)}. Configure-le dans <a href="#companion">Compagnon Pi</a>.</div></div>`; return; }
+    const st = d.stats;
+    el.innerHTML = `<div class="grid g-3"><div class="card span-2"><div class="card-h"><h2 class="grow">Notes (${st.notes})</h2><input class="input" id="pm-q" placeholder="Filtrer…" style="max-width:200px"><button class="btn sm primary" id="pm-add">${icon('plus')}Note</button></div><div class="card-b flush" id="pm-notes"></div></div>
+      <div class="stack"><div class="card"><div class="card-h"><h2>Ce que Patricia sait de toi</h2></div><div class="card-b" id="pm-facts"></div></div>
+      <div class="card pad small"><h3>Mémoire</h3><p class="muted">${st.conversations} messages · ${st.projects} projets · recherche ${st.fts ? 'plein texte' : 'simple'}<br>Fichier : <code>${esc(st.path)}</code> (microSD 64 Go du Pi)</p>
+      <div class="row wrap" style="margin-top:8px"><button class="btn sm" id="pm-export">${icon('download')}Exporter</button><button class="btn sm danger" id="pm-wipe">${icon('trash')}Effacer les conversations</button></div></div></div>
+      <div class="card span-3"><div class="card-h"><h2 class="grow">Journal des projets (${st.projects})</h2><button class="btn sm" id="pm-newp">${icon('plus')}Projet</button></div><div class="card-b flush" id="pm-projects"></div></div></div>`;
+    const drawNotes = () => {
+      const q = A.norm($('#pm-q', el).value || '');
+      const items = d.notes.filter((n) => !q || A.norm(n.title + ' ' + n.body + ' ' + n.tags.join(' ')).includes(q));
+      $('#pm-notes', el).innerHTML = items.map((n) => `<div class="list-item"><div class="icon-tile ${n.kind === 'erreur' ? 'bad' : n.kind === 'mesure' ? 'info' : n.kind === 'decision' ? 'ok' : 'accent'}">${icon(n.pinned ? 'pin' : 'file')}</div><div class="grow"><div style="font-weight:600">${esc(n.title)}</div><div class="small muted">${esc(n.body.slice(0, 240))}</div><div class="hint">${esc(n.kind)} · ${esc((n.updated || '').replace('T', ' ').slice(0, 16))}${n.project ? ' · ' + esc(n.project) : ''}${n.tags.length ? ' · ' + n.tags.map(esc).join(', ') : ''}</div></div><button class="btn sm icon ghost" data-pin="${n.id}" title="Épingler">${icon('pin')}</button><button class="btn sm icon ghost" data-edit="${n.id}" title="Modifier">${icon('edit')}</button><button class="btn sm icon ghost" data-del="${n.id}" title="Supprimer">${icon('trash')}</button></div>`).join('') || '<div class="empty">Aucune note.</div>';
+    };
+    const drawFacts = () => { $('#pm-facts', el).innerHTML = Object.entries(d.facts).map(([k, v]) => `<div class="row" style="margin-bottom:6px"><span class="grow small"><b>${esc(k)}</b> : ${esc(v)}</span><button class="btn sm icon ghost" data-fdel="${esc(k)}">${icon('x')}</button></div>`).join('') + `<form class="row" id="pm-fform" style="margin-top:8px"><input class="input" name="k" placeholder="ex. prénom" style="width:40%"><input class="input" name="v" placeholder="valeur" style="width:40%"><button class="btn sm">${icon('plus')}</button></form>`; };
+    const drawProjects = () => {
+      $('#pm-projects', el).innerHTML = d.projects.map((p) => `<div class="list-item"><div class="icon-tile accent">${icon('folder')}</div><div class="grow"><div style="font-weight:600">${esc(p.title)}</div><div class="small muted">${esc(p.goal || '')}</div><div class="hint">${p.board ? esc(p.board) + ' · ' : ''}${p.modules.map(esc).join(', ')}${p.log.length ? ' · dernier : ' + esc(p.log[p.log.length - 1].text) : ''}</div></div>
+        <select class="input" data-status="${esc(p.id)}" style="width:auto">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${k === p.status ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <button class="btn sm" data-say="On reprend ${esc(p.title)}">${icon('chat')}</button><button class="btn sm icon ghost" data-pdel="${esc(p.id)}">${icon('trash')}</button></div>`).join('') || '<div class="empty">Aucun projet. Décris une idée à Patricia.</div>';
+    };
+    drawNotes(); drawFacts(); drawProjects();
+    $('#pm-q', el).oninput = drawNotes;
+    const reload = () => memoryTab(el);
+    el.addEventListener('submit', async (e) => { if (e.target.id !== 'pm-fform') return; e.preventDefault(); const f = new FormData(e.target); if (!f.get('k')) return; await piJSON('/api/v1/patricia/facts', { key: f.get('k'), value: f.get('v') }); reload(); });
+    el.addEventListener('change', async (e) => { const s = e.target.closest('[data-status]'); if (!s) return; const p = d.projects.find((x) => x.id === s.dataset.status); await piJSON('/api/v1/patricia/projects', { id: p.id, title: p.title, status: s.value }); toast('Statut mis à jour', 'ok'); });
+    el.addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      try {
+        if (b.id === 'pm-add' || b.dataset.edit) {
+          const n = b.dataset.edit ? d.notes.find((x) => String(x.id) === b.dataset.edit) : null;
+          const t = await A.modal({ title: n ? 'Modifier la note' : 'Nouvelle note', html: `<textarea class="textarea" id="pm-txt" rows="8">${esc(n ? n.body : '')}</textarea>`, ok: 'Enregistrer', onOpen: (m) => $('#pm-txt', m).focus() }).then((ok) => ok && $('#pm-txt') ? $('#pm-txt').value : null);
+          if (t) { if (n) await piJSON('/api/v1/patricia/notes/' + n.id, { body: t }); else await piJSON('/api/v1/patricia/notes', { text: t }); reload(); }
+        } else if (b.dataset.del) { if (await A.confirmBox('Supprimer la note', 'Patricia l\'oubliera définitivement.', 'Supprimer', true)) { await piJSON('/api/v1/patricia/notes/' + b.dataset.del, { delete: true }); reload(); } }
+        else if (b.dataset.pin) { const n = d.notes.find((x) => String(x.id) === b.dataset.pin); await piJSON('/api/v1/patricia/notes/' + n.id, { pinned: !n.pinned }); reload(); }
+        else if (b.dataset.fdel) { await piJSON('/api/v1/patricia/facts', { key: b.dataset.fdel, delete: true }); reload(); }
+        else if (b.dataset.pdel) { if (await A.confirmBox('Supprimer le projet du journal', 'Les fichiers sur la microSD ne sont pas touchés.', 'Supprimer', true)) { await piJSON(`/api/v1/patricia/projects/${b.dataset.pdel}/delete`, {}); reload(); } }
+        else if (b.id === 'pm-newp') { const t = await A.modal({ title: 'Nouveau projet', input: '', label: 'Nom du projet', ok: 'Créer' }); if (t) { await piJSON('/api/v1/patricia/projects', { title: t, status: 'idee' }); reload(); } }
+        else if (b.id === 'pm-export') { const data = await pi('/api/v1/patricia/export'); A.download('patricia-memoire-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 2), 'application/json'); }
+        else if (b.id === 'pm-wipe') { if (await A.confirmBox('Effacer les conversations', 'Les notes, projets et préférences sont conservés.', 'Effacer', true)) { await piJSON('/api/v1/patricia/wipe', { what: 'conversations' }); reload(); } }
+        else if (b.dataset.say) { A.go('assistant'); setTimeout(() => P.ask(b.dataset.say), 300); }
+      } catch (err) { toast(err.message, 'bad'); }
+    });
+  }
+
+  /* ------------------------------------------------------------ réglages */
+  async function settingsTab(el) {
+    const voices = (window.speechSynthesis ? speechSynthesis.getVoices() : []).filter((v) => /^fr/i.test(v.lang));
+    el.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2>Cerveau de Patricia</h2></div><div class="card-b stack">
+      <div class="seg" id="ps-preset"><button data-p="local">Hors ligne (règles)</button><button data-p="ollama">IA locale sur le Pi</button><button data-p="online">IA en ligne</button></div>
+      <label class="field">Adresse « chat/completions » (vue depuis le Pi)<input class="input" id="ps-ep" placeholder="http://127.0.0.1:11434/v1/chat/completions"></label>
+      <label class="field">Modèle<input class="input" id="ps-model" placeholder="qwen2.5:1.5b"></label>
+      <label class="field">Clé API (vide = conserver ; inutile pour Ollama)<input class="input" id="ps-key" type="password" autocomplete="off"></label>
+      <div class="row"><button class="btn primary" id="ps-save">${icon('save')}Enregistrer</button><span class="small muted" id="ps-state"></span></div>
+      <div class="hint">IA locale : <code>sudo bash pi/setup_patricia.sh --ollama</code> installe Ollama et le modèle qwen2.5:1.5b (~1 Go) sur la microSD. Sur un Pi 4 de 4 Go, compte quelques secondes à quelques dizaines de secondes par réponse. Les actions matérielles restent toujours à confirmer.</div></div></div>
+      <div class="card"><div class="card-h"><h2>Voix</h2></div><div class="card-b stack small">
+      <div>Micro : <b>${Voice.native() ? 'natif Android (APK NEXUS)' : Voice.web() ? 'reconnaissance du navigateur' : Voice.rec() ? 'Vosk sur le Pi' : 'indisponible ici'}</b></div>
+      ${Voice.available() ? '' : `<div class="banner warn">${icon('alert')}<div>${esc(Voice.why())}</div></div>`}
+      <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b>${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
+      <label class="switch"><input type="checkbox" id="ps-speak" ${prefs.speak ? 'checked' : ''}><span class="track"></span>Voix activée (sinon Patricia écrit seulement)</label>
+      <label class="field">Débit de la voix : <b id="ps-rate-v">${Math.round(prefs.rate * 100)} %</b><input type="range" id="ps-rate" min="0.7" max="1.2" step="0.02" value="${prefs.rate}"></label>
+      <label class="field">Voix de lecture<select class="input" id="ps-voice"><option value="">Automatique</option>${voices.map((v) => `<option ${v.name === prefs.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+      <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div>
+      <div class="card"><div class="card-h"><h2>Personnalité</h2></div><div class="card-b stack small">
+      <div class="seg" id="ps-style"><button data-st="scientifique" class="${prefs.style !== 'complice' ? 'on' : ''}">Scientifique</button><button data-st="complice" class="${prefs.style === 'complice' ? 'on' : ''}">Complice</button></div>
+      <div class="hint"><b>Scientifique</b> (par défaut) : pédagogue et neutre, elle explique pas à pas et te corrige. <b>Complice</b> : même rigueur, mais taquine et chaleureuse ; elle te pose de petites questions et redevient sérieuse dès qu'il s'agit de sécurité.</div></div></div>
+      <div class="card"><div class="card-h"><h2 class="grow">GitHub</h2><span class="badge" id="ps-gh-state">…</span></div><div class="card-b stack small">
+      <div class="muted">Dis « envoie la serre sur GitHub » : Patricia crée le dépôt s'il n'existe pas et y dépose le projet, après ta confirmation. Le Pi a besoin d'Internet (Wi-Fi amont du S3).</div>
+      <label class="field">Jeton GitHub (fine-grained : Administration + Contents en écriture)<input class="input" id="ps-gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+      <label class="field">Propriétaire (vide = ton compte ; ou une organisation)<input class="input" id="ps-gh-owner" placeholder=""></label>
+      <label class="switch"><input type="checkbox" id="ps-gh-private" checked><span class="track"></span>Nouveaux dépôts privés</label>
+      <div class="row"><button class="btn primary sm" id="ps-gh-save">${icon('save')}Enregistrer</button><button class="btn sm danger" id="ps-gh-del">${icon('trash')}Oublier le jeton</button></div>
+      <div class="hint">Le jeton reste sur le Pi (fichier lisible par le seul service NEXUS) et n'est jamais renvoyé à l'interface.</div></div></div></div>`;
+    const presets = { ollama: { ep: 'http://127.0.0.1:11434/v1/chat/completions', model: 'qwen2.5:1.5b' }, online: { ep: 'https://', model: '' }, local: { ep: '', model: '' } };
+    try { const c = await pi('/api/v1/assistant/config'); $('#ps-ep', el).value = c.endpoint || ''; $('#ps-model', el).value = c.model || ''; $('#ps-state', el).textContent = c.endpoint ? 'IA configurée' + (c.key_set ? ' · clé enregistrée' : '') : 'Mode hors ligne'; }
+    catch (e) { $('#ps-state', el).textContent = 'Pi injoignable : ' + e.message; }
+    $('#ps-preset', el).onclick = (e) => { const b = e.target.closest('[data-p]'); if (!b) return; const p = presets[b.dataset.p]; $('#ps-ep', el).value = p.ep; $('#ps-model', el).value = p.model; $$('#ps-preset button', el).forEach((x) => x.classList.toggle('on', x === b)); };
+    $('#ps-save', el).onclick = async () => { try { const r = await piJSON('/api/v1/assistant/config', { endpoint: $('#ps-ep', el).value.trim(), model: $('#ps-model', el).value.trim(), key: $('#ps-key', el).value }); $('#ps-key', el).value = ''; $('#ps-state', el).textContent = r.endpoint ? 'IA enregistrée' : 'Mode hors ligne'; toast('Réglages de Patricia enregistrés', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
+    $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); };
+    $('#ps-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak && window.speechSynthesis) speechSynthesis.cancel(); };
+    $('#ps-rate', el).oninput = (e) => { prefs.rate = Number(e.target.value); $('#ps-rate-v', el).textContent = Math.round(prefs.rate * 100) + ' %'; savePrefs(); };
+    $('#ps-style', el).onclick = async (e) => {
+      const b = e.target.closest('[data-st]'); if (!b) return;
+      prefs.style = b.dataset.st; savePrefs();
+      $$('#ps-style button', el).forEach((x) => x.classList.toggle('on', x === b));
+      try { await piJSON('/api/v1/patricia/facts', { key: 'style de patricia', value: prefs.style }); toast(prefs.style === 'complice' ? 'Mode complice activé 😉' : 'Mode scientifique activé', 'ok'); }
+      catch (err) { toast('Pi injoignable : le style sera appliqué à la prochaine connexion. ' + err.message, 'warn'); }
+    };
+    const ghShow = (g) => { const b = $('#ps-gh-state', el); b.textContent = g.configured ? 'connecté · ' + (g.owner || g.login) : 'non configuré'; b.className = 'badge ' + (g.configured ? 'ok' : ''); $('#ps-gh-owner', el).value = g.owner || ''; $('#ps-gh-private', el).checked = g.private !== false; };
+    pi('/api/v1/patricia/github').then(ghShow).catch(() => { $('#ps-gh-state', el).textContent = 'Pi injoignable'; });
+    $('#ps-gh-save', el).onclick = async () => { try { const tok = $('#ps-gh-token', el).value.trim(); ghShow(await piJSON('/api/v1/patricia/github', Object.assign({ owner: $('#ps-gh-owner', el).value.trim(), private: $('#ps-gh-private', el).checked }, tok ? { token: tok } : {}), 30000)); $('#ps-gh-token', el).value = ''; toast('GitHub enregistré', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
+    $('#ps-gh-del', el).onclick = async () => { try { ghShow(await piJSON('/api/v1/patricia/github', { delete: true })); toast('Jeton GitHub oublié', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
+    $('#ps-test', el).onclick = () => Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
+  }
+
+  /* ------------------------------------------------------------ enregistrement */
+  A.page({
+    id: 'assistant', title: 'Patricia', icon: 'sparkles', group: 'build', mobile: true, short: 'Patricia',
+    desc: 'Assistante : projets, mémoire, diagnostic, flash, pilotage, voix',
+    render(el, q) {
+      const tab = (q && q.tab) || 'chat';
+      el.innerHTML = `<div class="pa-hero"><div class="pa-orb" aria-hidden="true"><span></span></div><div class="grow"><div class="eyebrow">NEXUS · ASSISTANTE</div><h2>Patricia</h2><div class="small muted">Je conçois, je retiens, je corrige et je pilote avec toi.</div></div><span class="badge" id="pa-state">Connexion…</span></div>
+        <div class="tabs" id="pa-tabs">${[['chat', 'chat', 'Conversation'], ['memory', 'history', 'Mémoire'], ['settings', 'cog', 'Réglages']].map(([k, ic, t]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${icon(ic)}${t}</button>`).join('')}</div><div class="tab-panel" id="pa-panel"></div>`;
+      const panel = $('#pa-panel', el);
+      const show = (k) => { $$('#pa-tabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.tab === k)); P.log = null; (k === 'memory' ? memoryTab : k === 'settings' ? settingsTab : chatTab)(panel); };
+      $('#pa-tabs', el).onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); };
+      show(tab);
+      setPiState();
+      return () => { P.log = null; micBtn = null; inputEl = null; Voice.stop(); };
+    }
+  });
+  A.commands.push({ title: 'Parler à Patricia', group: 'Action', icon: 'mic', run: () => { A.go('assistant'); setTimeout(startMic, 400); } },
+    { title: 'Mémoire de Patricia', group: 'Page', icon: 'history', run: () => A.go('assistant', { tab: 'memory' }) });
+
+  /* Bouton flottant : Patricia accessible depuis toutes les pages (appui long = micro). */
+  function fab() {
+    if ($('#pa-fab')) return;
+    const b = document.createElement('button');
+    b.id = 'pa-fab'; b.className = 'pa-fab'; b.title = 'Patricia (appui long : micro)'; b.setAttribute('aria-label', 'Ouvrir Patricia');
+    b.innerHTML = icon('sparkles');
+    let t = null, long = false;
+    b.addEventListener('pointerdown', () => { long = false; t = setTimeout(() => { long = true; A.go('assistant'); setTimeout(startMic, 450); }, 550); });
+    b.addEventListener('pointerup', () => { clearTimeout(t); if (!long) A.go('assistant'); });
+    b.addEventListener('pointerleave', () => clearTimeout(t));
+    document.body.appendChild(b);
+  }
+  window.addEventListener('hashchange', () => { const f = $('#pa-fab'); if (f) f.hidden = (location.hash || '').startsWith('#assistant'); });
+  setTimeout(() => { fab(); const f = $('#pa-fab'); if (f) f.hidden = (location.hash || '').startsWith('#assistant'); }, 800);
+})();
+/* ---- 56_vehicles.js ---- */
+/* Flotte de véhicules : carte de l'aire de jeu, inscription, destinations, manette et ARRÊT D'URGENCE.
+ * Le superviseur tourne sur le Pi (pi/patricia/fleet.py) ; chaque voiture porte firmware/vehicle.
+ * Cette page envoie des ordres explicites (un clic = une confirmation) ; l'arrêt est toujours immédiat. */
+(function () {
+  'use strict';
+  const A = window.APP, $ = A.$, esc = A.esc, icon = A.icon, toast = A.toast;
+  const COLORS = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#0891b2', '#db2777', '#65a30d', '#7c3aed'];
+  const STATE = { pret: 'prêt', route: 'en route', attente: 'attend', arrive: 'arrivé', perdu: 'PERDU', conflit: 'CONFLIT', arret: 'arrêt', manuel: 'manuel', bloque: 'obstacle' };
+  const pj = (path, body) => A.piRequest(path, { method: 'POST', body: JSON.stringify(body || {}) });
+
+  A.fleetStop = async (vid) => {
+    try { await pj('/api/v1/fleet/estop', vid ? { vid } : {}); toast(vid ? `Arrêt envoyé à ${vid}` : 'ARRÊT D\'URGENCE envoyé à toute la flotte', 'ok'); }
+    catch (e) { toast('Arrêt via le Pi impossible : ' + e.message + ' — coupe l\'alimentation des véhicules.', 'bad', 10000); }
+  };
+
+  A.page({
+    id: 'vehicles', title: 'Flotte de véhicules', short: 'Véhicules', icon: 'car', group: 'build',
+    desc: 'Piloter jusqu\'à 9 voitures sans collision, avec arrêt d\'urgence',
+    render(el) {
+      let snap = null, sel = null, mode = 'goal', placing = null, timer = null, joy = null;
+      el.innerHTML = `<div class="banner warn">${icon('alert')}<div><b>Non testé sur de vrais véhicules.</b> Commence roues en l'air, puis une voiture à basse vitesse. Garde un coupe-circuit physique sur chaque batterie : le Wi-Fi n'est pas un système de sécurité. <a href="#" id="vh-doc">Règles de sécurité</a></div></div>
+        <div class="grid g-3"><div class="card span-2"><div class="card-h"><h2 class="grow">Aire de jeu</h2>
+          <div class="seg" id="vh-mode"><button data-m="goal" class="on">Destination</button><button data-m="obstacle">Obstacles</button></div>
+          <button class="btn danger pa-estop" id="vh-estop">${icon('stop')}ARRÊT</button><button class="btn" id="vh-release">${icon('play')}Lever l'arrêt</button></div>
+          <div class="card-b"><canvas id="vh-map" class="vh-map" aria-label="Carte de l'aire de jeu"></canvas><div class="hint" id="vh-hint">Choisis un véhicule à droite, puis clique une cellule pour l'y envoyer.</div></div></div>
+        <div class="stack"><div class="card"><div class="card-h"><h2 class="grow">Véhicules</h2><span class="badge" id="vh-state">…</span></div><div class="card-b flush" id="vh-list"></div></div>
+          <div class="card"><div class="card-h"><h2>Manette</h2></div><div class="card-b"><div class="vh-joy" id="vh-joy"><span></span></div><div class="hint">Maintiens et déplace (barre d'espace = ARRÊT) : le superviseur coupe l'avance si un autre véhicule ou un obstacle est devant.</div></div></div>
+          <div class="card"><div class="card-h"><h2>Aire</h2></div><div class="card-b"><form class="row wrap" id="vh-arena"><label class="field" style="width:30%">Largeur m<input class="input" name="w" type="number" step="0.1" min="0.5" max="50"></label><label class="field" style="width:30%">Hauteur m<input class="input" name="h" type="number" step="0.1" min="0.5" max="50"></label><label class="field" style="width:30%">Cellule m<input class="input" name="c" type="number" step="0.05" min="0.2" max="2"></label><button class="btn sm">Appliquer</button></form><div class="hint">La cellule doit être plus grande que le véhicule + la marge d'erreur de position (0,5 m conseillé pour des voitures de 20 cm).</div></div></div>
+          <div class="card"><div class="card-h"><h2>Journal</h2></div><div class="card-b small" id="vh-events" style="max-height:220px;overflow:auto"></div></div></div></div>`;
+      const cv = $('#vh-map', el), ctx = cv.getContext('2d');
+      const geom = () => { const a = snap.arena, W = cv.clientWidth, s = W / a.width_m; cv.width = W * devicePixelRatio; cv.height = a.height_m * s * devicePixelRatio; cv.style.height = (a.height_m * s) + 'px'; return { s: s * devicePixelRatio, a }; };
+      function draw() {
+        if (!snap || !snap.arena) return;
+        const { s, a } = geom(), H = cv.height, css = getComputedStyle(document.documentElement);
+        const tx = (x) => x * s, ty = (y) => H - y * s;
+        ctx.clearRect(0, 0, cv.width, H);
+        ctx.strokeStyle = css.getPropertyValue('--line') || '#ddd'; ctx.lineWidth = 1;
+        for (let i = 0; i <= a.cols; i++) { ctx.beginPath(); ctx.moveTo(tx(i * a.cell_m), 0); ctx.lineTo(tx(i * a.cell_m), H); ctx.stroke(); }
+        for (let j = 0; j <= a.rows; j++) { ctx.beginPath(); ctx.moveTo(0, ty(j * a.cell_m)); ctx.lineTo(cv.width, ty(j * a.cell_m)); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(120,120,120,.45)';
+        a.obstacles.forEach(([cx, cy]) => ctx.fillRect(tx(cx * a.cell_m), ty((cy + 1) * a.cell_m), a.cell_m * s, a.cell_m * s));
+        snap.vehicles.forEach((v, i) => {
+          const col = COLORS[i % COLORS.length];
+          ctx.fillStyle = col + '33';
+          v.held.forEach(([cx, cy]) => ctx.fillRect(tx(cx * a.cell_m), ty((cy + 1) * a.cell_m), a.cell_m * s, a.cell_m * s));
+          if (v.path.length) { ctx.strokeStyle = col; ctx.setLineDash([6, 5]); ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath(); ctx.moveTo(tx(v.x), ty(v.y)); v.path.forEach(([cx, cy]) => ctx.lineTo(tx((cx + 0.5) * a.cell_m), ty((cy + 0.5) * a.cell_m))); ctx.stroke(); ctx.setLineDash([]); }
+          if (v.goal) { ctx.strokeStyle = col; ctx.lineWidth = 2 * devicePixelRatio; const gx = tx((v.goal[0] + 0.5) * a.cell_m), gy = ty((v.goal[1] + 0.5) * a.cell_m); ctx.beginPath(); ctx.arc(gx, gy, a.cell_m * s * 0.25, 0, 7); ctx.stroke(); }
+          const r = Math.max(8, a.cell_m * s * 0.28), x = tx(v.x), y = ty(v.y);
+          ctx.save(); ctx.translate(x, y); ctx.rotate(-v.heading);
+          ctx.fillStyle = ['perdu', 'conflit', 'arret'].includes(v.state) ? '#dc2626' : col;
+          ctx.beginPath(); ctx.moveTo(r * 1.3, 0); ctx.lineTo(-r, r * 0.85); ctx.lineTo(-r * 0.6, 0); ctx.lineTo(-r, -r * 0.85); ctx.closePath(); ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = css.getPropertyValue('--text') || '#111'; ctx.font = `${11 * devicePixelRatio}px system-ui`; ctx.fillText(v.id + (sel === v.id ? ' ◀' : ''), x + r + 3, y - r);
+        });
+        if (snap.estop) { ctx.fillStyle = 'rgba(220,38,38,.12)'; ctx.fillRect(0, 0, cv.width, H); }
+      }
+      function list() {
+        const st = $('#vh-state', el);
+        st.className = 'badge ' + (!snap.enabled ? 'warn' : snap.estop ? 'bad' : 'ok');
+        st.textContent = !snap.enabled ? 'Pilotage inactif' : snap.estop ? 'ARRÊT ACTIF' : `${snap.vehicles.length} véhicule(s)`;
+        const ann = (snap.announced || []).map((v) => `<div class="list-item"><div class="icon-tile warn">${icon('car')}</div><div class="grow"><b>${esc(v.id)}</b><div class="hint">s'est annoncé · batterie ${(v.battery_mv / 1000).toFixed(2)} V</div></div><button class="btn sm primary" data-place="${esc(v.id)}">Placer</button></div>`).join('');
+        $('#vh-list', el).innerHTML = (snap.error ? `<div class="hint" style="padding:12px 16px">${esc(snap.error)}</div>` : '') + snap.vehicles.map((v, i) => `<div class="list-item click ${sel === v.id ? 'vh-sel' : ''}" data-vid="${esc(v.id)}"><div class="icon-tile" style="color:${COLORS[i % COLORS.length]}">${icon('car')}</div><div class="grow"><b>${esc(v.id)}</b> <span class="badge ${['perdu', 'conflit', 'arret', 'bloque'].includes(v.state) ? 'bad' : v.state === 'route' ? 'accent' : ''}">${STATE[v.state] || esc(v.state)}</span><div class="hint">(${v.x.toFixed(2)} ; ${v.y.toFixed(2)}) m · ${v.front_mm >= 0 ? v.front_mm + ' mm devant · ' : ''}${v.battery_mv ? (v.battery_mv / 1000).toFixed(2) + ' V · ' : ''}${v.age_s.toFixed(1)} s${v.note ? ' · ' + esc(v.note) : ''}</div></div><button class="btn sm icon ghost" data-stop="${esc(v.id)}" title="Arrêter">${icon('stop')}</button><button class="btn sm icon ghost" data-rm="${esc(v.id)}" title="Retirer">${icon('x')}</button></div>`).join('') + ann || '<div class="empty">Aucun véhicule. Flashe <code>firmware/vehicle</code> sur une voiture : elle apparaîtra ici.</div>';
+        $('#vh-events', el).innerHTML = (snap.events || []).slice().reverse().map((e) => `<div class="${e.level === 'bad' ? 'bad-text' : ''}">${esc(e.msg)}</div>`).join('') || '<span class="muted">—</span>';
+        const f = $('#vh-arena', el); if (f && document.activeElement.form !== f) { f.w.value = snap.arena.width_m; f.h.value = snap.arena.height_m; f.c.value = snap.arena.cell_m; }
+      }
+      async function poll() {
+        try { snap = await A.piRequest('/api/v1/fleet'); }
+        catch (e) { $('#vh-list', el).innerHTML = `<div class="hint" style="padding:12px 16px">Pi injoignable : ${esc(e.message)}. Configure-le dans <a href="#companion">Compagnon Pi</a>.</div>`; $('#vh-state', el).textContent = 'Pi injoignable'; return; }
+        list(); draw();
+      }
+      const cellAt = (ev) => { const r = cv.getBoundingClientRect(), a = snap.arena, s = r.width / a.width_m; const x = (ev.clientX - r.left) / s, y = (r.height - (ev.clientY - r.top)) / s; return { x, y, cx: Math.floor(x / a.cell_m), cy: Math.floor(y / a.cell_m) }; };
+      cv.addEventListener('click', async (ev) => {
+        if (!snap) return;
+        const c = cellAt(ev), a = snap.arena, center = [(c.cx + 0.5) * a.cell_m, (c.cy + 0.5) * a.cell_m];
+        try {
+          if (placing) { await pj('/api/v1/fleet/register', { vid: placing, x: center[0], y: center[1], heading: 0 }); toast(`${placing} placé : oriente-le vers la droite de la carte (cap 0)`, 'ok'); placing = null; $('#vh-hint', el).textContent = 'Choisis un véhicule, puis clique une cellule.'; }
+          else if (mode === 'obstacle') { const key = c.cx + ',' + c.cy, obs = a.obstacles.filter((o) => o.join(',') !== key); if (obs.length === a.obstacles.length) obs.push([c.cx, c.cy]); await pj('/api/v1/fleet/arena', { width_m: a.width_m, height_m: a.height_m, cell_m: a.cell_m, obstacles: obs }); }
+          else if (sel) { await pj('/api/v1/fleet/goal', { vid: sel, x: center[0], y: center[1], vmax: 0.25 }); }
+          else toast('Choisis d\'abord un véhicule dans la liste.', 'warn');
+          poll();
+        } catch (e) { toast(e.message, 'bad'); }
+      });
+      el.addEventListener('click', async (ev) => {
+        const t = ev.target.closest('[data-stop],[data-rm],[data-place],[data-vid],[data-m]');
+        if (ev.target.id === 'vh-doc') { ev.preventDefault(); A.modal({ title: 'Sécurité des véhicules', html: '<ol class="small"><li>Coupe-circuit physique sur chaque batterie, à portée de main.</li><li>Premier essai roues en l\'air : vérifie que STOP et la perte du Wi-Fi coupent les moteurs.</li><li>Une voiture à la fois, vitesse 0,15 m/s, zone dégagée ; ajoute les autres une par une.</li><li>Le capteur ultrason arrête la voiture seul sous 15 cm.</li><li>La position vient des codeurs de roues : elle dérive. Replace les voitures sur leur case de départ régulièrement.</li><li>Ne laisse jamais une voiture rouler hors de ta vue.</li></ol>', ok: 'Compris', cancel: false }); return; }
+        if (!t) return;
+        try {
+          if (t.dataset.m) { mode = t.dataset.m; el.querySelectorAll('#vh-mode button').forEach((b) => b.classList.toggle('on', b === t)); $('#vh-hint', el).textContent = mode === 'obstacle' ? 'Clique des cellules pour ajouter ou retirer des obstacles (véhicules arrêtés).' : 'Choisis un véhicule, puis clique une cellule.'; }
+          else if (t.dataset.stop) await A.fleetStop(t.dataset.stop);
+          else if (t.dataset.rm) { if (await A.confirmBox('Retirer ' + t.dataset.rm, 'Le véhicule reçoit STOP puis quitte la flotte.', 'Retirer', true)) await pj('/api/v1/fleet/remove', { vid: t.dataset.rm }); }
+          else if (t.dataset.place) { placing = t.dataset.place; $('#vh-hint', el).textContent = `Clique la cellule où se trouve réellement ${placing}, nez tourné vers la droite.`; }
+          else if (t.dataset.vid) { sel = t.dataset.vid; list(); draw(); }
+          poll();
+        } catch (e) { toast(e.message, 'bad'); }
+      });
+      $('#vh-estop', el).onclick = () => A.fleetStop();
+      $('#vh-release', el).onclick = async () => { if (await A.confirmBox('Lever l\'arrêt', 'Les véhicules restent immobiles jusqu\'au prochain ordre.', 'Lever l\'arrêt')) { try { await pj('/api/v1/fleet/release', {}); poll(); } catch (e) { toast(e.message, 'bad'); } } };
+      $('#vh-arena', el).addEventListener('submit', async (e) => { e.preventDefault(); const f = e.target; try { await pj('/api/v1/fleet/arena', { width_m: +f.w.value, height_m: +f.h.value, cell_m: +f.c.value, obstacles: [] }); poll(); } catch (er) { toast(er.message, 'bad'); } });
+      /* Manette : envoie throttle/steer à 10 Hz tant que le doigt est posé ; relâcher = 0. */
+      const pad = $('#vh-joy', el), knob = pad.firstElementChild;
+      const sendJoy = () => { if (joy && sel) pj('/api/v1/fleet/manual', { vid: sel, throttle: joy.t, steer: joy.s }).catch((e) => toast(e.message, 'bad')); };
+      let joyTimer = null;
+      pad.addEventListener('pointerdown', (e) => { if (!sel) { toast('Choisis un véhicule.', 'warn'); return; } pad.setPointerCapture(e.pointerId); joy = { t: 0, s: 0 }; joyTimer = setInterval(sendJoy, 100); move(e); });
+      const move = (e) => { if (!joy) return; const r = pad.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width * 2 - 1, dy = (e.clientY - r.top) / r.height * 2 - 1; joy.s = A.clamp(dx, -1, 1); joy.t = A.clamp(-dy, -1, 1) * 0.6; knob.style.transform = `translate(${joy.s * 40}px, ${-joy.t / 0.6 * 40}px)`; };
+      pad.addEventListener('pointermove', move);
+      const end = () => { if (!joy) return; joy = { t: 0, s: 0 }; sendJoy(); joy = null; clearInterval(joyTimer); knob.style.transform = ''; };
+      pad.addEventListener('pointerup', end); pad.addEventListener('pointercancel', end);
+      const key = (e) => { if (e.key === ' ' && !/INPUT|TEXTAREA|SELECT|BUTTON/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); A.fleetStop(); } };
+      document.addEventListener('keydown', key);
+      window.addEventListener('resize', draw);
+      poll(); timer = setInterval(poll, 300);
+      return () => { clearInterval(timer); clearInterval(joyTimer); document.removeEventListener('keydown', key); window.removeEventListener('resize', draw); };
+    }
+  });
+  A.commands.push({ title: 'ARRÊT D\'URGENCE de la flotte', group: 'Action', icon: 'stop', run: () => A.fleetStop() });
+})();
+/* ---- 57_appruntime.js ---- */
+/* NEXUS App Runtime — moteur des applications du Studio APK.
+ * Un seul fichier, sans dépendance, utilisé à l'identique par :
+ *   - l'aperçu et le mode test du Studio APK (interface du MASTER),
+ *   - l'APK Android (assets/player/runtime.js, copie synchronisée par scripts/sync_app_runtime.py),
+ *   - l'appli web servie par le Pi (/apps/<id>/).
+ * Ce que tu vois dans l'aperçu est donc exactement ce que fera l'application. */
+(function () {
+  'use strict';
+  const R = (window.NexusAppRuntime = window.NexusAppRuntime || {});
+  R.VERSION = '1.0.0';
+  R.FORMAT = 'nexus-app/1';
+
+  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ESC[c]);
+  const num = (v, d) => { const n = parseFloat(v); return isFinite(n) ? n : d; };
+  const h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+  /* ------------------------------------------------------------------ catalogue des composants */
+  // [clé, libellé, type d'éditeur, valeur par défaut]. Types : text, textarea, number, color, var, select:a=A|b=B, bool, actions
+  const WIDTH = ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'full'];
+  R.COMPONENTS = {
+    title: { label: 'Titre', icon: 'T', group: 'Affichage', props: [['text', 'Texte', 'text', 'Mon application'], ['sub', 'Sous-titre', 'text', '']] },
+    text: { label: 'Texte', icon: '¶', group: 'Affichage', props: [['text', 'Texte (mets {variable} pour afficher une valeur)', 'textarea', 'Bonjour !'], ['size', 'Taille', 'select:s=Petit|m=Moyen|l=Grand', 'm'], WIDTH] },
+    value: { label: 'Valeur', icon: '42', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Température'], ['var', 'Variable', 'var', ''], ['unit', 'Unité', 'text', ''], ['decimals', 'Décimales', 'number', 1], ['warn', 'Orange au-dessus de', 'number', ''], ['alarm', 'Rouge au-dessus de', 'number', ''], ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'half']] },
+    gauge: { label: 'Jauge', icon: '◔', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Humidité'], ['var', 'Variable', 'var', ''], ['min', 'Minimum', 'number', 0], ['max', 'Maximum', 'number', 100], ['unit', 'Unité', 'text', '%'], ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'half']] },
+    chart: { label: 'Courbe', icon: '〽', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Évolution'], ['var', 'Variable', 'var', ''], ['points', 'Points affichés', 'number', 60], WIDTH] },
+    led: { label: 'Voyant', icon: '●', group: 'Capteurs', props: [['label', 'Libellé', 'text', 'Alerte'], ['var', 'Variable', 'var', ''], ['op', 'S\'allume si', 'select:gt=est supérieure à|lt=est inférieure à|eq=est égale à|on=est vraie (1)', 'gt'], ['value', 'Valeur', 'text', '0'], ['color', 'Couleur', 'color', '#ef4444'], ['width', 'Largeur', 'select:full=Pleine|half=Moitié', 'half']] },
+    button: { label: 'Bouton', icon: '▭', group: 'Commandes', props: [['text', 'Texte', 'text', 'Appuie'], ['color', 'Couleur', 'color', ''], ['style', 'Style', 'select:fill=Plein|outline=Contour', 'fill'], WIDTH, ['do', 'Quand on appuie', 'actions', []]] },
+    switch: { label: 'Interrupteur', icon: '⏻', group: 'Commandes', props: [['label', 'Libellé', 'text', 'Lampe'], ['var', 'Variable (1 / 0)', 'var', ''], WIDTH, ['do', 'Quand on allume', 'actions', []], ['off', 'Quand on éteint', 'actions', []]] },
+    slider: { label: 'Curseur', icon: '⇔', group: 'Commandes', props: [['label', 'Libellé', 'text', 'Vitesse'], ['var', 'Variable', 'var', ''], ['min', 'Minimum', 'number', 0], ['max', 'Maximum', 'number', 100], ['step', 'Pas', 'number', 1], WIDTH, ['do', 'Quand on relâche', 'actions', []]] },
+    input: { label: 'Saisie', icon: '⌨', group: 'Commandes', props: [['label', 'Libellé', 'text', 'Message'], ['var', 'Variable', 'var', ''], ['placeholder', 'Indication', 'text', ''], ['kind', 'Type', 'select:text=Texte|number=Nombre', 'text'], WIDTH, ['do', 'Quand on valide', 'actions', []]] },
+    joystick: { label: 'Joystick', icon: '✥', group: 'Commandes', props: [['var_x', 'Variable X (-100…100)', 'var', ''], ['var_y', 'Variable Y (-100…100)', 'var', ''], ['do', 'Quand il bouge (5 fois/s)', 'actions', []]] },
+    image: { label: 'Image', icon: '🖼', group: 'Affichage', props: [['emoji', 'Emoji ou symbole', 'text', '🌱'], ['size', 'Taille (px)', 'number', 64], ['caption', 'Légende', 'text', ''], WIDTH] },
+    link: { label: 'Lien', icon: '↗', group: 'Affichage', props: [['text', 'Texte', 'text', 'Ouvrir la page de l\'appareil'], ['url', 'Adresse', 'text', 'http://192.168.4.20/'], WIDTH] },
+    spacer: { label: 'Espace', icon: '↕', group: 'Affichage', props: [['size', 'Hauteur (px)', 'number', 16]] }
+  };
+  R.ACTIONS = {
+    set: { label: 'Mettre une variable à', fields: [['var', 'Variable', 'var'], ['value', 'Valeur ou calcul ({x} + 1)', 'text']] },
+    toggle: { label: 'Inverser une variable (0 ↔ 1)', fields: [['var', 'Variable', 'var']] },
+    http: { label: 'Envoyer une requête à un appareil', fields: [['method', 'Méthode', 'select:GET=GET|POST=POST'], ['url', 'Adresse ({variables} permises)', 'text'], ['body', 'Corps (POST)', 'text']] },
+    job: { label: 'Lancer un job du MASTER', fields: [['type', 'Job', 'select:PING=Ping|SYSTEM_TEST=Check-up|I2C_SCAN=Scan I2C|WIFI_SCAN=Scan Wi-Fi|IDENTIFY=Faire clignoter|BENCHMARK=Benchmark'], ['worker', 'Worker (0 = auto)', 'number']] },
+    goto: { label: 'Aller à l\'écran', fields: [['screen', 'Écran', 'screen']] },
+    speak: { label: 'Dire à voix haute', fields: [['text', 'Texte ({variables} permises)', 'text']] },
+    listen: { label: 'Écouter la voix dans une variable', fields: [['var', 'Variable', 'var']] },
+    notify: { label: 'Afficher un message', fields: [['text', 'Message', 'text']] },
+    vibrate: { label: 'Vibrer', fields: [['ms', 'Durée (ms)', 'number']] }
+  };
+  R.WHEN = {
+    start: { label: 'Au démarrage' },
+    timer: { label: 'Toutes les N secondes', fields: [['every', 'Secondes', 'number']] },
+    above: { label: 'Quand une variable dépasse', fields: [['var', 'Variable', 'var'], ['value', 'Seuil', 'text']] },
+    below: { label: 'Quand une variable passe sous', fields: [['var', 'Variable', 'var'], ['value', 'Seuil', 'text']] },
+    equals: { label: 'Quand une variable devient égale à', fields: [['var', 'Variable', 'var'], ['value', 'Valeur', 'text']] },
+    change: { label: 'Quand une variable change', fields: [['var', 'Variable', 'var']] },
+    screen: { label: 'À l\'ouverture d\'un écran', fields: [['screen', 'Écran', 'screen']] }
+  };
+
+  R.blank = function (name) {
+    return {
+      format: R.FORMAT, id: '', name: name || 'Mon application', version: 1, icon: '📱', color: '#2f7cf6', theme: 'auto',
+      s3: 'http://192.168.4.1', description: '', vars: [],
+      screens: [{ id: 'accueil', title: 'Accueil', items: [{ id: 'c1', type: 'title', text: name || 'Mon application', sub: 'Créée avec NEXUS LAB' }] }],
+      rules: []
+    };
+  };
+  R.newItem = function (type, design) {
+    const meta = R.COMPONENTS[type];
+    const used = new Set();
+    (design.screens || []).forEach((s) => (s.items || []).forEach((i) => used.add(i.id)));
+    let n = 1;
+    while (used.has('c' + n)) n++;
+    const it = { id: 'c' + n, type };
+    meta.props.forEach(([k, , kind, def]) => { it[k] = kind === 'actions' ? [] : def; });
+    return it;
+  };
+
+  /* ------------------------------------------------------------------ calculs sûrs ({x} * 1.8 + 32) */
+  function calc(src) {
+    const s = String(src).replace(/\s+/g, '');
+    let i = 0;
+    const peek = () => s[i];
+    function atom() {
+      if (peek() === '(') { i++; const v = add(); if (s[i++] !== ')') throw 0; return v; }
+      if (peek() === '-') { i++; return -atom(); }
+      const m = /^\d+(?:\.\d+)?/.exec(s.slice(i));
+      if (!m) throw 0;
+      i += m[0].length;
+      return parseFloat(m[0]);
+    }
+    function mul() { let v = atom(); while (peek() === '*' || peek() === '/' || peek() === '%') { const o = s[i++], r = atom(); v = o === '*' ? v * r : o === '/' ? v / r : v % r; } return v; }
+    function add() { let v = mul(); while (peek() === '+' || peek() === '-') { const o = s[i++], r = mul(); v = o === '+' ? v + r : v - r; } return v; }
+    const v = add();
+    if (i !== s.length) throw 0;
+    return v;
+  }
+  R.calc = calc;
+
+  /* ------------------------------------------------------------------ réseau */
+  function nativeNet() {
+    const pending = {};
+    let seq = 0;
+    window.__nexusHttp = (id, status, text) => { const p = pending[id]; if (!p) return; delete pending[id]; status ? p.ok({ status, text }) : p.ko(new Error(text || 'réseau injoignable')); };
+    return (method, url, body) => new Promise((ok, ko) => {
+      const id = 'h' + (++seq);
+      pending[id] = { ok, ko };
+      setTimeout(() => { if (pending[id]) { delete pending[id]; ko(new Error('délai dépassé')); } }, 9000);
+      window.NexusNative.http(id, method, url, body || '');
+    });
+  }
+  function fetchNet(proxy) {
+    return async (method, url, body) => {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+      try {
+        const sameOrigin = !/^https?:/i.test(url) || url.indexOf(location.origin + '/') === 0;
+        let r;
+        if (proxy && !sameOrigin) {
+          r = await fetch(proxy, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method, url, body: body || '' }), signal: ctl.signal });
+        } else {
+          const opt = { method, signal: ctl.signal };
+          if (body && method !== 'GET') { opt.body = body; opt.headers = { 'Content-Type': /^[[{]/.test(body.trim()) ? 'application/json' : 'application/x-www-form-urlencoded' }; }
+          r = await fetch(url, opt);
+        }
+        return { status: r.status, text: await r.text() };
+      } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'délai dépassé' : 'injoignable (ou bloqué par le navigateur : teste dans l\'APK)');
+      } finally { clearTimeout(t); }
+    };
+  }
+  R.net = function (opts) {
+    if (opts && typeof opts.net === 'function') return opts.net;
+    if (window.NexusNative && window.NexusNative.player && window.NexusNative.player()) return nativeNet();
+    return fetchNet(opts && opts.proxy);
+  };
+
+  /* ------------------------------------------------------------------ styles (injectés une seule fois) */
+  const CSS = `
+.nxa{--a:#2f7cf6;--bg:#f4f6fb;--card:#fff;--fg:#141b2b;--mut:#6a7487;--line:#e2e7f0;--ok:#16a34a;--warn:#f59e0b;--bad:#ef4444;
+ font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg);display:flex;flex-direction:column;height:100%;min-height:100%;overflow:hidden;position:relative}
+.nxa[data-theme=dark]{--bg:#0f1522;--card:#18212f;--fg:#e8edf6;--mut:#94a0b6;--line:#263246}
+@media (prefers-color-scheme:dark){.nxa[data-theme=auto]{--bg:#0f1522;--card:#18212f;--fg:#e8edf6;--mut:#94a0b6;--line:#263246}}
+.nxa *{box-sizing:border-box}
+.nxa-top{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--a);color:#fff;flex:none}
+.nxa-top b{font-size:17px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nxa-top .nxa-ic{font-size:22px;line-height:1}
+.nxa-top button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;min-width:34px;height:34px;font-size:17px;cursor:pointer}
+.nxa-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.45);flex:none}
+.nxa-dot.on{background:#6ff0a6;box-shadow:0 0 0 3px rgba(111,240,166,.25)}
+.nxa-body{flex:1;overflow:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start}
+.nxa-item{grid-column:span 2;min-width:0}
+.nxa-item.half{grid-column:span 1}
+.nxa-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.nxa-lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.nxa-big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.nxa-big small{font-size:14px;font-weight:500;color:var(--mut);margin-left:3px}
+.nxa-big.warn{color:var(--warn)}.nxa-big.bad{color:var(--bad)}
+.nxa-h1{font-size:24px;font-weight:750;margin:4px 2px 0}.nxa-h1+div{color:var(--mut);margin:2px 2px 4px}
+.nxa-t{white-space:pre-wrap;margin:2px}.nxa-t.s{font-size:13px;color:var(--mut)}.nxa-t.l{font-size:19px;font-weight:600}
+.nxa-btn{width:100%;min-height:50px;border-radius:14px;border:2px solid var(--bc,var(--a));background:var(--bc,var(--a));color:#fff;font:600 16px system-ui,sans-serif;cursor:pointer;touch-action:manipulation;transition:transform .08s}
+.nxa-btn.outline{background:transparent;color:var(--bc,var(--a))}
+.nxa-btn:active{transform:scale(.97)}
+.nxa-row{display:flex;align-items:center;gap:10px}
+.nxa-sw{margin-left:auto;width:54px;height:32px;border-radius:20px;background:var(--line);position:relative;border:0;cursor:pointer;flex:none;transition:background .15s}
+.nxa-sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
+.nxa-sw.on{background:var(--a)}.nxa-sw.on::after{left:25px}
+.nxa input[type=range]{width:100%;accent-color:var(--a)}
+.nxa-in{display:flex;gap:6px}.nxa-in input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:10px;font:inherit}
+.nxa-in button{border:0;background:var(--a);color:#fff;border-radius:10px;padding:0 14px;font:inherit;cursor:pointer}
+.nxa-led{width:22px;height:22px;border-radius:50%;background:var(--line);margin-left:auto;flex:none;transition:all .2s}
+.nxa-img{text-align:center}.nxa-img div{line-height:1.1}
+.nxa-joy{width:180px;height:180px;margin:6px auto;border-radius:50%;background:radial-gradient(circle,var(--card) 0,var(--bg) 100%);border:2px solid var(--line);position:relative;touch-action:none}
+.nxa-joy i{position:absolute;width:64px;height:64px;border-radius:50%;background:var(--a);left:58px;top:58px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.nxa-tabs{display:flex;background:var(--card);border-top:1px solid var(--line);flex:none}
+.nxa-tabs button{flex:1;border:0;background:none;padding:10px 4px 12px;color:var(--mut);font:600 12px system-ui,sans-serif;cursor:pointer}
+.nxa-tabs button.on{color:var(--a)}
+.nxa-toast{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:rgba(20,27,43,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:86%;text-align:center;pointer-events:none;animation:nxaf 2.6s forwards}
+@keyframes nxaf{0%{opacity:0;transform:translate(-50%,8px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+.nxa-empty{grid-column:span 2;text-align:center;color:var(--mut);padding:40px 10px;border:2px dashed var(--line);border-radius:16px}
+.nxa-sheet{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
+.nxa-sheet>div{background:var(--card);width:100%;border-radius:18px 18px 0 0;padding:18px;display:grid;gap:10px}
+.nxa-sheet input{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:10px;font:inherit}
+.nxa.design .nxa-item{cursor:pointer;position:relative;outline:2px dashed transparent;outline-offset:3px;border-radius:16px}
+.nxa.design .nxa-item:hover{outline-color:rgba(127,140,160,.5)}
+.nxa.design .nxa-item.sel{outline:2px solid var(--a)}
+.nxa.design .nxa-item.drop{box-shadow:0 -4px 0 var(--a)}
+.nxa.design .nxa-item *{pointer-events:none}
+`;
+  function injectCss() {
+    if (document.getElementById('nxa-css')) return;
+    const st = document.createElement('style');
+    st.id = 'nxa-css';
+    st.textContent = CSS;
+    document.head.appendChild(st);
+  }
+
+  /* ------------------------------------------------------------------ application */
+  R.mount = function (root, design, opts) {
+    opts = opts || {};
+    injectCss();
+    const design_ = JSON.parse(JSON.stringify(design));
+    const D = design_, mode = opts.mode || 'run', live = mode === 'run';
+    const net = R.net(opts);
+    const vars = {}, hist = {}, meta = {}, timers = [], edges = {};
+    const varDef = {};
+    let screen = opts.screen && D.screens.some((s) => s.id === opts.screen) ? opts.screen : (D.screens[0] || {}).id;
+    const back = [];
+    let updaters = [], destroyed = false, online = false;
+    const log = (msg, kind) => { if (opts.log) opts.log(msg, kind || 'info'); };
+    let s3 = (opts.s3 != null ? opts.s3 : D.s3 || '').replace(/\/+$/, '');
+
+    (D.vars || []).forEach((v) => {
+      varDef[v.name] = v;
+      vars[v.name] = v.type === 'number' ? num(v.default, 0) : v.type === 'bool' ? (v.default === true || v.default === 1 || v.default === '1' ? 1 : 0) : String(v.default == null ? '' : v.default);
+      hist[v.name] = [];
+    });
+    if (opts.sample) Object.keys(opts.sample).forEach((k) => {
+      if (!(k in vars)) return;
+      vars[k] = opts.sample[k];
+      // aperçu : une petite courbe plausible autour de la valeur d'exemple
+      if (typeof vars[k] === 'number') for (let i = 0; i < 40; i++) hist[k].push(vars[k] * (1 + 0.04 * Math.sin(i / 4) + 0.015 * Math.sin(i * 1.7)));
+    });
+
+    function fmt(name, decimals) {
+      const v = name in vars ? vars[name] : meta[name];
+      if (v == null || v === '') return '—';
+      if (typeof v === 'number') return decimals != null && decimals !== '' ? v.toFixed(Math.max(0, Math.min(6, num(decimals, 1)))) : String(Math.round(v * 1000) / 1000);
+      return String(v);
+    }
+    const tpl = (s) => String(s == null ? '' : s).replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, k) => (k in vars || k in meta ? fmt(k) : m));
+    function evalValue(s, name) {
+      const t = tpl(s).trim();
+      const def = varDef[name] || {};
+      if (def.type !== 'text' && /^[\d\s.+\-*/%()]+$/.test(t)) { try { return calc(t); } catch (e) { /* texte */ } }
+      if (def.type === 'bool') return /^(1|true|vrai|on|oui)$/i.test(t) ? 1 : 0;
+      return def.type === 'number' && isFinite(parseFloat(t)) ? parseFloat(t) : t;
+    }
+
+    function setVar(name, value, quiet) {
+      if (!(name in vars)) return;
+      const def = varDef[name] || {};
+      if (def.type === 'number' && typeof value !== 'number') { const n = parseFloat(value); value = isFinite(n) ? n : vars[name]; }
+      const old = vars[name];
+      vars[name] = value;
+      if (typeof value === 'number') { const hh = hist[name]; hh.push(value); if (hh.length > 300) hh.shift(); }
+      if (!quiet) refresh();
+      if (old !== value && live) fireVar(name, old, value);
+    }
+    function refresh() { updaters.forEach((u) => { try { u(); } catch (e) { /* composant */ } }); }
+
+    /* --- blocs « quand » */
+    function fireVar(name, old, value) {
+      (D.rules || []).forEach((r, i) => {
+        const w = r.when;
+        if (w.var !== name) return;
+        let hit = false;
+        if (w.type === 'change') hit = true;
+        else {
+          const th = evalValue(w.value, name);
+          const cond = w.type === 'above' ? value > th : w.type === 'below' ? value < th : String(value) === String(th);
+          hit = cond && !edges[i];
+          edges[i] = cond;
+        }
+        if (hit) run(r.do, 'bloc « quand »');
+      });
+    }
+
+    /* --- actions */
+    async function run(list, where) {
+      for (const a of list || []) {
+        if (destroyed) return;
+        try { await act(a); } catch (e) { log((where ? where + ' : ' : '') + (R.ACTIONS[a.a] || {}).label + ' — ' + e.message, 'bad'); }
+      }
+    }
+    function toast(text) {
+      if (window.NexusNative && window.NexusNative.toast && live && opts.native !== false) { window.NexusNative.toast(text); return; }
+      const t = h(`<div class="nxa-toast">${esc(text)}</div>`);
+      app.appendChild(t);
+      setTimeout(() => t.remove(), 2700);
+    }
+    async function act(a) {
+      if (!live) return;
+      switch (a.a) {
+        case 'set': setVar(a.var, evalValue(a.value, a.var)); break;
+        case 'toggle': setVar(a.var, vars[a.var] && vars[a.var] !== '0' ? 0 : 1); break;
+        case 'goto': go(a.screen, true); break;
+        case 'notify': toast(tpl(a.text)); break;
+        case 'vibrate':
+          if (window.NexusNative && window.NexusNative.vibrate) window.NexusNative.vibrate(num(a.ms, 200));
+          else if (navigator.vibrate) navigator.vibrate(num(a.ms, 200));
+          break;
+        case 'speak': {
+          const text = tpl(a.text);
+          if (window.NexusNative && window.NexusNative.speak) window.NexusNative.speak(text);
+          else if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(text); u.lang = 'fr-FR'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+          break;
+        }
+        case 'listen': setVar(a.var, await listen()); break;
+        case 'http': {
+          const url = tpl(a.url), body = a.body ? tpl(a.body) : '';
+          const r = await net(a.method || 'GET', url, body);
+          log(`${a.method || 'GET'} ${url} → ${r.status}`, r.status < 400 ? 'ok' : 'bad');
+          if (r.status >= 400) throw new Error('réponse ' + r.status);
+          break;
+        }
+        case 'job': {
+          const body = `type=${encodeURIComponent(a.type || 'PING')}&priority=50&worker=${num(a.worker, 0)}`;
+          const r = await net('POST', s3 + '/api/job', body);
+          if (r.status >= 400) throw new Error('le MASTER a refusé (' + r.status + ')');
+          toast('Job ' + (a.type || 'PING') + ' envoyé');
+          break;
+        }
+      }
+    }
+    function listen() {
+      return new Promise((ok, ko) => {
+        if (window.NexusNative && window.NexusNative.listen) {
+          window.__nexusVoice = (good, text) => (good ? ok(text) : ko(new Error(text)));
+          window.NexusNative.listen('fr-FR');
+          return;
+        }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { ko(new Error('reconnaissance vocale absente ici')); return; }
+        const rec = new SR();
+        rec.lang = 'fr-FR';
+        rec.onresult = (e) => ok(e.results[0][0].transcript);
+        rec.onerror = (e) => ko(new Error(e.error || 'micro'));
+        rec.start();
+      });
+    }
+
+    /* --- sources de données */
+    async function pollFeeds() {
+      const feedVars = (D.vars || []).filter((v) => v.source === 'feed');
+      if (!feedVars.length || destroyed) return;
+      try {
+        const r = await net('GET', s3 + '/api/feeds');
+        const feeds = JSON.parse(r.text);
+        setOnline(true);
+        feedVars.forEach((v) => {
+          const [a, b] = v.feed.indexOf('/') > 0 ? v.feed.split('/') : [null, v.feed];
+          const f = (Array.isArray(feeds) ? feeds : []).find((x) => x.key === b && (!a || x.source === a));
+          if (f && f.age_ms < 120000) { meta[v.name + '_ip'] = f.ip; setVar(v.name, num(f.value, vars[v.name]), true); }
+        });
+        refresh();
+      } catch (e) { setOnline(false); }
+    }
+    async function pollHttp(v) {
+      try {
+        const r = await net('GET', tpl(v.url));
+        let val = r.text;
+        try {
+          let o = JSON.parse(r.text);
+          if (v.path) v.path.split('.').forEach((k) => { o = o == null ? o : Array.isArray(o) && !/^\d+$/.test(k) ? o.find((x) => x && (x.label === k || x.key === k || x.name === k)) : o[k]; });
+          val = o && typeof o === 'object' && 'value' in o ? o.value : o;
+        } catch (e) { /* texte brut */ }
+        setVar(v.name, typeof val === 'object' ? JSON.stringify(val) : val);
+      } catch (e) { log(`${v.name} : ${e.message}`, 'bad'); }
+    }
+    function setOnline(on) { online = on; const d = app.querySelector('.nxa-dot'); if (d) d.classList.toggle('on', on); }
+
+    /* --- rendu */
+    const app = h(`<div class="nxa ${mode === 'design' ? 'design' : ''}" data-theme="${esc(D.theme || 'auto')}"></div>`);
+    app.style.setProperty('--a', /^#[0-9a-f]{6}$/i.test(D.color || '') ? D.color : '#2f7cf6');
+    root.innerHTML = '';
+    root.appendChild(app);
+
+    function go(id, push) {
+      if (!D.screens.some((s) => s.id === id)) return;
+      if (push && id !== screen) back.push(screen);
+      screen = id;
+      render();
+      if (live) (D.rules || []).forEach((r) => { if (r.when.type === 'screen' && r.when.screen === id) run(r.do, 'ouverture d\'écran'); });
+      if (opts.onScreen) opts.onScreen(id);
+    }
+
+    function render() {
+      updaters = [];
+      const scr = D.screens.find((s) => s.id === screen) || D.screens[0];
+      if (!scr) { app.innerHTML = '<div class="nxa-body"><div class="nxa-empty">Aucun écran</div></div>'; return; }
+      const multi = D.screens.length > 1;
+      app.innerHTML = `<div class="nxa-top">${back.length && live ? '<button data-back aria-label="Retour">‹</button>' : `<span class="nxa-ic">${esc(D.icon || '📱')}</span>`}
+        <b>${esc(multi ? scr.title : D.name)}</b><span class="nxa-dot${online ? ' on' : ''}" title="MASTER"></span>${live && opts.settings !== false ? '<button data-set aria-label="Réglages">⚙</button>' : ''}</div>
+        <div class="nxa-body"></div>${multi ? `<nav class="nxa-tabs">${D.screens.map((s) => `<button data-tab="${esc(s.id)}" class="${s.id === scr.id ? 'on' : ''}">${esc(s.title)}</button>`).join('')}</nav>` : ''}`;
+      const body = app.querySelector('.nxa-body');
+      if (!scr.items.length) body.innerHTML = `<div class="nxa-empty">${mode === 'design' ? 'Glisse des composants ici depuis la palette' : 'Écran vide'}</div>`;
+      scr.items.forEach((it) => {
+        const wrap = h(`<div class="nxa-item ${it.width === 'half' ? 'half' : ''}" data-id="${esc(it.id)}"></div>`);
+        if (mode === 'design') { wrap.draggable = true; if (opts.selected === it.id) wrap.classList.add('sel'); }
+        try { build(it, wrap); } catch (e) { wrap.innerHTML = `<div class="nxa-card">⚠ ${esc(it.type)}</div>`; }
+        body.appendChild(wrap);
+      });
+      app.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { back.length = 0; go(b.dataset.tab, false); }));
+      const bb = app.querySelector('[data-back]');
+      if (bb) bb.onclick = () => goBack();
+      const sb = app.querySelector('[data-set]');
+      if (sb) sb.onclick = settings;
+      refresh();
+    }
+    function goBack() { if (!back.length) return false; screen = back.pop(); render(); return true; }
+
+    function build(it, wrap) {
+      const card = (inner) => { wrap.innerHTML = `<div class="nxa-card">${inner}</div>`; return wrap.firstElementChild; };
+      switch (it.type) {
+        case 'title': {
+          wrap.innerHTML = `<div class="nxa-h1"></div>${it.sub ? '<div></div>' : ''}`;
+          const [t1, t2] = wrap.children;
+          updaters.push(() => { t1.textContent = tpl(it.text); if (t2) t2.textContent = tpl(it.sub); });
+          break;
+        }
+        case 'text': { wrap.innerHTML = `<div class="nxa-t ${esc(it.size || 'm')}"></div>`; const t = wrap.firstElementChild; updaters.push(() => { t.textContent = tpl(it.text); }); break; }
+        case 'spacer': wrap.style.height = Math.max(0, Math.min(200, num(it.size, 16))) + 'px'; if (mode === 'design') wrap.style.outline = '1px dashed rgba(127,140,160,.35)'; break;
+        case 'image': wrap.innerHTML = `<div class="nxa-img"><div style="font-size:${Math.max(16, Math.min(200, num(it.size, 64)))}px">${esc(it.emoji || '🖼')}</div>${it.caption ? `<div class="nxa-t s">${esc(it.caption)}</div>` : ''}</div>`; break;
+        case 'link': { wrap.innerHTML = `<button class="nxa-btn outline">${esc(it.text || 'Ouvrir')} ↗</button>`; wrap.firstElementChild.onclick = () => { if (live) window.open(tpl(it.url), '_blank'); }; break; }
+        case 'value': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)}</div><div class="nxa-big"></div>`), big = c.lastElementChild;
+          updaters.push(() => {
+            const v = vars[it.var];
+            big.innerHTML = `${esc(it.var ? fmt(it.var, it.decimals) : '—')}<small>${esc(it.unit || (varDef[it.var] || {}).unit || '')}</small>`;
+            big.className = 'nxa-big' + (it.alarm !== '' && it.alarm != null && v > num(it.alarm, Infinity) ? ' bad' : it.warn !== '' && it.warn != null && v > num(it.warn, Infinity) ? ' warn' : '');
+          });
+          break;
+        }
+        case 'gauge': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)}</div><svg viewBox="0 0 120 70" style="width:100%;max-height:120px"><path d="M10 64 A50 50 0 0 1 110 64" fill="none" stroke="var(--line)" stroke-width="11" stroke-linecap="round"/><path class="g" d="M10 64 A50 50 0 0 1 110 64" fill="none" stroke="var(--a)" stroke-width="11" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/><text x="60" y="60" text-anchor="middle" font-size="19" font-weight="700" fill="currentColor"></text></svg>`);
+          const g = c.querySelector('.g'), tx = c.querySelector('text');
+          updaters.push(() => {
+            const mn = num(it.min, 0), mx = num(it.max, 100), v = num(vars[it.var], mn);
+            const p = Math.max(0, Math.min(100, ((v - mn) / (mx - mn || 1)) * 100));
+            g.setAttribute('stroke-dasharray', `${p} 100`);
+            tx.textContent = fmt(it.var, 0) + (it.unit || '');
+          });
+          break;
+        }
+        case 'chart': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)} <span style="float:right"></span></div><svg viewBox="0 0 300 90" preserveAspectRatio="none" style="width:100%;height:90px"><polyline fill="none" stroke="var(--a)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`);
+          const pl = c.querySelector('polyline'), last = c.querySelector('span');
+          updaters.push(() => {
+            const pts = (hist[it.var] || []).slice(-Math.max(5, Math.min(300, num(it.points, 60))));
+            last.textContent = it.var ? fmt(it.var) + ((varDef[it.var] || {}).unit || '') : '';
+            if (pts.length < 2) { pl.setAttribute('points', ''); return; }
+            const mn = Math.min(...pts), mx = Math.max(...pts), span = mx - mn || 1;
+            pl.setAttribute('points', pts.map((v, i) => `${(i / (pts.length - 1)) * 300},${84 - ((v - mn) / span) * 78}`).join(' '));
+          });
+          break;
+        }
+        case 'led': {
+          const c = card(`<div class="nxa-row"><span>${esc(it.label)}</span><i class="nxa-led"></i></div>`), led = c.querySelector('i');
+          updaters.push(() => {
+            const v = vars[it.var], th = evalValue(it.value, it.var);
+            const on = it.op === 'gt' ? v > th : it.op === 'lt' ? v < th : it.op === 'eq' ? String(v) === String(th) : !!(v && v !== '0');
+            led.style.background = on ? it.color || '#ef4444' : '';
+            led.style.boxShadow = on ? `0 0 12px ${it.color || '#ef4444'}` : '';
+          });
+          break;
+        }
+        case 'button': {
+          wrap.innerHTML = `<button class="nxa-btn ${it.style === 'outline' ? 'outline' : ''}">${esc(it.text || 'Bouton')}</button>`;
+          const b = wrap.firstElementChild;
+          if (it.color) b.style.setProperty('--bc', it.color);
+          b.onclick = () => run(it.do, `« ${it.text} »`);
+          updaters.push(() => { b.textContent = tpl(it.text || 'Bouton'); });
+          break;
+        }
+        case 'switch': {
+          const c = card(`<div class="nxa-row"><span>${esc(it.label)}</span><button class="nxa-sw" role="switch" aria-label="${esc(it.label)}"></button></div>`), sw = c.querySelector('button');
+          sw.onclick = () => { if (!live) return; const on = !(vars[it.var] && vars[it.var] !== '0'); if (it.var) setVar(it.var, on ? 1 : 0); else sw.classList.toggle('on', on); run(on ? it.do : it.off, `« ${it.label} »`); };
+          updaters.push(() => { if (it.var) sw.classList.toggle('on', !!(vars[it.var] && vars[it.var] !== '0')); });
+          break;
+        }
+        case 'slider': {
+          const c = card(`<div class="nxa-row"><span class="nxa-lbl" style="margin:0">${esc(it.label)}</span><b style="margin-left:auto"></b></div><input type="range" min="${num(it.min, 0)}" max="${num(it.max, 100)}" step="${num(it.step, 1)}">`);
+          const r = c.querySelector('input'), out = c.querySelector('b');
+          r.oninput = () => { if (it.var) setVar(it.var, parseFloat(r.value)); else out.textContent = r.value; };
+          r.onchange = () => run(it.do, `« ${it.label} »`);
+          updaters.push(() => { if (it.var) { if (document.activeElement !== r) r.value = num(vars[it.var], 0); out.textContent = fmt(it.var); } });
+          break;
+        }
+        case 'input': {
+          const c = card(`<div class="nxa-lbl">${esc(it.label)}</div><div class="nxa-in"><input type="${it.kind === 'number' ? 'number' : 'text'}" placeholder="${esc(it.placeholder || '')}"><button>OK</button></div>`);
+          const inp = c.querySelector('input');
+          const submit = () => { if (it.var) setVar(it.var, it.kind === 'number' ? num(inp.value, 0) : inp.value); run(it.do, `« ${it.label} »`); };
+          c.querySelector('button').onclick = submit;
+          inp.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+          break;
+        }
+        case 'joystick': {
+          wrap.innerHTML = '<div class="nxa-card"><div class="nxa-joy"><i></i></div></div>';
+          const pad = wrap.querySelector('.nxa-joy'), knob = pad.firstElementChild;
+          let last = 0, active = false;
+          const send = (x, y, force) => {
+            if (it.var_x) setVar(it.var_x, Math.round(x * 100), true);
+            if (it.var_y) setVar(it.var_y, Math.round(-y * 100), true);
+            refresh();
+            const t = Date.now();
+            if (force || t - last > 200) { last = t; run(it.do, 'joystick'); }
+          };
+          const move = (e) => {
+            if (!active || !live) return;
+            const r = pad.getBoundingClientRect();
+            let x = (e.clientX - r.left - r.width / 2) / (r.width / 2 - 32), y = (e.clientY - r.top - r.height / 2) / (r.height / 2 - 32);
+            const d = Math.hypot(x, y);
+            if (d > 1) { x /= d; y /= d; }
+            knob.style.transform = `translate(${x * (r.width / 2 - 32)}px,${y * (r.height / 2 - 32)}px)`;
+            send(x, y, false);
+          };
+          pad.onpointerdown = (e) => { active = true; pad.setPointerCapture(e.pointerId); move(e); };
+          pad.onpointermove = move;
+          pad.onpointerup = pad.onpointercancel = () => { if (!active) return; active = false; knob.style.transform = ''; send(0, 0, true); };
+          break;
+        }
+      }
+    }
+
+    function settings() {
+      const sh = h(`<div class="nxa-sheet"><div><b>Réglages</b><label class="nxa-lbl">Adresse du MASTER</label><input value="${esc(s3)}"><div class="nxa-t s">${esc(D.name)} · version ${esc(D.version)} · NEXUS LAB</div><button class="nxa-btn">Enregistrer</button></div></div>`);
+      sh.onclick = (e) => { if (e.target === sh) sh.remove(); };
+      sh.querySelector('button').onclick = () => {
+        s3 = sh.querySelector('input').value.trim().replace(/\/+$/, '');
+        try { localStorage.setItem('nxa.' + D.id + '.s3', s3); } catch (e) { /* stockage */ }
+        sh.remove();
+        pollFeeds();
+      };
+      app.appendChild(sh);
+    }
+
+    /* --- démarrage */
+    if (live) {
+      try { const saved = localStorage.getItem('nxa.' + D.id + '.s3'); if (saved && opts.s3 == null) s3 = saved; } catch (e) { /* stockage */ }
+    }
+    render();
+    if (live) {
+      if ((D.vars || []).some((v) => v.source === 'feed')) { pollFeeds(); timers.push(setInterval(pollFeeds, 2000)); }
+      (D.vars || []).filter((v) => v.source === 'http').forEach((v) => { pollHttp(v); timers.push(setInterval(() => pollHttp(v), Math.max(1, num(v.every, 2)) * 1000)); });
+      (D.rules || []).forEach((r) => {
+        if (r.when.type === 'start') run(r.do, 'démarrage');
+        if (r.when.type === 'timer') timers.push(setInterval(() => run(r.do, 'minuterie'), Math.max(1, num(r.when.every, 5)) * 1000));
+        if (r.when.type === 'screen' && r.when.screen === screen) run(r.do, 'ouverture d\'écran');
+      });
+      if (opts.player) window.__nexusBack = goBack;
+    }
+
+    return {
+      el: app,
+      vars,
+      get screen() { return screen; },
+      go: (id) => go(id, false),
+      set: setVar,
+      select(id) { opts.selected = id; app.querySelectorAll('.nxa-item').forEach((w) => w.classList.toggle('sel', w.dataset.id === id)); },
+      destroy() { destroyed = true; timers.forEach(clearInterval); if (window.__nexusBack === goBack) window.__nexusBack = null; root.innerHTML = ''; }
+    };
+  };
+
+  /* ------------------------------------------------------------------ lecteur (APK et appli web) */
+  R.boot = function (root) {
+    const D = window.NEXUS_APP;
+    if (!D) { root.innerHTML = '<p style="font:16px sans-serif;padding:20px;color:#fff">Application vide.</p>'; return; }
+    document.title = D.name;
+    if (window.NexusNative && window.NexusNative.barColor) window.NexusNative.barColor(D.color || '#2f7cf6');
+    const meta = document.querySelector('meta[name=theme-color]');
+    if (meta) meta.content = D.color || '#2f7cf6';
+    const web = !(window.NexusNative && window.NexusNative.player && window.NexusNative.player());
+    R.app = R.mount(root, D, { mode: 'run', player: true, proxy: web && /\/apps\//.test(location.pathname) ? 'proxy' : null });
+  };
+})();
+/* ---- 58_apkstudio.js ---- */
+/* Studio APK : crée une application Android sans coder, à la manière de MIT App Inventor.
+ * Écrans, composants glissés-déposés, variables reliées aux capteurs du labo, blocs « quand… alors… »,
+ * test en direct, puis le Pi fabrique et signe l'APK (aucune compilation) et donne le lien direct + le QR.
+ * Le rendu vient de 57_appruntime.js : l'aperçu est exactement l'application installée. */
+(function () {
+  'use strict';
+  const A = window.APP, $ = A.$, $$ = A.$$, esc = A.esc, icon = A.icon, toast = A.toast, store = A.store;
+  const R = window.NexusAppRuntime;
+  const S = { D: null, sel: null, scr: null, tab: 'design', mode: 'design', inst: null, logs: [], feeds: [], status: null, last: null, el: null };
+
+  /* ------------------------------------------------------------------ modèle */
+  const slug = (t) => {
+    const s = String(t || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'app';
+    return /^[a-z]/.test(s) ? s : ('a' + s).slice(0, 40);
+  };
+  const ident = (t, used) => {
+    let base = String(t || 'v').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 28) || 'v';
+    if (!/^[A-Za-z_]/.test(base)) base = 'v_' + base;
+    let n = base, i = 2;
+    while (used.has(n)) n = base + '_' + i++;
+    used.add(n);
+    return n;
+  };
+  function fix() {
+    const D = S.D;
+    D.vars = D.vars || []; D.rules = D.rules || [];
+    if (!D.screens || !D.screens.length) D.screens = [{ id: 'accueil', title: 'Accueil', items: [] }];
+    D.screens.forEach((s) => (s.items = s.items || []));
+    if (!D.screens.some((s) => s.id === S.scr)) S.scr = D.screens[0].id;
+    D.version = Math.max(1, parseInt(D.version, 10) || 1);
+  }
+  const save = () => store.set('apkstudio.design', S.D);
+  function load() { S.D = store.get('apkstudio.design', null) || R.blank('Mon application'); fix(); }
+  const screen = () => S.D.screens.find((s) => s.id === S.scr) || S.D.screens[0];
+  function findItem(id) {
+    for (let si = 0; si < S.D.screens.length; si++) {
+      const i = S.D.screens[si].items.findIndex((x) => x.id === id);
+      if (i >= 0) return { si, i, it: S.D.screens[si].items[i] };
+    }
+    return null;
+  }
+  const getP = (path) => path.reduce((o, k) => (o == null ? o : o[k]), S.D);
+  function setP(path, v) { const o = getP(path.slice(0, -1)); if (o) o[path[path.length - 1]] = v; }
+
+  /* ------------------------------------------------------------------ modèles d'applications */
+  const TEMPLATES = {
+    dashboard: { name: 'Tableau de bord', icon: '📊', desc: 'Température, humidité, jauge et courbe depuis le MASTER', make() {
+      const d = R.blank('Mon tableau de bord'); d.icon = '📊';
+      d.vars = [{ name: 'temp', source: 'feed', feed: 'temp', unit: '°C', type: 'number', default: 0 }, { name: 'hum', source: 'feed', feed: 'hum', unit: '%', type: 'number', default: 0 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Mon tableau de bord', sub: 'Mesures en direct du labo' },
+        { id: 'c2', type: 'value', label: 'Température', var: 'temp', unit: '°C', decimals: 1, warn: 28, alarm: 35, width: 'half' },
+        { id: 'c3', type: 'gauge', label: 'Humidité', var: 'hum', min: 0, max: 100, unit: '%', width: 'half' },
+        { id: 'c4', type: 'chart', label: 'Température', var: 'temp', points: 60, width: 'full' }];
+      d.rules = [{ when: { type: 'above', var: 'temp', value: '35' }, do: [{ a: 'notify', text: 'Alerte : {temp} °C' }, { a: 'vibrate', ms: 400 }] }];
+      return d; } },
+    remote: { name: 'Télécommande', icon: '🎛', desc: 'Boutons et interrupteurs qui commandent un appareil en HTTP', make() {
+      const d = R.blank('Télécommande'); d.icon = '🎛';
+      d.vars = [{ name: 'ip', source: 'local', type: 'text', default: '192.168.4.20' }, { name: 'lampe', source: 'local', type: 'bool', default: 0 }, { name: 'vitesse', source: 'local', type: 'number', default: 50 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Télécommande', sub: 'Appareil : {ip}' },
+        { id: 'c2', type: 'switch', label: 'Lampe', var: 'lampe', width: 'full', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=1' }], off: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=0' }] },
+        { id: 'c3', type: 'slider', label: 'Vitesse', var: 'vitesse', min: 0, max: 100, step: 5, width: 'full', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?vitesse={vitesse}' }] },
+        { id: 'c4', type: 'button', text: 'Marche', color: '#16a34a', style: 'fill', width: 'half', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?run=1' }, { a: 'vibrate', ms: 60 }] },
+        { id: 'c5', type: 'button', text: 'Arrêt', color: '#ef4444', style: 'fill', width: 'half', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?run=0' }, { a: 'vibrate', ms: 60 }] }];
+      return d; } },
+    car: { name: 'Manette de voiture', icon: '🏎', desc: 'Joystick qui envoie direction et vitesse à une voiture ESP32', make() {
+      const d = R.blank('Ma voiture'); d.icon = '🏎'; d.color = '#ea580c';
+      d.vars = [{ name: 'ip', source: 'local', type: 'text', default: '192.168.4.30' }, { name: 'x', source: 'local', type: 'number', default: 0 }, { name: 'y', source: 'local', type: 'number', default: 0 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Ma voiture', sub: 'Lâche le joystick pour arrêter' },
+        { id: 'c2', type: 'joystick', var_x: 'x', var_y: 'y', do: [{ a: 'http', method: 'GET', url: 'http://{ip}/drive?x={x}&y={y}' }] },
+        { id: 'c3', type: 'value', label: 'Avance', var: 'y', unit: '%', decimals: 0, width: 'half' },
+        { id: 'c4', type: 'value', label: 'Virage', var: 'x', unit: '%', decimals: 0, width: 'half' },
+        { id: 'c5', type: 'button', text: 'STOP', color: '#ef4444', width: 'full', do: [{ a: 'set', var: 'x', value: '0' }, { a: 'set', var: 'y', value: '0' }, { a: 'http', method: 'GET', url: 'http://{ip}/drive?x=0&y=0' }, { a: 'vibrate', ms: 200 }] }];
+      return d; } },
+    voice: { name: 'Commande vocale', icon: '🎙', desc: 'Parle à ton montage : « allume », « éteins »', make() {
+      const d = R.blank('Commande vocale'); d.icon = '🎙'; d.color = '#9333ea';
+      d.vars = [{ name: 'phrase', source: 'local', type: 'text', default: '' }, { name: 'ip', source: 'local', type: 'text', default: '192.168.4.20' }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Commande vocale', sub: 'Dis « allume » ou « éteins »' },
+        { id: 'c2', type: 'button', text: '🎙 Parler', width: 'full', do: [{ a: 'listen', var: 'phrase' }] },
+        { id: 'c3', type: 'text', text: 'J\'ai compris : {phrase}', size: 'l', width: 'full' }];
+      d.rules = [{ when: { type: 'equals', var: 'phrase', value: 'allume' }, do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=1' }, { a: 'speak', text: 'C\'est allumé' }] },
+        { when: { type: 'equals', var: 'phrase', value: 'éteins' }, do: [{ a: 'http', method: 'GET', url: 'http://{ip}/set?lampe=0' }, { a: 'speak', text: 'C\'est éteint' }] }];
+      return d; } },
+    lab: { name: 'Contrôle du labo', icon: '🧪', desc: 'Lance check-up, scan I2C et clignotement sur les workers', make() {
+      const d = R.blank('Mon labo'); d.icon = '🧪'; d.color = '#0891b2';
+      d.vars = [{ name: 'worker', source: 'local', type: 'number', default: 0 }];
+      d.screens[0].items = [{ id: 'c1', type: 'title', text: 'Mon labo', sub: 'Jobs du MASTER' },
+        { id: 'c2', type: 'button', text: 'Check-up', width: 'half', do: [{ a: 'job', type: 'SYSTEM_TEST', worker: 0 }] },
+        { id: 'c3', type: 'button', text: 'Scan I2C', width: 'half', do: [{ a: 'job', type: 'I2C_SCAN', worker: 0 }] },
+        { id: 'c4', type: 'button', text: 'Faire clignoter', style: 'outline', width: 'full', do: [{ a: 'job', type: 'IDENTIFY', worker: 0 }] }];
+      return d; } }
+  };
+
+  /* Application tirée d'un projet du Studio : une variable par mesure envoyée au MASTER. */
+  function fromSpec(spec, name) {
+    const g = window.LAB.generate(Object.assign({}, spec, { options: Object.assign({}, spec.options || {}, { master: true }) }));
+    const d = R.blank(name || spec.title || 'Mon projet');
+    d.name = String(name || spec.title || 'Mon projet').slice(0, 60);
+    d.icon = '📟';
+    d.description = `Mesures du montage « ${g.title} » (appareil ${g.device}).`;
+    const used = new Set();
+    d.vars = g.outs.slice(0, 24).map((o) => ({ name: ident(o.key, used), source: 'feed', feed: `${g.device}/${o.key}`, unit: o.unit, label: `${o.module} ${o.label}`, type: 'number', default: 0 }));
+    const items = [{ id: 'c1', type: 'title', text: d.name, sub: g.boardName }];
+    d.vars.forEach((v, i) => items.push({ id: 'c' + (i + 2), type: 'value', label: v.label, var: v.name, unit: v.unit, decimals: 1, width: 'half' }));
+    d.vars.slice(0, 2).forEach((v, i) => items.push({ id: 'c' + (d.vars.length + 2 + i), type: 'chart', label: v.label, var: v.name, points: 60, width: 'full' }));
+    if (!d.vars.length && !(g.controls || []).length) items.push({ id: 'c2', type: 'text', text: 'Ce projet n\'envoie pas de mesure : ajoute des boutons pour le commander.', size: 's' });
+    d.screens[0].items = items;
+    if (g.app && (g.controls || []).length) addControls(d, g, used, items.length + 2);
+    return d;
+  }
+  /* Montage avec « Pilotage par application » : un interrupteur ou un curseur par actionneur et variable réglable,
+   * qui appelle /set sur l'appareil (adresse connue grâce aux mesures reçues par le MASTER). */
+  function addControls(d, g, used, n) {
+    const feed = d.vars.find((v) => v.source === 'feed');
+    let host = feed ? `{${feed.name}_ip}` : '';
+    if (!host) { const ip = ident('ip_appareil', used); d.vars.push({ name: ip, source: 'local', type: 'text', default: '192.168.4.20', label: 'Adresse IP du montage' }); host = `{${ip}}`; }
+    const set = (q) => [{ a: 'http', method: 'GET', url: `http://${host}/set?${q}` }];
+    const items = [{ id: 'c' + n++, type: 'title', text: 'Commandes', sub: g.title }];
+    if (!feed) items.push({ id: 'c' + n++, type: 'input', label: 'Adresse IP du montage', var: d.vars[d.vars.length - 1].name, width: 'full' });
+    g.controls.forEach((c) => {
+      if (c.var) {   // variable réglable : déjà suivie via le MASTER (var_<nom>), sinon variable locale
+        let v = d.vars.find((x) => x.feed === `${g.device}/${c.key}`);
+        if (!v) { v = { name: ident(c.key, used), source: 'local', type: 'number', default: 0, unit: c.set.unit || '' }; d.vars.push(v); }
+        items.push({ id: 'c' + n++, type: 'slider', label: c.name, var: v.name, min: 0, max: 100, step: 0.5, width: 'full', do: set(`${c.key}={${v.name}}`) });
+        return;
+      }
+      const v = { name: ident(c.key + '_cmd', used), source: 'local', type: 'number', default: 0, label: c.name };
+      d.vars.push(v);
+      if (c.set && c.set.min != null) {
+        const span = Number(c.set.max) - Number(c.set.min);
+        v.default = Number(c.set.min) <= 0 && Number(c.set.max) >= 0 ? 0 : Number(c.set.min);
+        v.unit = c.set.unit || '';
+        items.push({ id: 'c' + n++, type: 'slider', label: `${c.name} (${c.set.unit || ''})`.replace(' ()', ''), var: v.name, min: Number(c.set.min), max: Number(c.set.max), step: span > 200 ? Math.round(span / 100) : span > 20 ? 1 : 0.1, width: 'full', do: set(`${c.key}={${v.name}}`) });
+      } else {
+        items.push({ id: 'c' + n++, type: 'switch', label: c.name, var: v.name, width: 'full', do: set(`${c.key}=on`), off: set(`${c.key}=off`) });
+      }
+    });
+    d.screens[0].title = 'Mesures';
+    d.screens.push({ id: 'commandes', title: 'Commandes', items });
+  }
+
+  /* ------------------------------------------------------------------ Pi */
+  const piReady = () => !!(A.piBase && A.piBase());
+  const piJ = (path, body) => A.piRequest(path, { method: 'POST', body: JSON.stringify(body || {}) });
+  async function testNet(method, url, body) {
+    if (!/^https?:/i.test(url)) {   // MASTER : mêmes appels que le reste de l'interface (session, mode démo)
+      const data = method === 'GET' ? await A.api(url) : await A.post(url, Object.fromEntries(new URLSearchParams(body || '')));
+      return { status: 200, text: typeof data === 'string' ? data : JSON.stringify(data) };
+    }
+    if (!piReady()) {
+      const r = await fetch(url, Object.assign({ method }, body && method !== 'GET' ? { body, headers: { 'Content-Type': /^[[{]/.test(body.trim()) ? 'application/json' : 'application/x-www-form-urlencoded' } } : {}));
+      return { status: r.status, text: await r.text() };
+    }
+    const r = await fetch(A.piBase() + '/api/v1/appstudio/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + A.piToken() }, body: JSON.stringify({ method, url, body: body || '' }) });
+    return { status: r.status, text: await r.text() };
+  }
+  async function publish(design, quiet) {
+    if (!piReady()) throw new Error('Pi non configuré : ouvre « Compagnon Pi » et renseigne son adresse et son jeton.');
+    const d = JSON.parse(JSON.stringify(design));
+    d.id = d.id || slug(d.name);
+    const saved = await piJ('/api/v1/appstudio/apps', { design: d });
+    const res = await piJ(`/api/v1/appstudio/apps/${saved.id}/build`, {});
+    res.id = saved.id;
+    res.apk_url = A.piBase() + res.apk;
+    res.web_url = A.piBase() + res.web;
+    if (!quiet) toast(`APK prête : ${d.name} v${res.version}`, 'ok');
+    return res;
+  }
+  async function qrUrl(res) {
+    try { const blob = await A.piRequest(res.qr); return blob instanceof Blob ? URL.createObjectURL(blob) : ''; } catch (e) { return ''; }
+  }
+  A.AppStudio = { fromSpec, publish, qrUrl, slug, templates: TEMPLATES };
+
+  /* ------------------------------------------------------------------ champs génériques */
+  const P = (path) => esc(JSON.stringify(path));
+  function field(kind, value, path, label) {
+    const v = value == null ? '' : value;
+    let inp;
+    if (kind === 'textarea') inp = `<textarea class="textarea" rows="3" data-p="${P(path)}">${esc(v)}</textarea>`;
+    else if (kind === 'number') inp = `<input class="input" type="number" step="any" data-num data-p="${P(path)}" value="${esc(v)}">`;
+    else if (kind === 'color') inp = `<div class="row"><input type="color" data-p="${P(path)}" value="${esc(/^#[0-9a-f]{6}$/i.test(v) ? v : S.D.color || '#2f7cf6')}" style="width:48px;height:34px;border:0;background:none">${v ? `<button class="btn sm ghost" data-clear="${P(path)}">Par défaut</button>` : '<span class="hint">couleur du thème</span>'}</div>`;
+    else if (kind === 'var') inp = `<select class="select" data-p="${P(path)}"><option value="">— choisir —</option>${S.D.vars.map((x) => `<option ${x.name === v ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}<option value="__new">＋ Nouvelle variable…</option></select>`;
+    else if (kind === 'screen') inp = `<select class="select" data-p="${P(path)}">${S.D.screens.map((s) => `<option value="${esc(s.id)}" ${s.id === v ? 'selected' : ''}>${esc(s.title)}</option>`).join('')}</select>`;
+    else if (kind.startsWith('select:')) inp = `<select class="select" data-p="${P(path)}">${kind.slice(7).split('|').map((o) => { const j = o.indexOf('='); const k = o.slice(0, j), n = o.slice(j + 1); return `<option value="${esc(k)}" ${String(v) === k ? 'selected' : ''}>${esc(n)}</option>`; }).join('')}</select>`;
+    else inp = `<input class="input" data-p="${P(path)}" value="${esc(v)}">`;
+    return `<label class="field">${label ? `<span>${esc(label)}</span>` : ''}${inp}</label>`;
+  }
+  function actionsEditor(path, title) {
+    const list = getP(path) || [];
+    return `<div class="as-acts"><div class="as-acts-h">${esc(title)}</div>${list.map((a, i) => {
+      const meta = R.ACTIONS[a.a] || R.ACTIONS.notify;
+      return `<div class="as-act"><div class="row"><span class="as-n">${i + 1}</span><select class="select sm grow" data-p="${P(path.concat([i, 'a']))}" data-restruct>${Object.entries(R.ACTIONS).map(([k, m]) => `<option value="${k}" ${k === a.a ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}</select><button class="btn sm icon ghost" data-delact="${P(path)}" data-i="${i}" aria-label="Retirer">${icon('x')}</button></div>
+        ${meta.fields.map(([k, lbl, kind]) => field(kind, a[k], path.concat([i, k]), lbl)).join('')}</div>`;
+    }).join('')}<button class="btn sm" data-addact="${P(path)}">${icon('plus')}Ajouter une action</button></div>`;
+  }
+
+  /* ------------------------------------------------------------------ rendu de la page */
+  function draw() {
+    const el = S.el;
+    if (!el) return;
+    el.innerHTML = `<div class="as-head"><div class="as-app"><span class="as-ico" style="background:${esc(S.D.color)}">${esc(S.D.icon)}</span><div><b>${esc(S.D.name)}</b><div class="small muted">${S.D.screens.length} écran(s) · ${S.D.vars.length} variable(s) · ${S.D.rules.length} bloc(s) · v${S.D.version}</div></div></div>
+      <div class="tabs" id="as-tabs">${[['design', 'Concevoir', 'phone'], ['vars', 'Variables', 'gauge'], ['rules', 'Blocs « quand »', 'zap'], ['settings', 'Application', 'settings'], ['publish', 'Publier', 'download']].map(([k, n, ic]) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${icon(ic)}${n}</button>`).join('')}</div></div>
+      <div id="as-body"></div>`;
+    $$('#as-tabs button', el).forEach((b) => (b.onclick = () => { S.tab = b.dataset.tab; draw(); }));
+    const body = $('#as-body', el);
+    if (S.tab === 'design') drawDesign(body);
+    else if (S.tab === 'vars') drawVars(body);
+    else if (S.tab === 'rules') drawRules(body);
+    else if (S.tab === 'settings') drawSettings(body);
+    else drawPublish(body);
+  }
+
+  function drawDesign(body) {
+    const groups = {};
+    Object.entries(R.COMPONENTS).forEach(([k, c]) => (groups[c.group] = groups[c.group] || []).push([k, c]));
+    body.innerHTML = `<div class="as-layout">
+      <div class="card as-pal"><div class="card-h"><h2>Composants</h2></div><div class="card-b">${Object.entries(groups).map(([g, list]) => `<div class="as-g">${esc(g)}</div><div class="as-pal-list">${list.map(([k, c]) => `<button class="as-pi" draggable="true" data-add="${k}" title="Clique ou glisse dans le téléphone"><span>${esc(c.icon)}</span>${esc(c.label)}</button>`).join('')}</div>`).join('')}</div></div>
+      <div class="as-center">
+        <div class="row wrap as-scr">${S.D.screens.map((s) => `<button class="chip ${s.id === S.scr ? 'on' : ''}" data-scr="${esc(s.id)}">${esc(s.title)}</button>`).join('')}<button class="chip" data-scr-add>${icon('plus')}Écran</button><span class="grow"></span>
+          <div class="seg" id="as-mode"><button data-m="design" class="${S.mode === 'design' ? 'on' : ''}">${icon('edit')}Concevoir</button><button data-m="run" class="${S.mode === 'run' ? 'on' : ''}">${icon('play')}Tester</button></div></div>
+        <div class="as-phone"><div class="as-notch"></div><div class="as-screen" id="as-screen"></div></div>
+        ${S.mode === 'run' ? `<div class="card as-log"><div class="card-h"><h2 class="grow">Journal du test</h2><span class="hint">${piReady() ? 'Requêtes relayées par le Pi' : 'Sans Pi : le navigateur peut bloquer les requêtes vers les appareils'}</span></div><div class="card-b small mono" id="as-log">${S.logs.map((l) => `<div class="${l.k === 'bad' ? 'bad-text' : ''}">${esc(l.m)}</div>`).join('') || '<span class="muted">Appuie sur les boutons du téléphone.</span>'}</div></div>` : ''}
+      </div>
+      <div class="card as-insp"><div class="card-h"><h2 class="grow">Propriétés</h2></div><div class="card-b" id="as-insp"></div></div></div>`;
+    $$('[data-scr]', body).forEach((b) => (b.onclick = () => { S.scr = b.dataset.scr; S.sel = null; draw(); }));
+    $('[data-scr-add]', body).onclick = addScreen;
+    $$('#as-mode button', body).forEach((b) => (b.onclick = () => { S.mode = b.dataset.m; S.logs = []; draw(); }));
+    $$('[data-add]', body).forEach((b) => {
+      b.onclick = () => addItem(b.dataset.add);
+      b.ondragstart = (e) => { e.dataTransfer.setData('text/x-nexus-add', b.dataset.add); e.dataTransfer.effectAllowed = 'copy'; };
+    });
+    preview();
+    inspector();
+  }
+
+  function sample() {
+    const out = {};
+    S.D.vars.forEach((v) => {
+      if (v.source === 'feed') {
+        const [a, b] = v.feed && v.feed.indexOf('/') > 0 ? v.feed.split('/') : [null, v.feed];
+        const f = S.feeds.find((x) => x.key === b && (!a || x.source === a));
+        const typical = { '°C': 21.5, '%': 48, hPa: 1013, m: 120, lx: 350, ppm: 420, V: 3.7, cm: 25 };
+        out[v.name] = f ? Number(f.value) : typical[v.unit] != null ? typical[v.unit] : 42;
+      } else if (v.type === 'number' && !Number(v.default)) out[v.name] = 42;
+    });
+    return out;
+  }
+  function preview() {
+    const host = $('#as-screen', S.el);
+    if (!host) return;
+    if (S.inst) S.inst.destroy();
+    S.inst = R.mount(host, S.D, {
+      mode: S.mode, screen: S.scr, selected: S.sel, sample: S.mode === 'design' ? sample() : null, s3: '', native: false, settings: false, net: testNet,
+      log: (m, k) => { S.logs.push({ m, k }); S.logs = S.logs.slice(-40); const lg = $('#as-log', S.el); if (lg) { lg.innerHTML = S.logs.map((l) => `<div class="${l.k === 'bad' ? 'bad-text' : ''}">${esc(l.m)}</div>`).join(''); lg.scrollTop = 1e6; } },
+      onScreen: (id) => { if (S.scr !== id) { S.scr = id; $$('[data-scr]', S.el).forEach((b) => b.classList.toggle('on', b.dataset.scr === id)); if (S.mode === 'design') { S.sel = null; inspector(); } } }
+    });
+    if (S.mode !== 'design') return;
+    const app = S.inst.el;
+    app.addEventListener('click', (e) => { const w = e.target.closest('.nxa-item'); if (!w) return; S.sel = w.dataset.id; S.inst.select(S.sel); inspector(); if (innerWidth < 760) { const b = $('#as-insp', S.el); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+    let dragId = null;
+    app.addEventListener('dragstart', (e) => { const w = e.target.closest('.nxa-item'); if (!w) return; dragId = w.dataset.id; e.dataTransfer.setData('text/x-nexus-move', dragId); e.dataTransfer.effectAllowed = 'move'; });
+    app.addEventListener('dragover', (e) => { e.preventDefault(); $$('.nxa-item.drop', app).forEach((x) => x.classList.remove('drop')); const w = e.target.closest('.nxa-item'); if (w) w.classList.add('drop'); });
+    app.addEventListener('dragleave', (e) => { if (!app.contains(e.relatedTarget)) $$('.nxa-item.drop', app).forEach((x) => x.classList.remove('drop')); });
+    app.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const w = e.target.closest('.nxa-item'), before = w ? w.dataset.id : null;
+      const add = e.dataTransfer.getData('text/x-nexus-add'), move = e.dataTransfer.getData('text/x-nexus-move') || dragId;
+      if (add) addItem(add, before);
+      else if (move && move !== before) moveItem(move, before);
+      dragId = null;
+    });
+  }
+  function changed(restructure) {
+    save();
+    if (restructure) { draw(); return; }
+    const head = $('.as-app', S.el);
+    if (head) head.innerHTML = `<span class="as-ico" style="background:${esc(S.D.color)}">${esc(S.D.icon)}</span><div><b>${esc(S.D.name)}</b><div class="small muted">${S.D.screens.length} écran(s) · ${S.D.vars.length} variable(s) · ${S.D.rules.length} bloc(s) · v${S.D.version}</div></div>`;
+    clearTimeout(changed.t);
+    changed.t = setTimeout(preview, 180);
+  }
+
+  function addItem(type, before) {
+    const it = R.newItem(type, S.D), list = screen().items;
+    const i = before ? list.findIndex((x) => x.id === before) : -1;
+    if (i >= 0) list.splice(i, 0, it); else list.push(it);
+    if ((it.var === '' || it.var_x === '') && S.D.vars.length && type !== 'joystick') it.var = S.D.vars[0].name;
+    S.sel = it.id;
+    changed(true);
+  }
+  function moveItem(id, before) {
+    const f = findItem(id);
+    if (!f) return;
+    const [it] = S.D.screens[f.si].items.splice(f.i, 1), list = screen().items;
+    const i = before ? list.findIndex((x) => x.id === before) : -1;
+    if (i >= 0) list.splice(i, 0, it); else list.push(it);
+    changed(true);
+  }
+  async function addScreen() {
+    const title = await A.modal({ title: 'Nouvel écran', input: 'Écran ' + (S.D.screens.length + 1), label: 'Nom de l\'écran', ok: 'Créer' });
+    if (!title) return;
+    const used = new Set(S.D.screens.map((s) => s.id));
+    const id = ident(slug(title), used);
+    S.D.screens.push({ id, title: String(title).slice(0, 60), items: [{ id: R.newItem('title', S.D).id, type: 'title', text: String(title).slice(0, 60), sub: '' }] });
+    S.scr = id; S.sel = null;
+    changed(true);
+  }
+
+  function inspector() {
+    const box = $('#as-insp', S.el);
+    if (!box) return;
+    const f = S.sel && findItem(S.sel);
+    if (!f) {
+      const s = screen(), si = S.D.screens.indexOf(s);
+      box.innerHTML = `<p class="small muted">Clique un composant du téléphone pour le régler, ou glisse-le pour le déplacer.</p>
+        ${field('text', s.title, ['screens', si, 'title'], 'Nom de l\'écran')}
+        <div class="row wrap">${si > 0 ? `<button class="btn sm" data-scr-left>${icon('back')}Avancer l'écran</button>` : ''}${S.D.screens.length > 1 ? `<button class="btn sm danger" data-scr-del>${icon('trash')}Supprimer l'écran</button>` : ''}</div>`;
+      const left = $('[data-scr-left]', box);
+      if (left) left.onclick = () => { S.D.screens.splice(si, 1); S.D.screens.splice(si - 1, 0, s); changed(true); };
+      const del = $('[data-scr-del]', box);
+      if (del) del.onclick = async () => { if (!(await A.confirmBox('Supprimer l\'écran', `« ${s.title} » et ses ${s.items.length} composant(s) seront supprimés.`, 'Supprimer', true))) return; S.D.screens.splice(si, 1); S.scr = S.D.screens[0].id; changed(true); };
+      return;
+    }
+    const meta = R.COMPONENTS[f.it.type], base = ['screens', f.si, 'items', f.i];
+    box.innerHTML = `<div class="row"><span class="as-badge">${esc(meta.icon)}</span><b class="grow">${esc(meta.label)}</b><span class="small muted mono">${esc(f.it.id)}</span></div>
+      ${meta.props.map(([k, lbl, kind]) => (kind === 'actions' ? actionsEditor(base.concat([k]), lbl) : field(kind, f.it[k], base.concat([k]), lbl))).join('')}
+      <div class="row wrap as-tools"><button class="btn sm" data-mv="-1">${icon('chevron')}Monter</button><button class="btn sm" data-mv="1">Descendre</button><button class="btn sm" data-dup>${icon('copy')}Dupliquer</button><button class="btn sm danger" data-del>${icon('trash')}Supprimer</button></div>`;
+    $$('[data-mv]', box).forEach((b) => (b.onclick = () => { const list = S.D.screens[f.si].items, j = f.i + Number(b.dataset.mv); if (j < 0 || j >= list.length) return; list.splice(j, 0, list.splice(f.i, 1)[0]); changed(true); }));
+    $('[data-dup]', box).onclick = () => { const c = JSON.parse(JSON.stringify(f.it)); c.id = R.newItem(f.it.type, S.D).id; S.D.screens[f.si].items.splice(f.i + 1, 0, c); S.sel = c.id; changed(true); };
+    $('[data-del]', box).onclick = () => { S.D.screens[f.si].items.splice(f.i, 1); S.sel = null; changed(true); };
+  }
+
+  function drawVars(body) {
+    body.innerHTML = `<div class="card"><div class="card-h"><h2 class="grow">Variables</h2><button class="btn sm" id="as-feeds">${icon('refresh')}Mesures du MASTER</button><button class="btn sm primary" id="as-addvar">${icon('plus')}Variable</button></div>
+      <div class="card-b"><p class="hint">Une variable garde une valeur. Elle peut venir d'un capteur (mesure envoyée au MASTER par ton montage), d'une adresse HTTP d'un appareil (JSON), ou rester locale (réglée par un bouton, un curseur, la voix…). Utilise-la partout avec <code>{nom}</code>.</p>
+      <datalist id="as-feedlist">${S.feeds.map((f) => `<option value="${esc(f.source + '/' + f.key)}">${esc(f.value + ' ' + (f.unit || ''))}</option>`).join('')}</datalist>
+      ${S.D.vars.length ? '' : '<div class="empty">Aucune variable. Ajoute-en une, ou pars d\'un projet (onglet Application).</div>'}
+      <div class="as-vars">${S.D.vars.map((v, i) => {
+        const p = ['vars', i], live = v.source === 'feed' ? S.feeds.find((f) => (v.feed || '').endsWith('/' + f.key) ? (v.feed === f.source + '/' + f.key) : f.key === v.feed) : null;
+        return `<div class="as-var card pad"><div class="row"><b class="mono grow">{${esc(v.name)}}</b>${live ? `<span class="badge ok">${esc(live.value)} ${esc(live.unit || '')}</span>` : ''}<button class="btn sm icon ghost" data-delvar="${i}" aria-label="Supprimer">${icon('trash')}</button></div>
+          <div class="form-grid">${field('text', v.name, p.concat(['name']), 'Nom')}${field('select:local=Locale|feed=Capteur du MASTER|http=Adresse HTTP (JSON)', v.source, p.concat(['source']), 'Source')}
+          ${field('select:number=Nombre|text=Texte|bool=Oui / non', v.type, p.concat(['type']), 'Type')}${field('text', v.unit, p.concat(['unit']), 'Unité')}
+          ${v.source === 'feed' ? `<label class="field"><span>Mesure (appareil/clé)</span><input class="input" list="as-feedlist" data-p="${P(p.concat(['feed']))}" value="${esc(v.feed || '')}" placeholder="serre/temp"></label>` : ''}
+          ${v.source === 'http' ? field('text', v.url, p.concat(['url']), 'Adresse (ex. http://192.168.4.23/api)') + field('text', v.path, p.concat(['path']), 'Chemin dans le JSON (ex. values.0)') + field('number', v.every || 2, p.concat(['every']), 'Toutes les N secondes') : ''}
+          ${v.source === 'local' ? field('text', v.default, p.concat(['default']), 'Valeur de départ') : ''}</div>
+          ${v.source === 'feed' ? '<div class="hint">L\'adresse IP de l\'appareil est aussi disponible : <code>{' + esc(v.name) + '_ip}</code>.</div>' : ''}</div>`;
+      }).join('')}</div></div></div>`;
+    $('#as-addvar', body).onclick = () => { const used = new Set(S.D.vars.map((v) => v.name)); S.D.vars.push({ name: ident('valeur', used), source: S.feeds.length ? 'feed' : 'local', feed: S.feeds.length ? S.feeds[0].source + '/' + S.feeds[0].key : '', type: 'number', unit: '', default: 0 }); changed(true); };
+    $('#as-feeds', body).onclick = async () => { await loadFeeds(); draw(); toast(S.feeds.length ? `${S.feeds.length} mesure(s) reçue(s) par le MASTER` : 'Aucune mesure reçue : ton montage doit envoyer au MASTER (option du Studio).', S.feeds.length ? 'ok' : 'warn'); };
+    $$('[data-delvar]', body).forEach((b) => (b.onclick = () => { S.D.vars.splice(Number(b.dataset.delvar), 1); changed(true); }));
+  }
+
+  function drawRules(body) {
+    body.innerHTML = `<div class="card"><div class="card-h"><h2 class="grow">Blocs « quand… alors… »</h2><button class="btn sm primary" id="as-addrule">${icon('plus')}Bloc</button></div>
+      <div class="card-b"><p class="hint">Comme les blocs d'App Inventor : choisis un événement, puis les actions à faire. Les seuils ne se déclenchent qu'au franchissement (pas en boucle).</p>
+      ${S.D.rules.length ? '' : '<div class="empty">Aucun bloc. Exemple : quand {temp} dépasse 30, afficher « Trop chaud » et vibrer.</div>'}
+      ${S.D.rules.map((r, i) => {
+        const w = R.WHEN[r.when.type] || R.WHEN.start, p = ['rules', i];
+        return `<div class="card pad as-rule"><div class="row"><span class="rule-kw">QUAND</span><select class="select sm grow" data-p="${P(p.concat(['when', 'type']))}" data-restruct>${Object.entries(R.WHEN).map(([k, m]) => `<option value="${k}" ${k === r.when.type ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}</select><button class="btn sm icon ghost" data-delrule="${i}" aria-label="Supprimer">${icon('trash')}</button></div>
+          <div class="form-grid">${(w.fields || []).map(([k, lbl, kind]) => field(kind, r.when[k], p.concat(['when', k]), lbl)).join('')}</div>
+          ${actionsEditor(p.concat(['do']), 'ALORS')}</div>`;
+      }).join('')}</div></div>`;
+    $('#as-addrule', body).onclick = () => { S.D.rules.push({ when: S.D.vars.length ? { type: 'above', var: S.D.vars[0].name, value: '30' } : { type: 'timer', every: 10 }, do: [{ a: 'notify', text: 'Bloc déclenché' }] }); changed(true); };
+    $$('[data-delrule]', body).forEach((b) => (b.onclick = () => { S.D.rules.splice(Number(b.dataset.delrule), 1); changed(true); }));
+  }
+
+  function drawSettings(body) {
+    body.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2>Application</h2></div><div class="card-b form-grid">
+        ${field('text', S.D.name, ['name'], 'Nom affiché sur le téléphone')}${field('text', S.D.icon, ['icon'], 'Icône (emoji)')}
+        ${field('color', S.D.color, ['color'], 'Couleur principale')}${field('select:auto=Selon le téléphone|light=Clair|dark=Sombre', S.D.theme, ['theme'], 'Thème')}
+        ${field('text', S.D.s3, ['s3'], 'Adresse du MASTER')}${field('number', S.D.version, ['version'], 'Version (augmente à chaque APK)')}
+        ${field('textarea', S.D.description, ['description'], 'Description')}
+        <div class="hint">Identifiant Android : <code>local.nexus.apps.${esc(S.D.id || slug(S.D.name))}</code>${S.D.id ? ' (fixé : garde-le pour mettre à jour l\'appli installée)' : ''}</div></div></div>
+      <div class="card"><div class="card-h"><h2>Partir de…</h2></div><div class="card-b">
+        <div class="as-tpl">${Object.entries(TEMPLATES).map(([k, t]) => `<button class="as-tplb" data-tpl="${k}"><span>${esc(t.icon)}</span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></button>`).join('')}
+        <button class="as-tplb" data-from-studio><span>🧩</span><b>Projet du Studio</b><small>Une valeur et une courbe par mesure du montage ouvert dans le Studio</small></button>
+        <button class="as-tplb" data-tpl-blank><span>⬜</span><b>Vide</b><small>Un écran, rien d'autre</small></button></div>
+        <div class="row wrap" style="margin-top:12px"><button class="btn sm" id="as-export">${icon('download')}Exporter (.json)</button><label class="btn sm">${icon('upload')}Importer<input type="file" accept=".json,application/json" id="as-import" hidden></label></div></div></div></div>`;
+    $$('[data-tpl]', body).forEach((b) => (b.onclick = () => replace(TEMPLATES[b.dataset.tpl].make())));
+    $('[data-tpl-blank]', body).onclick = () => replace(R.blank('Mon application'));
+    $('[data-from-studio]', body).onclick = () => {
+      const spec = store.get('studio.spec', null);
+      if (!spec || !(spec.modules || []).length) { toast('Le Studio est vide : assemble d\'abord ton montage.', 'warn'); return; }
+      try { replace(fromSpec(spec)); } catch (e) { toast(e.message, 'bad'); }
+    };
+    $('#as-export', body).onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S.D, null, 1)], { type: 'application/json' })); a.download = (S.D.id || slug(S.D.name)) + '.nexusapp.json'; a.click(); };
+    $('#as-import', body).onchange = async (e) => { try { const d = JSON.parse(await e.target.files[0].text()); if (d.format !== R.FORMAT) throw new Error('Ce fichier n\'est pas une application NEXUS'); replace(d, true); } catch (err) { toast(err.message, 'bad'); } };
+  }
+  async function replace(d, keepId) {
+    const used = (S.D.screens || []).some((s) => s.items.length > 1) || S.D.vars.length;
+    if (used && !(await A.confirmBox('Remplacer l\'application ?', `« ${S.D.name} » sera remplacée dans l'éditeur (elle reste sur le Pi si tu l'as publiée).`, 'Remplacer'))) return;
+    if (!keepId) delete d.id;
+    S.D = d; S.sel = null; S.scr = null; fix(); S.tab = 'design';
+    changed(true);
+  }
+
+  async function drawPublish(body) {
+    body.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2 class="grow">Créer l'APK</h2><span class="badge" id="as-pistate">…</span></div><div class="card-b">
+        <p>Le Pi assemble l'application dans l'APK NEXUS et la signe avec la clé du labo, <b>sans compiler</b> : quelques secondes, même sur le Raspberry Pi 4.</p>
+        <button class="btn primary" id="as-build" style="width:100%;min-height:48px">${icon('rocket')}Créer l'APK de « ${esc(S.D.name)} »</button>
+        <div id="as-result"></div>
+        <p class="hint">Sur le téléphone : ouvre le lien ou scanne le QR, puis autorise l'installation depuis cette source. Une nouvelle version s'installe par-dessus l'ancienne (même clé, même identifiant).</p></div></div>
+      <div class="card"><div class="card-h"><h2 class="grow">Mes applications sur le Pi</h2><button class="btn sm" id="as-reload">${icon('refresh')}</button></div><div class="card-b flush" id="as-apps"><div class="empty">…</div></div></div></div>`;
+    $('#as-build', body).onclick = build;
+    $('#as-reload', body).onclick = () => drawPublish(body);
+    if (S.last) showResult(S.last);
+    const st = $('#as-pistate', body), apps = $('#as-apps', body);
+    if (!piReady()) { st.className = 'badge warn'; st.textContent = 'Pi non configuré'; apps.innerHTML = `<div class="empty">Renseigne l'adresse et le jeton du Pi dans <a href="#companion">Compagnon Pi</a>.</div>`; return; }
+    try {
+      S.status = await A.piRequest('/api/v1/appstudio');
+      st.className = 'badge ' + (S.status.base.ok ? 'ok' : 'warn');
+      st.textContent = S.status.base.ok ? 'Pi prêt · ' + S.status.signature : 'APK de base absente';
+      if (!S.status.base.ok) {
+        $('#as-result', body).innerHTML = `<div class="banner warn">${icon('alert')}<div>${esc(S.status.base.reason)}.<br>Une seule fois : construis l'APK NEXUS sur un PC (<code>scripts\\build_android.bat</code>), puis envoie-la ici. En attendant, l'<b>appli web</b> fonctionne déjà.
+          <label class="btn sm" style="margin-top:8px">${icon('upload')}Envoyer app-debug.apk au Pi<input type="file" accept=".apk" id="as-base" hidden></label></div></div>`;
+        $('#as-base', body).onchange = async (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          try {
+            const r = await fetch(A.piBase() + '/api/v1/appstudio/base', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken() }, body: f });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+            toast('APK NEXUS installée sur le Pi : le Studio APK est prêt', 'ok');
+            drawPublish(body);
+          } catch (err) { toast('Envoi refusé : ' + err.message, 'bad', 8000); }
+        };
+      }
+      const list = (await A.piRequest('/api/v1/appstudio/apps')).items || [];
+      apps.innerHTML = list.length ? list.map((a) => `<div class="list-item"><span class="as-ico sm" style="background:${esc(a.color)}">${esc(a.icon)}</span><div class="grow"><b>${esc(a.name)}</b><div class="small muted">v${esc(a.version)} · ${esc((a.updated || '').replace('T', ' '))}${a.last_build ? ' · APK prête' : ''}</div></div>
+        <button class="btn sm" data-open="${esc(a.id)}">Ouvrir</button>${a.last_build ? `<a class="btn sm" href="${esc(A.piBase() + a.last_build.apk)}" download>${icon('download')}</a>` : ''}<a class="btn sm" href="${esc(A.piBase() + '/apps/' + a.id + '/')}" target="_blank" rel="noopener" title="Appli web">${icon('globe')}</a><button class="btn sm icon ghost" data-rm="${esc(a.id)}" aria-label="Supprimer">${icon('trash')}</button></div>`).join('') : '<div class="empty">Aucune application enregistrée sur le Pi.</div>';
+      $$('[data-open]', apps).forEach((b) => (b.onclick = async () => { try { const d = await A.piRequest('/api/v1/appstudio/apps/' + b.dataset.open); delete d.last_build; replace(d, true); } catch (e) { toast(e.message, 'bad'); } }));
+      $$('[data-rm]', apps).forEach((b) => (b.onclick = async () => { if (!(await A.confirmBox('Supprimer du Pi', 'La conception est supprimée ; les APK déjà installées continuent de fonctionner.', 'Supprimer', true))) return; try { await piJ(`/api/v1/appstudio/apps/${b.dataset.rm}/delete`); drawPublish(body); } catch (e) { toast(e.message, 'bad'); } }));
+    } catch (e) { st.className = 'badge bad'; st.textContent = 'Pi injoignable'; apps.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  async function build() {
+    const btn = $('#as-build', S.el);
+    btn.disabled = true;
+    btn.innerHTML = `${icon('refresh')}Fabrication sur le Pi…`;
+    try {
+      const res = await publish(S.D, true);
+      S.D.id = res.id;
+      S.D.version = res.version + 1;
+      save();
+      S.last = res;
+      changed();
+      showResult(res);
+      toast('APK prête à installer', 'ok');
+    } catch (e) {
+      $('#as-result', S.el).innerHTML = `<div class="banner warn">${icon('alert')}<div><b>APK non créée.</b> ${esc(e.message)}</div></div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `${icon('rocket')}Créer l'APK de « ${esc(S.D.name)} »`;
+    }
+  }
+  async function showResult(res) {
+    const box = $('#as-result', S.el);
+    if (!box) return;
+    box.innerHTML = `<div class="as-done"><div class="as-qr" id="as-qr"><span class="muted small">QR…</span></div><div class="grow">
+      <b>${esc(res.package)}</b> · v${esc(res.version)} · ${(res.size / 1024).toFixed(0)} Ko · signature ${esc(res.signature)}
+      <a class="btn primary" href="${esc(res.apk_url)}" download style="margin:8px 0;width:100%">${icon('download')}Télécharger l'APK</a>
+      <div class="row"><input class="input sm mono grow" readonly value="${esc(res.apk_url)}" id="as-link"><button class="btn sm" id="as-copy">${icon('copy')}</button></div>
+      <div class="small" style="margin-top:6px">Appli web (sans installer) : <a href="${esc(res.web_url)}" target="_blank" rel="noopener">${esc(res.web_url)}</a></div>
+      <div class="tiny muted mono">SHA-256 ${esc(res.sha256.slice(0, 16))}…</div></div></div>`;
+    $('#as-copy', box).onclick = () => { const i = $('#as-link', box); i.select(); try { navigator.clipboard.writeText(i.value); } catch (e) { document.execCommand('copy'); } toast('Lien copié', 'ok'); };
+    const url = await qrUrl(res);
+    const q = $('#as-qr', box);
+    if (q) q.innerHTML = url ? `<img src="${url}" alt="QR de téléchargement">` : '<span class="small muted">QR indisponible (python3-qrcode absent sur le Pi)</span>';
+  }
+
+  async function loadFeeds() { try { const f = await A.api('/api/feeds'); S.feeds = Array.isArray(f) ? f : []; } catch (e) { S.feeds = []; } }
+
+  /* ------------------------------------------------------------------ liaisons des champs */
+  function bindFields(el) {
+    const onEdit = (e) => {
+      const t = e.target;
+      if (!t.dataset || !t.dataset.p) return;
+      const path = JSON.parse(t.dataset.p);
+      let v = t.value;
+      if (v === '__new') {
+        const used = new Set(S.D.vars.map((x) => x.name));
+        A.modal({ title: 'Nouvelle variable', input: ident('valeur', new Set(used)), label: 'Nom (lettres, chiffres, _)', ok: 'Créer' }).then((name) => {
+          if (!name) { draw(); return; }
+          const n = ident(name, used);
+          S.D.vars.push({ name: n, source: 'local', type: 'number', default: 0, unit: '' });
+          setP(path, n);
+          changed(true);
+        });
+        return;
+      }
+      if ('num' in t.dataset) v = v === '' ? '' : Number(v);
+      const last = path[path.length - 1];
+      if (path[0] === 'vars' && last === 'name') { // renommer partout
+        const old = getP(path);
+        v = String(v).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 32);
+        if (!/^[A-Za-z_]/.test(v) || S.D.vars.some((x, i) => i !== path[1] && x.name === v)) { if (e.type === 'change') { toast('Nom invalide ou déjà pris', 'warn'); draw(); } return; }
+        renameVar(old, v);
+      }
+      setP(path, v);
+      if (path.length === 1 && last === 'name' && !S.D.id) { /* l'identifiant suit le nom tant qu'il n'est pas publié */ }
+      const restruct = 'restruct' in t.dataset || (path[0] === 'vars' && last === 'source') || (path[0] === 'screens' && last === 'title');
+      if (e.type === 'change' || !restruct) changed(restruct && e.type === 'change');
+    };
+    el.addEventListener('input', (e) => { if (e.target.tagName !== 'SELECT') onEdit(e); });
+    el.addEventListener('change', onEdit);
+    el.addEventListener('click', (e) => {
+      const add = e.target.closest('[data-addact]'), del = e.target.closest('[data-delact]'), clr = e.target.closest('[data-clear]');
+      if (add) { const list = getP(JSON.parse(add.dataset.addact)) || []; list.push({ a: 'notify', text: 'Bonjour' }); setP(JSON.parse(add.dataset.addact), list); changed(true); }
+      if (del) { getP(JSON.parse(del.dataset.delact)).splice(Number(del.dataset.i), 1); changed(true); }
+      if (clr) { setP(JSON.parse(clr.dataset.clear), ''); changed(true); }
+    });
+  }
+  function renameVar(old, nu) {
+    if (!old || old === nu) return;
+    const re = new RegExp('\\{' + old + '(_ip)?\\}', 'g');
+    const walk = (o) => {
+      if (Array.isArray(o)) return o.forEach(walk);
+      if (!o || typeof o !== 'object') return;
+      Object.keys(o).forEach((k) => {
+        if (typeof o[k] === 'string') { if (['var', 'var_x', 'var_y'].includes(k) && o[k] === old) o[k] = nu; else o[k] = o[k].replace(re, (m, ip) => '{' + nu + (ip || '') + '}'); } else walk(o[k]);
+      });
+    };
+    walk(S.D.screens); walk(S.D.rules);
+  }
+
+  /* ------------------------------------------------------------------ page */
+  A.page({
+    id: 'apkstudio', title: 'Studio APK', short: 'APK', icon: 'phone', group: 'build', mobile: true,
+    desc: 'Crée ton application Android sans coder : écrans, capteurs, blocs, lien direct',
+    render(el, q) {
+      if (!R) { el.innerHTML = '<div class="banner warn">Moteur d\'application absent.</div>'; return null; }
+      S.el = el;
+      if (!S.D) load();
+      el.classList.add('as-page');
+      bindFields(el);
+      A.setTopActions(`<button class="btn" data-act="as-new">${icon('plus')}<span class="lbl">Nouvelle</span></button><button class="btn primary" data-act="as-publish">${icon('rocket')}<span class="lbl">Créer l'APK</span></button>`);
+      draw();
+      start(q);
+      // nettoyage à la sortie de la page : le mode test interroge le MASTER toutes les 2 s
+      return () => { if (S.inst) { S.inst.destroy(); S.inst = null; } S.el = null; };
+    }
+  });
+  async function start(q) {
+      await loadFeeds();
+      if (q && q.studio) {
+        const spec = store.get('apkstudio.fromStudio', null);
+        if (spec) { try { S.D = fromSpec(spec, spec.title); S.sel = null; S.scr = null; fix(); save(); toast('Application préparée depuis le Studio', 'ok'); } catch (e) { toast('Projet non chargé : ' + e.message, 'warn'); } }
+        history.replaceState(null, '', '#apkstudio');
+      }
+      if (q && q.p) {
+        try {
+          const p = A.projectById && A.projectById(q.p);
+          let spec = p && p.spec;
+          if (!spec && piReady()) { const r = await A.piRequest('/api/v1/patricia/memory'); const pp = (r.projects || []).find((x) => x.id === q.p); if (pp) spec = { title: pp.title, board: pp.board || 'esp32', modules: (pp.modules || []).map((id) => ({ id })) }; }
+          if (spec) { S.D = fromSpec(spec, (p && p.title) || spec.title); S.sel = null; S.scr = null; fix(); save(); toast('Application préparée depuis le projet', 'ok'); }
+        } catch (e) { toast('Projet non chargé : ' + e.message, 'warn'); }
+        history.replaceState(null, '', '#apkstudio');
+      }
+      if (S.el) draw();
+  }
+  Object.assign(A.actions, {
+    'as-new': () => { S.tab = 'settings'; draw(); },
+    'as-publish': () => { S.tab = 'publish'; draw(); setTimeout(() => { const b = $('#as-build', S.el); if (b) b.click(); }, 50); }
+  });
+  A.commands.push({ title: 'Créer une application Android (Studio APK)', group: 'Action', icon: 'phone', run: () => A.go('apkstudio') });
+})();
+/* ---- 89_phone.js ---- */
+/* Mode téléphone : l'APK NEXUS embarque cette interface et l'ouvre quand le box est hors de portée.
+ * Le travail (projets du Studio, notes et faits de Patricia, applications du Studio APK) part dans une boîte
+ * d'envoi chiffrée par l'APK (AES-256-GCM, clé du Keystore Android), puis est envoyé au box dès que
+ * l'interface du box s'ouvre dans l'APK. Dans un navigateur, ?phone simule ce mode (boîte dans localStorage). */
+(function () {
+  'use strict';
+  const A = window.APP, S = A.S, $ = A.$, esc = A.esc, icon = A.icon, toast = A.toast, store = A.store;
+  const N = window.NexusNative && window.NexusNative.outboxList ? window.NexusNative : null;
+  const offline = !!((N && N.phone && N.phone() === 'offline') || /[?&]phone\b/.test(location.search));
+  const KEY = 'phone.outbox';
+
+  /* ------------------------------------------------------------ boîte d'envoi */
+  const Outbox = {
+    list() {
+      if (N) { try { return JSON.parse(N.outboxList() || '[]'); } catch (e) { return []; } }
+      return store.get(KEY, []);
+    },
+    add(kind, data, label) {
+      const item = { kind, data, label, at: new Date().toISOString() };
+      if (N) { item.id = N.outboxAdd(JSON.stringify(item)); return item; }
+      const items = store.get(KEY, []);
+      item.id = 'tel-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      items.push(item); store.set(KEY, items); return item;
+    },
+    done(ids) {
+      if (!ids.length) return;
+      if (N) { N.outboxDone(JSON.stringify(ids)); return; }
+      store.set(KEY, store.get(KEY, []).filter((x) => !ids.includes(x.id)));
+    }
+  };
+  A.Phone = { offline, native: !!N, Outbox };
+
+  /* Chemins du Pi gardés sur le téléphone en mode hors ligne. */
+  const QUEUED = ['/api/v1/patricia/notes', '/api/v1/patricia/facts', '/api/v1/appstudio/apps', '/api/v1/projects/save'];
+  const LABELS = { '/api/v1/patricia/notes': 'Note pour Patricia', '/api/v1/patricia/facts': 'Souvenir de Patricia', '/api/v1/appstudio/apps': 'Application du Studio APK', '/api/v1/projects/save': 'Projet' };
+  const NOTE_RE = /^\s*(note(r)?( que)?|retiens( que)?|n'oublie pas( que)?|souviens-toi( que)?)\s*[:,]?\s*/i;
+
+  function localMemory() {
+    const items = Outbox.list();
+    const notes = items.filter((x) => x.kind === 'pi' && x.data.path === '/api/v1/patricia/notes').map((x, i) => {
+      const b = x.data.body || {};
+      return { id: x.id, title: String(b.text || b.body || '').split('\n')[0].slice(0, 80), body: String(b.text || b.body || ''), tags: ['téléphone'], kind: b.kind || 'note', pinned: false, created: x.at };
+    });
+    const facts = {};
+    items.filter((x) => x.kind === 'pi' && x.data.path === '/api/v1/patricia/facts' && !x.data.body.delete).forEach((x) => { facts[x.data.body.key] = x.data.body.value; });
+    return { notes, projects: [], facts, followups: [], stats: { notes: notes.length, conversations: 0, projects: 0, fts: false, path: 'téléphone (en attente d\'envoi au box)' }, catalog: {} };
+  }
+
+  function install() {
+    if (!offline) return;
+    S.phone = true;
+    A.piBase = () => 'telephone';
+    A.piToken = () => 'telephone';
+    A.piRequest = async (path, opts) => {
+      opts = opts || {};
+      const method = (opts.method || 'GET').toUpperCase();
+      let body = {};
+      try { body = opts.body ? JSON.parse(opts.body) : {}; } catch (e) { body = {}; }
+      if (method === 'GET' && path === '/api/v1/patricia/memory') return localMemory();
+      if (method === 'POST' && path === '/api/v1/patricia/chat') {
+        const text = String(body.text || body.q || body.message || '');
+        if (NOTE_RE.test(text)) {
+          const note = text.replace(NOTE_RE, '').trim();
+          if (note) {
+            Outbox.add('pi', { path: '/api/v1/patricia/notes', body: { text: note } }, 'Note pour Patricia');
+            return { answer: `C'est noté sur ton téléphone : « ${note} ». Je l'envoie au box dès que tu le rejoins.`, intent: 'note_add', mode: 'téléphone', cards: [], actions: [], suggestions: ['Mes notes'] };
+          }
+        }
+        throw new Error('Pi hors de portée (mode téléphone)');
+      }
+      const own = /^\/api\/v1\/patricia\/notes\/(.+)$/.exec(path);
+      if (method === 'POST' && own) {
+        // Note encore sur le téléphone : modifiée ou supprimée dans la boîte d'envoi.
+        const id = decodeURIComponent(own[1]), old = Outbox.list().find((x) => x.id === id);
+        if (!old) throw new Error('note déjà envoyée au box : modifie-la quand le box est connecté');
+        Outbox.done([id]);
+        if (!body.delete) Outbox.add('pi', { path: '/api/v1/patricia/notes', body: Object.assign({}, old.data.body, body.body != null ? { text: body.body } : {}) }, old.label);
+        updateBadge();
+        return { ok: true };
+      }
+      if (method === 'POST' && QUEUED.includes(path)) {
+        const item = Outbox.add('pi', { path, body }, LABELS[path]);
+        updateBadge();
+        return { ok: true, queued: true, id: (body.design && body.design.id) || item.id, project_id: body.project_id, note: 'gardé sur le téléphone' };
+      }
+      throw new Error('Pi hors de portée : disponible quand le téléphone rejoint le Wi-Fi du box');
+    };
+    A.piSaveProject = async (id, files) => { Outbox.add('project', { id, files }, 'Projet « ' + id + ' »'); updateBadge(); return { ok: true, queued: true }; };
+    A.saveProjectToSd = async (id, p, res) => {
+      await A.piSaveProject(id, A.projectFilesData(id, p, res));
+      toast(`Projet « ${id} » gardé sur le téléphone : il partira au box à la prochaine connexion.`, 'ok', 5000);
+      return 'phone';
+    };
+    // L'APK prévient quand le box redevient joignable.
+    window.__nexusBox = (url) => {
+      S.boxUrl = url;
+      toast(`Box détecté (${url}) : ouvre la page Téléphone pour envoyer ton travail.`, 'ok', 8000);
+      updateBadge();
+    };
+  }
+
+  /* ------------------------------------------------------------ envoi au box */
+  async function sendItem(x) {
+    if (x.kind === 'project') {
+      const { id, files } = x.data;
+      if (S.admin) {
+        try {
+          for (const [name, data] of Object.entries(files)) await A.uploadFile('/api/project/upload', new Blob([data]), { 'X-Project': encodeURIComponent(id), 'X-Filename': encodeURIComponent(name) });
+          return 'S3';
+        } catch (e) { /* essai sur le Pi */ }
+      }
+      if (A.piToken && A.piToken()) { await A.piSaveProject(id, files); return 'Pi'; }
+      throw new Error('ouvre une session administrateur ou connecte le Pi');
+    }
+    if (x.kind === 'pi') {
+      if (!(A.piToken && A.piToken())) throw new Error('Pi non configuré dans Compagnon Pi');
+      await A.piRequest(x.data.path, { method: 'POST', body: JSON.stringify(x.data.body || {}) });
+      return 'Pi';
+    }
+    throw new Error('type inconnu');
+  }
+  async function sync(quiet) {
+    if (offline || S.demo) return { sent: 0, left: Outbox.list().length };
+    const items = Outbox.list(), done = [], errors = [];
+    const log = store.get('phone.received', []);
+    for (const x of items) {
+      try { const where = await sendItem(x); done.push(x.id); log.unshift({ label: x.label, at: x.at, received: new Date().toISOString(), where }); }
+      catch (e) { errors.push(x.label + ' : ' + e.message); }
+    }
+    Outbox.done(done);
+    store.set('phone.received', log.slice(0, 60));
+    if (done.length) toast(`${done.length} élément(s) du téléphone reçus par le box.`, 'ok', 6000);
+    if (errors.length && !quiet) toast(`${errors.length} élément(s) en attente : ${errors[0]}`, 'warn', 8000);
+    updateBadge();
+    return { sent: done.length, left: items.length - done.length, errors };
+  }
+  A.Phone.sync = sync;
+
+  function updateBadge() {
+    const n = Outbox.list().length;
+    const b = document.getElementById('phone-badge');
+    if (b) { b.textContent = n ? String(n) : ''; b.hidden = !n; }
+  }
+
+  /* ------------------------------------------------------------ page Téléphone */
+  function render(el) {
+    const items = Outbox.list();
+    const received = store.get('phone.received', []);
+    const head = offline
+      ? `<div class="banner ${S.boxUrl ? 'ok' : 'warn'}">${icon(S.boxUrl ? 'wifi' : 'alert')}<div><b>Mode téléphone, sans le box.</b> Bibliothèque, Studio, montages, Studio APK et notes de Patricia marchent ici. Les écrans du matériel montrent un aperçu simulé.${S.boxUrl ? `<br>Le box est de nouveau joignable (${esc(S.boxUrl)}).` : ''}${S.boxUrl && N && N.openBox ? `<div style="margin-top:10px"><button class="btn primary" id="ph-open">${icon('upload')}Ouvrir le box et envoyer</button></div>` : ''}</div></div>`
+      : `<div class="banner ok">${icon('wifi')}<div><b>Connecté au box.</b> ${N ? 'Ce que tu as fait hors ligne sur le téléphone est envoyé automatiquement à l\'ouverture.' : 'Installe l\'APK NEXUS sur ton téléphone pour travailler sans le box.'}${N && items.length ? `<div style="margin-top:10px"><button class="btn primary" id="ph-sync">${icon('upload')}Envoyer maintenant</button></div>` : ''}</div></div>`;
+    el.innerHTML = `<div class="stack">
+      <div class="hero"><div><div class="eyebrow">NEXUS · TÉLÉPHONE</div><h1>Travailler sans le box</h1><p>L'APK garde une copie complète de l'interface. Ton travail attend dans une boîte d'envoi chiffrée, puis rejoint le box dès que le téléphone est sur son Wi-Fi.</p></div></div>
+      ${head}
+      <div class="grid g-2">
+        <section class="card"><div class="card-h"><h2 class="grow">En attente d'envoi (${items.length})</h2></div><div class="card-b flush">${items.length ? items.map((x) => `<div class="list-item"><div class="icon-tile accent">${icon(x.kind === 'project' ? 'file' : 'history')}</div><div class="grow"><b>${esc(x.label || x.kind)}</b><div class="hint">${esc(new Date(x.at).toLocaleString('fr-FR'))}</div></div></div>`).join('') : '<div class="pad muted small">Rien en attente.</div>'}</div></section>
+        <section class="card"><div class="card-h"><h2 class="grow">Reçu du téléphone</h2></div><div class="card-b flush">${received.length ? received.slice(0, 20).map((x) => `<div class="list-item"><div class="icon-tile ok">${icon('check')}</div><div class="grow"><b>${esc(x.label)}</b><div class="hint">fait le ${esc(new Date(x.at).toLocaleString('fr-FR'))} · reçu par le ${esc(x.where)} le ${esc(new Date(x.received).toLocaleString('fr-FR'))}</div></div></div>`).join('') : '<div class="pad muted small">Aucun envoi pour l\'instant.</div>'}</div></section>
+      </div>
+      <section class="card pad small"><h3>Sécurité et restrictions Android</h3><ul class="muted">
+        <li>Boîte d'envoi chiffrée en AES-256-GCM avec une clé du Keystore Android, qui ne quitte jamais le téléphone.</li>
+        <li>Données dans l'espace privé de l'application ; sauvegarde Android désactivée.</li>
+        <li>Seules la page embarquée et l'adresse du box peuvent lire la boîte d'envoi.</li>
+        <li>Permissions : Internet, micro (demandé au premier appui) et vibration. Aucune localisation, aucun contact, aucun stockage partagé.</li>
+        <li>Le box parle en HTTP sur son propre Wi-Fi (pas de certificat possible sur 192.168.4.1) ; les liens vers Internet s'ouvrent dans le navigateur.</li>
+      </ul></section></div>`;
+    const open = $('#ph-open', el); if (open) open.onclick = () => N.openBox();
+    const s = $('#ph-sync', el); if (s) s.onclick = async () => { s.disabled = true; await sync(false); render(el); };
+  }
+  A.page({ id: 'phone', title: 'Téléphone', icon: 'phone', group: 'sys', desc: 'Travail hors ligne sur le téléphone et envoi au box', render });
+
+  install();
+  A.Phone.afterBoot = () => {
+    if (offline) { setTimeout(() => toast('Mode téléphone : ton travail reste sur le téléphone et partira au box à la prochaine connexion.', 'ok', 7000), 500); return; }
+    if (N && Outbox.list().length) setTimeout(() => sync(true), 2500);
   };
 })();
 /* ---- 90_demo.js ---- */
@@ -3858,6 +6140,8 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
       const url = new URL(path, 'http://demo.local');
       const p = url.pathname, q = (k) => url.searchParams.get(k), b = body(opts);
       if (p === '/api/session') return ok({ admin, version: '6.0.0' });
+      if (p === '/api/feeds') return ok(state().feeds);
+      if (p === '/api/link') { const h = Array.from({ length: 60 }, (_, i) => (i === 41 ? -1 : Math.round(rnd(9, 26) + (i % 17 === 0 ? 30 : 0)))); const okv = h.filter((v) => v >= 0); return ok({ pi: '192.168.4.2:8088', ok: true, rtt_ms: Math.round(okv.reduce((a, b) => a + b, 0) / okv.length), loss_pct: 2, min_ms: Math.min(...okv), max_ms: Math.max(...okv), jitter_ms: 5, samples: h.length, sent: 1420, lost: 3, period_s: 20, hello_age_s: 12, last_ok_age_s: 4, history: h }); }
       if (p === '/api/state') { const s = state(); s.events = events.filter((e) => e.seq > (A.S.lastSeq || 0)); return ok(s); }
       if (p === '/api/events') { const since = Number(q('since') || 0); return ok({ last: seq, events: events.filter((e) => e.seq > since) }); }
       if (p === '/api/logout') { admin = false; return ok({ ok: true }); }
@@ -3882,6 +6166,13 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
       if (p === '/api/worker/forget') { const i = workers.findIndex((x) => x.id === Number(b.id)); if (i >= 0 && workers[i].state !== 'OFFLINE') return fail(409, 'le worker est en ligne'); if (i >= 0) workers.splice(i, 1); return ok({ ok: true }); }
       if (p === '/api/worker/reboot') { const w = workers.find((x) => x.id === Number(b.id)); if (w) w.uptime_ms = 0; return ok({ ok: true }); }
       if (p === '/api/worker/home') { const w = workers.find((x) => x.id === Number(b.id)); if (w) { w.state = 'READY'; w.job = '-'; } return ok({ ok: true }); }
+      if (p === '/api/worker/flash/remote') {   // démo : le worker « redémarre » sur le projet et écrit des mesures
+        const w = workers.find((x) => x.id === Number(b.id));
+        if (w) { w.state = 'FLASHING'; w.progress = 0; setTimeout(() => { w.state = 'PROJECT'; w.job = 'projet'; }, 2500); }
+        let n = 0;
+        const tick = setInterval(() => { if (++n > 14) return clearInterval(tick); wlogSeq++; wlog.push({ seq: wlogSeq, id: Number(b.id), t: Date.now(), text: n === 1 ? '# ESP32 LAB — projet chargé depuis le MASTER' : `dht22_temp:${(22 + Math.random()).toFixed(2)}\tdht22_hum:${(48 + Math.random() * 3).toFixed(2)}` }); }, 1500);
+        ev('I', 'ota', `worker ${b.id} : OTA distante ${String(b.url).slice(0, 60)}`); return ok({ ok: true });
+      }
       if (p === '/api/worker/flash') { if (b.mode === 'project') { const w = workers.find((x) => x.id === Number(b.id)); if (w) { w.state = 'PROJECT'; w.job = String(b.path).split('/').pop().replace(/\.ino\.bin$|\.bin$/i, ''); } } ev('I', 'ota', `worker ${b.id} : mise à jour ${b.path}`); return ok({ ok: true }); }
       if (p === '/api/sd/list') { const path = q('path') || '/sd'; const items = listDir(path); if (!items) return fail(404, 'dossier introuvable'); return ok({ path, admin, items, total: 31902400512, free: 31211069440 }); }
       if (p === '/api/sd/delete' || p === '/api/sd/rename' || p === '/api/sd/mkdir') {

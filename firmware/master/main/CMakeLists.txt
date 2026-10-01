@@ -10,6 +10,7 @@ idf_component_register(
         "http_util.c"
         "job_engine.c"
         "lab_config.c"
+        "linktest.c"
         "led_status.c"
         "netmon.c"
         "notifications.c"

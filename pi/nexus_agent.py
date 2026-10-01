@@ -9,6 +9,15 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from io import BytesIO
 from urllib.parse import parse_qs,urlparse
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from patricia import api as patricia_api
+from patricia.engine import Engine
+from patricia.fleet import Arena
+from patricia.fleet_net import FleetService
+from patricia.knowledge import Knowledge
+from patricia.memory import Memory
+from appstudio import api as appstudio_api
 
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv("NEXUS_DATA","/srv/nexus"))
@@ -27,6 +36,12 @@ WHATSAPP_VERIFY_TOKEN=os.getenv("NEXUS_WHATSAPP_VERIFY_TOKEN","")
 WHATSAPP_APP_SECRET=os.getenv("NEXUS_WHATSAPP_APP_SECRET","")
 WHATSAPP_ALLOWLIST={re.sub(r"\D","",x) for x in os.getenv("NEXUS_WHATSAPP_ALLOWLIST","").split(",") if re.sub(r"\D","",x)}
 AI_CONFIG=DATA/"assistant-config.json"
+PATRICIA_DB=Path(os.getenv("NEXUS_PATRICIA_DB",str(DATA/"patricia"/"memory.sqlite3")))
+FLEET_KEY=os.getenv("NEXUS_FLEET_KEY","")
+ENGINE=None; FLEET=None; APPCTX=None
+APPSTUDIO=Path(os.getenv("NEXUS_APPSTUDIO",str(DATA/"appstudio")))
+BASE_APK=Path(os.getenv("NEXUS_APK",str(DATA/"packages"/"nexus-lab.apk")))
+PLAYER=Path(os.getenv("NEXUS_PLAYER",str(next((p for p in (ROOT/"player",ROOT/"mobile"/"app"/"src"/"main"/"assets"/"player") if (p/"runtime.js").is_file()),ROOT/"player"))))
 CLI=os.getenv("ARDUINO_CLI","arduino-cli")
 PORT=int(os.getenv("NEXUS_PORT","8088"))
 BUILD_WORKERS=max(1,min(4,int(os.getenv("NEXUS_BUILD_WORKERS","1"))))
@@ -173,6 +188,37 @@ def project_dir(pid):
             if p.is_dir() and not p.is_symlink() and any(p.glob("*.ino")): return p
         except (OSError,ValueError): pass
     return None
+
+# Durée de compilation d'un premier build sur Raspberry Pi 4 (cœur ESP32 non encore en cache), en secondes.
+FIRST_BUILD_S={"esp32":420,"esp32s3":480,"esp32c3":400}
+def build_estimate(pid,board):
+    """Temps prévu avant que le firmware soit prêt : attente dans la file + compilation (historique du Pi)."""
+    board=board if board in BOARDS else "esp32"
+    cached=False; src=project_dir(pid) if pid else None
+    if src:
+        try:
+            fp=source_fingerprint(src,board)
+            with connect() as c: row=c.execute("SELECT artifact,sha256 FROM build_cache WHERE project=? AND board=? AND fingerprint=?",(pid,board,fp)).fetchone()
+            cached=bool(row and Path(row["artifact"]).is_file())
+        except (OSError,sqlite3.Error): cached=False
+    with connect() as c:
+        done=[dict(r) for r in c.execute("SELECT project,board,elapsed FROM jobs WHERE status='success' AND COALESCE(kind,'esp')='esp' AND elapsed>3 ORDER BY finished DESC LIMIT 40")]
+        busy=[dict(r) for r in c.execute("SELECT board,status,started FROM jobs WHERE status IN ('queued','claimed','running') AND COALESCE(kind,'esp')='esp'")]
+    same=[r["elapsed"] for r in done if r["project"]==pid and r["board"]==board]
+    per_board=sorted(r["elapsed"] for r in done if r["board"]==board)
+    if same: build_s,basis=same[0],"project"
+    elif per_board: build_s,basis=per_board[len(per_board)//2],"board"
+    else: build_s,basis=FIRST_BUILD_S[board],"default"
+    wait=0.0
+    for r in busy:
+        med=sorted(x["elapsed"] for x in done if x["board"]==r["board"]) or [FIRST_BUILD_S.get(r["board"],420)]
+        est=med[len(med)//2]
+        if r["status"]=="running" and r["started"]:
+            try: est=max(10.0,est-(datetime.now(timezone.utc)-datetime.fromisoformat(r["started"])).total_seconds())
+            except ValueError: pass
+        wait+=est
+    if cached: build_s,basis=2,"cache"
+    return {"project":pid,"board":board,"build_s":round(build_s),"wait_s":round(wait),"total_s":round(build_s+wait),"basis":basis,"samples":len(same) or len(per_board),"ahead":len(busy),"cached":cached,"arduino_cli":bool(shutil.which(CLI) or Path(CLI).is_file())}
 
 def sync_user_project(pid,files):
     if not ID.fullmatch(pid) or not isinstance(files,dict) or not 1<=len(files)<=24: raise ValueError("Identifiant ou liste de fichiers invalide")
@@ -369,6 +415,83 @@ def build_android(job):
     finally:
         with lock: active.pop(jid,None)
 
+def record_app_build(pid,artifact,digest):
+    """Une APK du Studio APK devient un job Android réussi : même lien direct et même QR que les autres APK."""
+    jid=artifact.parent.name
+    with connect() as c: c.execute("INSERT INTO jobs(id,project,board,status,priority,created,started,finished,elapsed,stage,progress,log,artifact,sha256,error,kind) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(jid,pid,"android","success",50,now(),now(),now(),0,"APK du Studio APK prête",100,"Assemblée et signée sur le Pi, sans compilation",str(artifact),digest,None,"android"))
+    event("INFO","android","APK du Studio APK fabriquée",jid,pid,"android","success"); add_message("Studio APK",f"APK prête : {pid} · SHA-256 {digest[:12]}…")
+    return jid
+
+# ----------------------------------------------------------------------------- liaison Wi-Fi Pi ↔ S3
+# Toutes les 30 s le Pi s'annonce au S3 (GET /api/link/hello) et mesure le temps de réponse ; le S3, lui, sonde le Pi
+# (GET /api/v1/ping) toutes les 20 s. Les deux côtés publient latence, gigue et perte (/api/link sur le S3, /api/v1/link ici).
+S3_URL=os.getenv("NEXUS_S3_URL","http://192.168.4.1").rstrip("/")
+LINK_PERIOD=float(os.getenv("NEXUS_LINK_PERIOD","30"))
+LINK={"hist":[],"sent":0,"lost":0,"last_ok":None,"up":None,"s3":S3_URL}
+LINK_LOCK=threading.Lock()
+def link_probe():
+    t0=time.monotonic()
+    try:
+        with urllib.request.urlopen(urllib.request.Request(f"{S3_URL}/api/link/hello?port={PORT}",headers={"User-Agent":"NEXUS-LAB-Pi"}),timeout=3) as r:
+            r.read(2048); ok=r.status==200
+    except (OSError,ValueError): ok=False
+    ms=round((time.monotonic()-t0)*1000) if ok else None
+    with LINK_LOCK:
+        LINK["hist"]=(LINK["hist"]+[ms])[-120:]; LINK["sent"]+=1
+        if ok: LINK["last_ok"]=now()
+        else: LINK["lost"]+=1
+        was=LINK["up"]; recent=LINK["hist"][-3:]
+        LINK["up"]=True if ok else (False if len(recent)==3 and all(v is None for v in recent) else was)
+    if was is not None and LINK["up"]!=was:
+        event("INFO" if LINK["up"] else "WARN","liaison","Liaison Pi ↔ S3 "+("rétablie" if LINK["up"] else "perdue : 3 essais sans réponse du S3"))
+    return ms
+def link_stats():
+    with LINK_LOCK:
+        h=list(LINK["hist"]); ok=[v for v in h if v is not None]
+        jit=[abs(a-b) for a,b in zip(ok,ok[1:])]
+        return {"s3":LINK["s3"],"up":bool(LINK["up"]),"samples":len(h),"rtt_ms":round(sum(ok)/len(ok)) if ok else None,"min_ms":min(ok) if ok else None,
+                "max_ms":max(ok) if ok else None,"jitter_ms":round(sum(jit)/len(jit)) if jit else 0,"loss_pct":round(100*(len(h)-len(ok))/len(h)) if h else 0,
+                "sent":LINK["sent"],"lost":LINK["lost"],"last_ok":LINK["last_ok"],"period_s":LINK_PERIOD,"history":h}
+def link_loop():
+    while True:
+        link_probe()
+        if stop.wait(LINK_PERIOD): break
+
+class AgentHost:
+    """Ce que Patricia peut demander à l'agent : files de compilation, projets, bibliothèques, flotte."""
+    def __init__(self,fleet): self.fleet=fleet
+    def queue_build(self,pid,board):
+        if board not in BOARDS: raise ValueError("Carte non autorisée")
+        if not project_dir(pid): raise ValueError("Projet introuvable sur le Pi : enregistre-le d’abord.")
+        jid=uuid.uuid4().hex[:12]
+        with connect() as c: c.execute("INSERT INTO jobs(id,project,board,status,priority,created,stage) VALUES(?,?,?,?,?,?,?)",(jid,pid,board,"queued",60,now(),"en attente"))
+        event("INFO","build","Compilation demandée par Patricia",jid,pid,board,"queued"); wake.set(); return {"id":jid,"status":"queued"}
+    def queue_apk(self,pid):
+        if platform.machine().lower() not in ("x86_64","amd64"): raise ValueError("Le Pi 4 ARM64 ne peut pas exécuter les outils Android de Google : construis l’APK sur un PC avec scripts/build_project_apk.bat puis importe-la (Studio APK).")
+        if not project_dir(pid): raise ValueError("Projet introuvable sur le Pi.")
+        jid=uuid.uuid4().hex[:12]
+        with connect() as c: c.execute("INSERT INTO jobs(id,project,board,status,priority,created,stage,kind) VALUES(?,?,?,?,?,?,?,?)",(jid,pid,"android","queued",50,now(),"en attente APK","android"))
+        wake.set(); return {"id":jid,"status":"queued"}
+    def user_projects(self):
+        return [p.name for p in sorted(USER_PROJECTS.iterdir()) if p.is_dir() and ID.fullmatch(p.name)] if USER_PROJECTS.exists() else []
+    def recent_builds(self):
+        with connect() as c: return [dict(r) for r in c.execute("SELECT id,project,board,status,error,kind FROM jobs ORDER BY created DESC LIMIT 20")]
+    def github_push(self,pid,repo,private=None):
+        from patricia import github as gh
+        d=project_dir(pid)
+        if not d: raise ValueError("Projet introuvable sur le Pi : enregistre-le d’abord.")
+        try: res=gh.push_project(d,pid,repo,private)
+        except gh.GitHubError as e: raise ValueError(str(e)) from None
+        event("INFO","github",f"Projet envoyé sur GitHub par Patricia : {res['repo']}",None,pid); return res
+    def install_library(self,name):
+        if not re.fullmatch(r"[A-Za-z0-9 _.+-]{2,80}",name or ""): raise ValueError("Nom de bibliothèque refusé")
+        p=subprocess.run([CLI,"lib","install",name],capture_output=True,text=True,timeout=300,shell=False)
+        if p.returncode: raise ValueError(("arduino-cli : "+(p.stderr or p.stdout))[:300])
+        event("INFO","arduino","Bibliothèque installée par Patricia: "+name); return {"installed":name}
+
+def patricia_llm_config():
+    return assistant_config()
+
 def worker_loop():
     while not stop.is_set():
         with connect() as c: row=c.execute("SELECT * FROM jobs WHERE status='queued' ORDER BY priority DESC,created LIMIT 1").fetchone()
@@ -440,19 +563,26 @@ class Api(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed=urlparse(self.path); path=parsed.path; q=parse_qs(parsed.query)
         if path=="/webhooks/whatsapp": self.whatsapp_challenge(q); return
+        if path=="/api/v1/ping": self.sendj(200,{"ok":True}); return
         if path=="/api/v1/health":
             n=sum(1 for p in PROJECTS.iterdir() if p.is_dir()) if PROJECTS.exists() else 0
             try: shared_free=shutil.disk_usage(PROJECTS).free
             except OSError: shared_free=0
             self.sendj(200,{"ok":True,"service":"NEXUS-AGENT","version":"1.0.0","arduino_cli":shutil.which(CLI) or "absent","host_arch":platform.machine(),"project_count":n,"shared_storage":str(SHARED_ROOT),"shared_free_bytes":shared_free}); return
+        if path.startswith("/apps/") and APPCTX and appstudio_api.handle_public(self,"GET",path,APPCTX,body_json): return
         if path=="/download/nexus-lab.apk":
-            apk=Path(os.getenv("NEXUS_APK",str(DATA/"packages"/"nexus-lab.apk")))
+            apk=BASE_APK
             if not apk.is_file(): self.sendj(404,{"error":"APK absent du Pi"}); return
             self.send_response(200); self.send_header("Content-Type","application/vnd.android.package-archive")
             self.send_header("Content-Length",str(apk.stat().st_size)); self.send_header("Content-Disposition",'attachment; filename="nexus-lab.apk"'); self.end_headers()
             with apk.open("rb") as f: shutil.copyfileobj(f,self.wfile)
             return
         if not (path.startswith("/download/apps/") or path.startswith("/download/firmware/")) and self.denied(): return
+        if ENGINE and patricia_api.handle(self,"GET",path,q,ENGINE,FLEET,body_json): return
+        if APPCTX and appstudio_api.handle(self,"GET",path,APPCTX,body_json): return
+        if path=="/api/v1/link":
+            if q.get("now"): link_probe()
+            self.sendj(200,link_stats()); return
         if path=="/api/v1/assistant/config":
             cfg=assistant_config()
             self.sendj(200,{"endpoint":cfg["endpoint"],"model":cfg["model"],"configured":bool(cfg["endpoint"] and cfg["key"]),"key_set":bool(cfg["key"])}); return
@@ -490,6 +620,8 @@ class Api(BaseHTTPRequestHandler):
             if q.get("board"): sql+=" AND board=?"; args.append(q["board"][0])
             with connect() as c: items=[dict(r) for r in c.execute(sql+" ORDER BY project,board,name LIMIT 1000",args)]
             self.sendj(200,{"items":items}); return
+        if path=="/api/v1/build/estimate":
+            self.sendj(200,build_estimate(q.get("project",[""])[0][:80],q.get("board",["esp32"])[0].lower())); return
         if path=="/api/v1/jobs":
             with connect() as c: items=[dict(r) for r in c.execute("SELECT * FROM jobs ORDER BY created DESC LIMIT 100")]
             self.sendj(200,{"items":items}); return
@@ -561,8 +693,13 @@ class Api(BaseHTTPRequestHandler):
                 import qrcode
                 from io import BytesIO
                 url=f"http://{self.headers.get('Host','nexus-pi.local:8088')}/download/apps/{row['project']}/{jid}.apk"
-                stream=BytesIO(); qrcode.make(url).save(stream,format="PNG"); data=stream.getvalue()
-                self.send_response(200); self.send_header("Content-Type","image/png"); self.send_header("Content-Length",str(len(data))); self.send_header("Cache-Control","no-store"); self.send_header("Access-Control-Allow-Origin","*"); self.end_headers(); self.wfile.write(data)
+                stream=BytesIO()
+                try: qrcode.make(url).save(stream,format="PNG"); ctype="image/png"
+                except ImportError:   # sans Pillow : QR en SVG, lisible pareil
+                    import qrcode.image.svg
+                    qrcode.make(url,image_factory=qrcode.image.svg.SvgPathImage).save(stream); ctype="image/svg+xml"
+                data=stream.getvalue()
+                self.send_response(200); self.send_header("Content-Type",ctype); self.send_header("Content-Length",str(len(data))); self.send_header("Cache-Control","no-store"); self.send_header("Access-Control-Allow-Origin","*"); self.end_headers(); self.wfile.write(data)
             except ImportError: self.sendj(503,{"error":"Générateur QR absent: installe python3-qrcode."})
             return
         if path.startswith("/api/v1/jobs/") and path.endswith("/firmware-link"):
@@ -593,7 +730,10 @@ class Api(BaseHTTPRequestHandler):
     def do_POST(self):
         path=urlparse(self.path).path
         if path=="/webhooks/whatsapp": self.whatsapp_webhook(); return
+        if path.startswith("/apps/") and APPCTX and appstudio_api.handle_public(self,"POST",path,APPCTX,body_json): return
         if self.denied(): return
+        if ENGINE and patricia_api.handle(self,"POST",path,{},ENGINE,FLEET,body_json): return
+        if APPCTX and appstudio_api.handle(self,"POST",path,APPCTX,body_json): return
         if path=="/api/v1/storage/upload":
             try: target=shared_path(parse_qs(urlparse(self.path).query).get("path",[""])[0])
             except ValueError as e: self.sendj(400,{"error":str(e)}); return
@@ -733,11 +873,25 @@ def main():
     if len(TOKEN)<32: raise SystemExit("NEXUS_TOKEN absent/trop court : configure un jeton aléatoire de 32 caractères.")
     for p in (DATA,PROJECTS,USER_PROJECTS,FIRMWARE,BUILDS,APPS,DB.parent): p.mkdir(parents=True,exist_ok=True)
     init(); index_fw()
+    global ENGINE,FLEET,APPCTX
+    APPCTX=appstudio_api.Context(designs=APPSTUDIO/"apps",apps=APPS,keys=APPSTUDIO/"keys",base_apk=BASE_APK,player=PLAYER if (PLAYER/"runtime.js").is_file() else None,record=record_app_build)
+    FLEET=FleetService(FLEET_KEY,Arena(float(os.getenv("NEXUS_ARENA_W","4")),float(os.getenv("NEXUS_ARENA_H","4")),float(os.getenv("NEXUS_ARENA_CELL","0.5"))))
+    FLEET.start()
+    ENGINE=Engine(Memory(PATRICIA_DB),Knowledge(CATALOG),AgentHost(FLEET),patricia_llm_config)
+    def backup_loop():
+        while not stop.is_set():
+            try: ENGINE.mem.backup(SHARED_ROOT/"BACKUPS"/"PATRICIA")
+            except (OSError,sqlite3.Error) as e: print(json.dumps({"at":now(),"component":"patricia","message":"sauvegarde impossible: "+str(e)[:200]}),flush=True)
+            stop.wait(86400)
+    threading.Thread(target=backup_loop,name="patricia-backup",daemon=True).start()
+    print("Patricia prête ; pilotage:", "actif" if FLEET.transport else FLEET.error,flush=True)
+    if LINK_PERIOD>0: threading.Thread(target=link_loop,name="nexus-link",daemon=True).start()
     for i in range(BUILD_WORKERS): threading.Thread(target=worker_loop,name=f"nexus-builder-{i+1}",daemon=True).start()
     server=ThreadingHTTPServer(("0.0.0.0",PORT),Api); print("NEXUS-AGENT sur le port",PORT,"; workers de compilation:",BUILD_WORKERS,flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
     finally:
+        if FLEET: FLEET.stop()
         stop.set(); wake.set(); server.shutdown(); server.server_close()
         with lock:
             for p in active.values():

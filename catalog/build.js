@@ -232,6 +232,11 @@ function main() {
     index.push({ id: p.id, title: p.title, cat: p.cat, kind: p.kind, tags: p.tags, difficulty: p.difficulty, boards: p.boards, libs: res.libs.map((l) => l.name) });
   });
   const summary = { version: LAB.VERSION, generated: new Date().toISOString().slice(0, 10), modules: LAB.MODULES.length, recipes: (LAB.RECIPES || []).length, classics: (LAB.CLASSICS || []).length, categories: CATS, projects: index };
+  // Date inchangée si le contenu n'a pas bougé : la reconstruction reste reproductible (contrôle de la CI).
+  try {
+    const prev = JSON.parse(fs.readFileSync(path.join(__dirname, 'catalog.json'), 'utf8'));
+    if (prev.generated && JSON.stringify(Object.assign({}, prev, { generated: summary.generated })) === JSON.stringify(summary)) summary.generated = prev.generated;
+  } catch (e) { /* premier build */ }
   fs.writeFileSync(path.join(__dirname, 'catalog.json'), JSON.stringify(summary, null, 1) + '\n');
 
   // Paquet pour l'interface web du MASTER : sources + catégories

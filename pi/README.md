@@ -37,6 +37,14 @@ Le Studio peut fonctionner sans fournisseur IA : catalogue, questions à choix, 
 
 Les builds ESP32/S3/C3 s’exécutent dans la file Pi avec 1 à 4 workers configurables; commence à 1 sur Pi 4. Le Pi héberge les binaires vérifiés. Le S3 sélectionne la carte, demande confirmation, donne l’ordre au worker et surveille le redémarrage.
 
+## Démarrage automatique (SSH)
+
+Une seule commande, déjà lancée par `install.sh` :
+
+    sudo bash pi/enable_boot.sh
+
+À chaque allumage, le service `nexus-boot` active SSH, rejoint le point d'accès du S3 (profil créé par `connect_to_master_ap.sh`, 6 essais), vérifie que le S3 répond, démarre l'agent et contrôle sa santé, puis lance tes propres scripts placés dans `/etc/nexus/boot.d/*.sh` (5 min maximum chacun). L'état est écrit dans `/run/nexus/boot.json` et s'affiche à chaque connexion SSH. Désactiver : `sudo bash pi/enable_boot.sh --off`. Journal : `journalctl -u nexus-boot`.
+
 ## Contrôles SSH
 
     lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS

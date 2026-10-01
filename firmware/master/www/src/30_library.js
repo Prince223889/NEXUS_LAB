@@ -192,7 +192,7 @@
     let board = store.get('lib.board', 'esp32');
     if (!p.boards.includes(board)) board = p.boards[0];
     const opt = Object.assign({ web: false, master: false, mqtt: false }, p.spec ? p.spec.options : {});
-    let tab = 'code';
+    let tab = p.kind === 'classic' ? 'code' : 'wiring';   // le montage s'affiche dès qu'on choisit un projet
     const favs = new Set(store.get('favs', []));
     const d = drawer(p.title, '', {
       sub: `${esc(cat(p.cat).name)} · ${p.kind === 'module' ? 'capteur / module' : p.kind === 'recipe' ? 'projet complet' : 'classique'}`,
@@ -212,7 +212,8 @@
         </div>
         ${(res.warnings || []).map((w) => `<div class="banner warn">${icon('alert')}<div>${esc(w)}</div></div>`).join('')}
         <div class="row wrap" style="margin-bottom:12px">
-          <button class="btn primary" data-pa="zip">${icon('download')}Projet .zip</button>
+          ${p.kind !== 'classic' ? `<button class="btn primary" data-pa="ota" title="Compilé si besoin par le Pi, flashé par le S3, moniteur vérifié">${icon('zap')}Flasher sur un worker</button>` : ''}
+          <button class="btn" data-pa="zip">${icon('download')}Projet .zip</button>
           <button class="btn" data-pa="ino">${icon('file')}.ino</button>
           <button class="btn" data-pa="copy">${icon('copy')}Copier</button>
           ${p.kind !== 'classic' ? `<button class="btn" data-pa="studio">${icon('wand')}Modifier dans le Studio</button>` : ''}
@@ -220,7 +221,7 @@
           <button class="btn" data-pa="sd" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('sd')}Enregistrer sur la microSD</button>
           ${p.kind !== 'classic' || p.boards.includes(board) ? `<button class="btn" data-pa="flash" ${S.admin ? '' : 'disabled title="Connexion administrateur requise"'}>${icon('usb')}Flasher par câble</button>` : ''}
         </div>
-        <div class="tabs" id="pj-tabs">${[['code', 'Code'], ['wiring', 'Montage'], ['pins', 'Brochage'], ['info', 'Infos & bibliothèques']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <div class="tabs" id="pj-tabs">${[['wiring', 'Montage'], ['code', 'Code'], ['pins', 'Brochage'], ['info', 'Infos & bibliothèques']].map(([k, n]) => `<button data-t="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('')}</div>
         <div class="tab-panel">${tab === 'code' ? A.codeBlock(res.code, '62vh')
           : tab === 'wiring' ? (LAB.montageSvg && res.wiring && res.wiring.length ? `<div class="montage">${LAB.montageSvg(res, { id: p.id, title: p.title }).svg}</div><div class="row" style="margin:10px 0"><button class="btn sm" data-pa="svg">${icon('download')}Schéma .svg</button></div>` : '') + wiringTable(res)
           : tab === 'pins' ? boardView(res.board, usedFromWiring(res.board, res.wiring))
@@ -242,6 +243,12 @@
         else if (k === 'sd') A.saveProjectToSd(p.id, p, res);
         else if (k === 'svg') download(`montage_${p.id}_${board}.svg`, LAB.montageSvg(res, { id: p.id, title: p.title }).svg, 'image/svg+xml');
         else if (k === 'flash') { A.flashPreselect = { board, path: `/sd/PROJECTS/LIBRARY/${p.id}/bin/${board}/${p.id}.bin`, ctx: { kind: 'esp', id: p.id, board } }; d.close(); A.go('usb'); }
+        else if (k === 'ota') {
+          const base = Object.assign({ web: false, master: false, mqtt: false }, p.spec.options || {});
+          const custom = ['web', 'master', 'mqtt'].some((o) => !!opt[o] !== !!base[o]);   // options changées : nouveau firmware à compiler
+          d.close();
+          A.flashPipeline(custom ? { spec: Object.assign({}, p.spec, { options: Object.assign({}, p.spec.options, opt) }), title: p.title + ' (perso)' } : { id: p.id, title: p.title });
+        }
         else if (k === 'bench') { const spec = JSON.parse(JSON.stringify(p.spec)); spec.board = board; d.close(); A.openBench(spec, p.id); }
         else if (k === 'studio') { const spec = JSON.parse(JSON.stringify(p.spec)); spec.board = board; spec.options = Object.assign({}, spec.options, opt); d.close(); A.openInStudio(spec); }
       };

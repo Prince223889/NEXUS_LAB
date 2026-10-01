@@ -8,6 +8,7 @@
 #include "job_engine.h"
 #include "led_status.h"
 #include "netmon.h"
+#include "linktest.h"
 #include "notifications.h"
 #include "ota_manager.h"
 #include "reports.h"
@@ -55,6 +56,7 @@ void app_main(void)
     job_engine_start();
     bench_init();
     netmon_init();
+    linktest_start();
     telemetry_start();
     reports_init();
     reports_start();

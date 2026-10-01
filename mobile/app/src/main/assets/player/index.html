@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f7cf6">
+<title>NEXUS App</title>
+<style>html,body{margin:0;height:100%;background:#0f1522}#app{height:100%}</style>
+</head>
+<body>
+<div id="app"></div>
+<!-- Lecteur des applications du Studio APK : app.js (la conception) est ajouté par le Pi. -->
+<script src="runtime.js"></script>
+<script src="app.js"></script>
+<script>NexusAppRuntime.boot(document.getElementById('app'));</script>
+</body>
+</html>

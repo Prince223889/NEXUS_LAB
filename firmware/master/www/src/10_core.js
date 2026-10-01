@@ -157,7 +157,13 @@
     resistor: '<path d="M2 12h4l1.5-4 3 8 3-8 3 8 1.5-4h4"/>',
     wave: '<path d="M2 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0"/>',
     box: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
-    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/>'
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
+    'mic-off': '<path d="M3 3l18 18"/><path d="M9 9v2a3 3 0 0 0 5 2.2M15 9.3V6a3 3 0 0 0-5.7-1.3"/><path d="M5 11a7 7 0 0 0 11.5 5.4M19 11a7 7 0 0 1-.6 2.8M12 18v3M8 21h8"/>',
+    volume: '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+    car: '<path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13.5" r="1"/><circle cx="16.5" cy="13.5" r="1"/><path d="M5 19v2M19 19v2"/>',
+    brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>',
+    phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'
   };
   function icon(name, cls) {
     return `<svg class="${cls || ''}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.info}</svg>`;
@@ -262,7 +268,7 @@
   function modal(opts) {
     return new Promise((resolve) => {
       const m = document.createElement('div');
-      m.className = 'modal';
+      m.className = 'modal' + (opts.wide ? ' wide' : '');
       m.setAttribute('role', 'dialog');
       m.setAttribute('aria-modal', 'true');
       m.innerHTML = `<div class="modal-h"><h2>${esc(opts.title || '')}</h2></div>
@@ -464,7 +470,8 @@
     const st = S.state;
     const dot = $('#conn-dot'), txt = $('#conn-text');
     if (dot) {
-      if (S.demo) { dot.className = 'dot warn'; txt.textContent = 'Mode démonstration'; }
+      if (S.phone) { dot.className = 'dot warn'; txt.innerHTML = '<a href="#phone">Téléphone · hors ligne</a>'; }
+      else if (S.demo) { dot.className = 'dot warn'; txt.textContent = 'Mode démonstration'; }
       else if (!S.online) { dot.className = 'dot bad'; txt.textContent = 'MASTER injoignable'; }
       else { dot.className = 'dot ok'; txt.textContent = (S.wsOk ? 'Temps réel' : 'Connecté') + (st && st.master ? ' · ' + st.master.ap_ip : ''); }
     }
@@ -724,7 +731,7 @@
     document.getElementById('app').innerHTML = shellHtml();
     window.addEventListener('hashchange', route);
     let sess = null;
-    const forceDemo = /[?&]demo\b/.test(location.search) || location.protocol === 'file:' || window.LAB_FORCE_DEMO;
+    const forceDemo = /[?&]demo\b/.test(location.search) || location.protocol === 'file:' || window.LAB_FORCE_DEMO || !!(APP.Phone && APP.Phone.offline);
     if (!forceDemo) {
       try { sess = await api('/api/session'); } catch (e) { sess = null; }
     }
@@ -740,7 +747,8 @@
     }
     renderShellState();
     route();
-    if (S.demo) setTimeout(() => toast('Mode démonstration : MASTER non détecté, les données sont simulées.', 'warn', 6000), 400);
+    if (S.demo && !S.phone) setTimeout(() => toast('Mode démonstration : MASTER non détecté, les données sont simulées.', 'warn', 6000), 400);
+    if (APP.Phone) APP.Phone.afterBoot();
     if (location.hash === '#admin' && S.admin) toast('Session administrateur ouverte', 'ok');
   };
 })();

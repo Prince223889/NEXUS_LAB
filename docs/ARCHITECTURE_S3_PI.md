@@ -13,6 +13,30 @@ Le flux de flash reste : Studio → projet sauvegardé sur la carte accessible p
 
 Le S3 agit aussi comme passerelle Internet : si son Wi-Fi amont est configuré et connecté, il partage cette connexion au Pi et aux workers. Le Wi-Fi du Pi garde une métrique 600 afin de laisser Ethernet prioritaire quand il est présent. Sans Wi-Fi amont, le réseau local du labo continue normalement. Le S3 peut accepter dix clients : avec le Pi, il reste jusqu’à neuf workers.
 
+## Flash en un clic
+
+Le bouton **Flasher** existe dans le Studio. Dans la Bibliothèque, il s'appelle **Flasher sur un worker**. Il enchaîne cinq étapes :
+
+1. **Worker** : choisis le worker. Sa puce est détectée (ESP32, S3 ou C3) et le code est adapté à cette carte.
+2. **Montage** : le schéma s'affiche. Coche « Le montage est câblé comme sur le schéma ».
+3. **Firmware** :
+   - Un projet de la bibliothèque déjà compilé est lu sur la microSD du S3. Le flash est immédiat et le Pi n'est pas nécessaire.
+   - Un projet nouveau ou modifié est envoyé au Pi, qui le compile. Le **temps prévu** s'affiche avant de commencer. Il vient de l'historique du Pi : la dernière compilation de ce projet, sinon la médiane des compilations de la même carte, sinon une estimation prudente de 7 à 8 minutes pour une première compilation sur un Pi 4. Les compilations déjà en file sont comptées. Une barre affiche ensuite le temps écoulé et le temps restant. Un projet déjà dans le cache du Pi est prêt en 2 secondes.
+4. **Flash** : le S3 autorise l'OTA. Le worker télécharge le firmware, vérifie son SHA-256 et redémarre sur le projet.
+5. **Vérification** : le moniteur du worker est lu pendant 25 secondes. Patricia, sur le Pi, ou l'analyse locale du S3 si le Pi est absent, donne un verdict : ça fonctionne, échec ou incertain, avec les raisons. Si la compilation échoue, le journal est diagnostiqué : bibliothèque manquante, erreur de code…
+
+## Avec et sans le Pi
+
+| Fonction | Pi allumé | Pi absent |
+|---|---|---|
+| Interface, workers, jobs, capteurs en direct, Réseau, Outils | ✓ | ✓ (le S3 suffit) |
+| Bibliothèque, montages, code, Studio, .ino et .zip | ✓ | ✓ (générés dans le navigateur) |
+| Flasher un projet de la bibliothèque déjà compilé | ✓ | ✓ (binaire sur la microSD du S3) |
+| Flasher un projet nouveau ou modifié | ✓ compilé par le Pi | ✗ télécharge le .ino pour l'Arduino IDE, ou compile sur PC avec `scripts\compile_all.bat` |
+| Vérification du moniteur après flash | Patricia | analyse locale du S3 |
+| Patricia : mémoire, voix, IA, flotte de voitures | ✓ | assistant de secours du S3 (état du labo, câblage du catalogue) |
+| Studio APK et appli web | ✓ | ✗ (le Pi fabrique les APK) |
+
 ## Les deux cartes et leur contenu
 
 Le Pi démarre sur la **clé USB de 8 Go**. Sa **microSD de 64 Go** est un volume FAT32 séparé, monté sur `/srv/nexus/shared`. La microSD de **2 Go du S3 est un autre support** : elle contient la bibliothèque, les binaires `.bin`, les firmwares `.hex`, les montages et les explications du dossier `SD_CARD/`.
@@ -35,6 +59,10 @@ Démarre Raspberry Pi OS Lite 64 bits depuis la clé USB 8 Go, active SSH et gar
     sudo bash pi/setup_arduino.sh
     sudo systemctl status nexus-agent
     curl -s http://127.0.0.1:8088/api/v1/health
+
+`install.sh` active aussi le service `nexus-boot` : à chaque démarrage, SSH, connexion au Wi-Fi du S3, agent et scripts de `/etc/nexus/boot.d/` (commande seule : `sudo bash pi/enable_boot.sh`, détails dans `pi/README.md`).
+
+Le canal Wi-Fi est testé en continu dans les deux sens : le Pi s'annonce au S3 toutes les 30 s, le S3 sonde le Pi toutes les 20 s. Latence, gigue et perte sont visibles dans **Système › Liaison S3 ↔ Pi** ; une coupure et son rétablissement sont notés dans le journal.
 
 La préparation de carte est la seule étape qui efface un support, et elle exige confirmation interactive. Consulte le jeton localement avec sudo grep '^NEXUS_TOKEN=' /etc/nexus/nexus.env; ne le partage pas et n’expose pas le port 8088 à Internet. Garde Ethernet ou une session SSH accessible pendant la configuration Wi-Fi.
 

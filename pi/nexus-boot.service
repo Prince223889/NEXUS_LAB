@@ -1,0 +1,13 @@
+[Unit]
+Description=NEXUS : SSH, Wi-Fi du S3 et agent au démarrage
+After=network.target NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash /usr/local/lib/nexus/nexus-boot.sh
+TimeoutStartSec=400
+
+[Install]
+WantedBy=multi-user.target
