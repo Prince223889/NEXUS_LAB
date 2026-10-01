@@ -22,7 +22,7 @@ Corps des POST : `application/x-www-form-urlencoded` sauf mention **JSON**. 🔒
 ## État et système
 | Méthode | Route | Description |
 |---|---|---|
-| GET | `/api/state` | `master{…}`, `jobs{queued,running,success,failed}`, `workers[]`, `feeds[]`, `bench{…}` (résumé du banc), `event_seq` |
+| GET | `/api/state` | `master{…}`, `jobs{queued,running,success,failed}`, `workers[]`, `feeds[]`, `bench{…}` (résumé du banc), `veille{armed,last,count}`, `event_seq` |
 | GET | `/api/health` | résumé court (supervision) |
 | GET | `/api/system/info` | version, IDF, puce, flash, PSRAM, microSD, OTA, USB |
 | GET | `/api/telemetry` | historique : `t[] heap[] psram[] temp[] hum[] workers[] jobs[] rssi[]`, `period_s` |
@@ -93,6 +93,9 @@ Une broche tenue par `PWM_GEN`, `SERVO_SWEEP`, `TONE_TEST` ou `ONEWIRE_SCAN` est
 |---|---|---|
 | GET 🔒 | `/api/usb/serial?since=N` | `{pos,data,usb{host,connected,chip,vid_pid,baud,flashing,rx_total}}` |
 | POST 🔒 | `/api/usb/serial` | **JSON** `{baud?, data?}` |
+| POST 🔒 | `/api/usb/detect` | identifie la carte branchée (ESP32/S3/C3 par le bootloader ROM, sinon Arduino par le bootloader STK500) ; lancé aussi tout seul à chaque branchement. Résultat dans `usb.detect{busy,seq,board,profile,text}` (`board` : `avr`, `esp32`, `esp32s3`, `esp32c3`…) de `/api/system/info`, `/api/usb/serial` et `/api/usb/flash/status` |
+| GET 🔒 | `/api/veille?since=N` | veille du labo : `{armed, armed_age_s, last, count, alerts[{seq,age_s,kind,text}], stations[{mac,connected,since_s,worker,name,known}], known[], rules[]}` |
+| POST 🔒 | `/api/veille` | **JSON** `{armed}` · `{mac, name, known}` (appareil connu ou oublié) · `{rule:{idx?, source, key, op:">"\|"<"\|"=", value, label}}` · `{delete_rule: idx}` |
 | POST 🔒 | `/api/avr/flash` | `path` (.hex), `profile` (`ATmega328P_Optiboot`, `ATmega328P_Old`, `ATmega168P_STK500`) |
 | POST 🔒 | `/api/update/check` | cherche une mise à jour (GitHub Release ou manifeste) → `{available, version, notes, source, assets, …}` |
 | POST 🔒 | `/api/update/approve` | télécharge et installe la mise à jour trouvée |

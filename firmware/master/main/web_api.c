@@ -19,6 +19,7 @@
 #include "telemetry.h"
 #include "usb_avr.h"
 #include "usb_flash.h"
+#include "veille.h"
 #include "wifi_lab.h"
 #include "worker_pool.h"
 #include "cJSON.h"
@@ -105,6 +106,7 @@ cJSON *web_state_json(bool detailed)
     telemetry_feeds_json(cJSON_AddArrayToObject(root, "feeds"));
     bench_status_json(cJSON_AddObjectToObject(root, "bench"), false);
     netmon_summary_json(cJSON_AddObjectToObject(root, "netmon"));
+    veille_summary_json(cJSON_AddObjectToObject(root, "veille"));
     cJSON_AddNumberToObject(root, "event_seq", evlog_last_seq());
     return root;
 }
@@ -855,6 +857,16 @@ static esp_err_t usb_flash_post(httpd_req_t *r)
     return http_error(r, e == ESP_ERR_INVALID_STATE ? 409 : e == ESP_ERR_NOT_FOUND ? 404 : 400, err[0] ? err : esp_err_to_name(e));
 }
 
+/* Identification de la carte branchée (ESP32/S3/C3 ou Arduino) ; résultat dans usb.detect. */
+static esp_err_t usb_detect_post(httpd_req_t *r)
+{
+    REQUIRE_ADMIN(r);
+    char err[120] = "";
+    esp_err_t e = usb_flash_start_detect(0, err, sizeof(err));
+    if (e == ESP_OK) return http_json_str(r, "{\"ok\":true}");
+    return http_error(r, e == ESP_ERR_INVALID_STATE ? 409 : 500, err[0] ? err : esp_err_to_name(e));
+}
+
 static esp_err_t usb_flash_status_get(httpd_req_t *r)
 {
     char v[16];
@@ -1126,6 +1138,47 @@ static esp_err_t wifi_scan_get(httpd_req_t *r)
     return http_json(r, j);
 }
 
+/* ---------- Veille du labo (matériel de l'utilisateur uniquement, voir veille.h) ---------- */
+static esp_err_t veille_get(httpd_req_t *r)
+{
+    REQUIRE_ADMIN(r);
+    char v[16];
+    uint32_t since = query_get(r, "since", v, sizeof(v)) ? (uint32_t)strtoul(v, NULL, 10) : 0;
+    cJSON *j = cJSON_CreateObject();
+    if (!j) return http_error(r, 500, "mémoire insuffisante");
+    veille_status_json(j, since);
+    return http_json(r, j);
+}
+
+/* {armed:bool} | {mac, name, known:bool} | {rule:{idx?, source, key, op, value, label}} | {delete_rule:idx} */
+static esp_err_t veille_post(httpd_req_t *r)
+{
+    REQUIRE_ADMIN(r);
+    cJSON *b = http_body_json(r, 1024);
+    if (!b) return http_error(r, 400, "JSON invalide");
+    esp_err_t e = ESP_ERR_INVALID_ARG;
+    const cJSON *armed = cJSON_GetObjectItem(b, "armed"), *mac = cJSON_GetObjectItem(b, "mac"), *rule = cJSON_GetObjectItem(b, "rule"),
+                *del = cJSON_GetObjectItem(b, "delete_rule");
+    if (cJSON_IsBool(armed)) {
+        e = veille_arm(cJSON_IsTrue(armed));
+    } else if (cJSON_IsString(mac)) {
+        const cJSON *name = cJSON_GetObjectItem(b, "name"), *known = cJSON_GetObjectItem(b, "known");
+        e = veille_set_known(mac->valuestring, cJSON_IsString(name) ? name->valuestring : "", !cJSON_IsFalse(known));
+    } else if (cJSON_IsObject(rule)) {
+        const cJSON *idx = cJSON_GetObjectItem(rule, "idx"), *src = cJSON_GetObjectItem(rule, "source"), *key = cJSON_GetObjectItem(rule, "key"),
+                    *op = cJSON_GetObjectItem(rule, "op"), *val = cJSON_GetObjectItem(rule, "value"), *lab = cJSON_GetObjectItem(rule, "label");
+        if (cJSON_IsString(src) && cJSON_IsString(key) && cJSON_IsString(op) && cJSON_IsNumber(val))
+            e = veille_set_rule(cJSON_IsNumber(idx) ? idx->valueint : -1, src->valuestring, key->valuestring, op->valuestring[0], (float)val->valuedouble,
+                                cJSON_IsString(lab) ? lab->valuestring : "");
+    } else if (cJSON_IsNumber(del)) {
+        e = veille_del_rule(del->valueint);
+    }
+    cJSON_Delete(b);
+    if (e == ESP_OK) return http_json_str(r, "{\"ok\":true}");
+    return http_error(r, e == ESP_ERR_NO_MEM ? 409 : e == ESP_ERR_NOT_FOUND ? 404 : 400,
+                      e == ESP_ERR_NO_MEM ? "liste pleine" : e == ESP_ERR_NOT_FOUND ? "règle introuvable" : "requête invalide (adresse MAC AA:BB:CC:DD:EE:FF, opérateur > < =)");
+}
+
 static esp_err_t feeds_get(httpd_req_t *r)
 {
     cJSON *a = cJSON_CreateArray();
@@ -1143,6 +1196,8 @@ void web_api_register(httpd_handle_t h)
         {.uri = "/api/system/identify", .method = HTTP_POST, .handler = identify_post},
         {.uri = "/api/telemetry", .method = HTTP_GET, .handler = telemetry_get},
         {.uri = "/api/feeds", .method = HTTP_GET, .handler = feeds_get},
+        {.uri = "/api/veille", .method = HTTP_GET, .handler = veille_get},
+        {.uri = "/api/veille", .method = HTTP_POST, .handler = veille_post},
         {.uri = "/api/events", .method = HTTP_GET, .handler = events_get},
         {.uri = "/api/netmon", .method = HTTP_GET, .handler = netmon_get},
         {.uri = "/api/link", .method = HTTP_GET, .handler = linktest_get},
@@ -1188,6 +1243,7 @@ void web_api_register(httpd_handle_t h)
         {.uri = "/api/avr/flash", .method = HTTP_POST, .handler = avr_flash_post},
         {.uri = "/api/usb/flash", .method = HTTP_POST, .handler = usb_flash_post},
         {.uri = "/api/usb/flash/status", .method = HTTP_GET, .handler = usb_flash_status_get},
+        {.uri = "/api/usb/detect", .method = HTTP_POST, .handler = usb_detect_post},
         {.uri = "/api/usb/serial", .method = HTTP_GET, .handler = usb_serial_get},
         {.uri = "/api/usb/serial", .method = HTTP_POST, .handler = usb_serial_post},
         {.uri = "/api/update/check", .method = HTTP_POST, .handler = update_check_post},

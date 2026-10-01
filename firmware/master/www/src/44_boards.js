@@ -41,7 +41,9 @@
     const m = rep.master;
     const parts = [];
     parts.push(row(!!m, 'MASTER ESP32-S3', m ? `v${esc(m.version || '?')} · ${esc(m.board_variant || '')} · microSD ${gb(m.sd_free)} libres / ${gb(m.sd_total)}` : esc(rep.errors[0] || 'injoignable')));
-    parts.push(row(rep.usb ? !!rep.usb.connected : null, 'USB du S3', rep.usb ? (rep.usb.connected ? `${esc(rep.usb.chip || 'carte')} (${esc(rep.usb.vid_pid || '')}) · ${rep.usb.baud} bauds${rep.usb.flashing ? ' · flash en cours' : ''}` : 'aucune carte branchée') : 'inconnu'));
+    const adv = A.usbAdvice ? A.usbAdvice(rep.usb) : null;
+    parts.push(row(rep.usb ? !!rep.usb.connected : null, 'USB du S3', rep.usb ? (rep.usb.connected ? `${adv && adv.name ? '<b>' + esc(adv.name) + '</b> · ' : ''}pont ${esc(rep.usb.chip || '?')} (${esc(rep.usb.vid_pid || '')}) · ${rep.usb.baud} bauds${rep.usb.flashing ? ' · occupé' : ''}` : 'aucune carte branchée') : 'inconnu',
+      rep.usb && rep.usb.connected && adv && adv.state === 'ok' ? `<button class="btn sm" data-usb-go>${icon('upload')}Flasher</button>` : ''));
     const wl = rep.workers.map((w) => row(w.state === 'OFFLINE' ? false : w.err ? null : true, `W${w.id}${w.label ? ' · ' + esc(w.label) : ''}`,
       w.state === 'OFFLINE' ? 'éteint ou hors de portée' : [esc(w.chip || 'puce ?'), w.flash ? 'flash ' + mb(w.flash) : '', w.psram ? 'PSRAM ' + mb(w.psram) : '', w.rssi ? `${w.rssi} dBm (${sig(w.rssi)})` : '', w.ip ? esc(w.ip) : '', w.version ? 'fw ' + esc(w.version) : '', w.err || ''].filter(Boolean).join(' · '),
       `<span class="badge ${w.state === 'OFFLINE' ? '' : w.state === 'READY' || w.state === 'IDLE' ? 'ok' : 'info'}">${esc(w.state || '?')}</span>`));
@@ -58,6 +60,9 @@
       <section class="card"><div class="card-h"><h2 class="grow">Raspberry Pi</h2></div><div class="card-b bd-list">${piRows.join('')}</div></section>
       <section class="card span-2"><div class="card-h"><h2 class="grow">Workers sur le Wi-Fi du S3</h2><span class="badge ${on.length ? 'ok' : ''}">${on.length}/${rep.capacity} en ligne</span></div><div class="card-b bd-list">${wl.join('') || '<div class="small muted">Aucun worker vu. Allume un ESP32 avec le firmware worker : il rejoint le Wi-Fi du S3 tout seul.</div>'}</div></section></div>`;
   };
+
+  /* Bouton « Flasher » de la ligne USB du S3 (page et carte de Patricia) → page USB & Flash. */
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-usb-go]')) A.go('usb'); });
 
   async function load(el) {
     const box = $('#bd-body', el); if (!box) return;

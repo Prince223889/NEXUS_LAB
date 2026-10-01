@@ -15,6 +15,8 @@ Patricia vit sur le Raspberry Pi (`pi/patricia/`) et s'affiche dans l'interface 
 | « Crée un dépôt github mon-robot » | Nouveau dépôt sur ton compte (README initial), privé par défaut |
 | « Analyse mon projet », « corrige les erreurs de serre » | Analyse du code (voir plus bas) et correction automatique avec copie de sauvegarde |
 | « Lance un voltmètre sur W2 », « fais un test des broches », « lance un scan 1-wire » | Nouveaux jobs des workers : voltmètre, test des broches, 1-Wire, analyseur logique, générateur PWM, balayage servo, test buzzer |
+| « Flashe la carte USB », « installe le worker sur la carte USB », « flashe la carte USB avec bme280 » | La carte branchée sur l'USB du S3 est identifiée (ESP32, S3, C3 ou Arduino) ; un ESP32 reçoit le **firmware worker** (il rejoint le Wi-Fi du S3), un Arduino le projet nommé ; flash, vérification MD5 puis moniteur série dans **USB & Flash** |
+| « Active la veille », « mode espion », « arrête la veille », « qu'est-ce que la veille a vu ? » | **Veille du labo** : alerte si un appareil inconnu rejoint le Wi-Fi du box, si un worker s'éteint ou si une alarme de capteur se déclenche ; journal dans **Système › Veille du labo**. Elle refuse de surveiller une personne (messages, appels, caméra) et propose la veille à la place |
 | « Quelle est la température ? », « Lis les capteurs du worker 2 » | Dernières mesures envoyées au MASTER par les workers et les montages, filtrées par grandeur ou par worker ; signale les mesures qui ne se mettent plus à jour |
 | « Vérifie W3 » | Lit le journal du worker (et le port USB si tu es admin) et explique ce qu'il voit |
 | Coller une erreur de compilation ou un moniteur série | Diagnostic : bibliothèque manquante (installation proposée), mauvaise carte, API LEDC 3.x, brownout, Guru Meditation, watchdog, boucle de redémarrage, capteur absent, I2C… |
@@ -40,6 +42,16 @@ Patricia est une IA : l'assistante et la complice de ton labo. À « qui es-tu ?
 ### Comme une IA en ligne
 
 Sans Internet, Patricia comprend les demandes du labo ci-dessus (règles en français) et cherche dans le catalogue et sa mémoire. Pour discuter de tout, comme avec ChatGPT ou Claude, branche une IA dans Réglages → IA : un modèle local avec Ollama (gratuit, plus lent et moins fin sur un Pi 4) ou un service en ligne au format « chat/completions » avec ta clé. L'IA reçoit les mêmes outils (catalogue, mémoire, fichiers, analyse, cartes branchées, actions) et passe par les mêmes règles de validation.
+
+## Veille du labo (« option espion »)
+
+La veille tourne sur le MASTER (elle marche sans le Pi) et ne surveille que **ton** matériel :
+
+- **Wi-Fi du box** : chaque appareil associé au point d'accès du S3 est listé (adresse MAC). Les workers sont reconnus tout seuls ; marque tes appareils (téléphone, Pi, PC) avec « C'est à moi ». Pendant la veille, un appareil inconnu déclenche une alerte.
+- **Workers** : alerte quand un worker s'éteint ou revient.
+- **Alarmes de capteurs** : « si atelier · pir > 0,5 alors alerte », sur les mesures envoyées par tes montages (préréglages mouvement, porte, gaz, fuite d'eau, température).
+
+Chaque alerte va dans le journal, le bandeau « Veille active » en haut de toutes les pages, une notification sur le téléphone (vibration + voix dans l'appli NEXUS) et WhatsApp/webhook si configuré. Rien n'est écouté, filmé ni intercepté : la veille ne capte aucun trafic et ne voit que les adresses des appareils connectés au box.
 
 ## Voix
 

@@ -53,7 +53,9 @@
   TREE['/sd/PROJECTS'].push('ARDUINO');
   TREE['/sd/PROJECTS/ARDUINO'] = ['01_LED_Blink', '04_DHT11_Temperature_Humidite', '14_Module_Relais', '24_BME280_Meteo'];
   TREE['/sd/PROJECTS/ARDUINO'].forEach((d) => { TREE['/sd/PROJECTS/ARDUINO/' + d] = [[d + '.ino', 1488], [d + '.hex', 35138], ['MONTAGE.md', 473], ['montage.png', 35309]]; });
-  TREE['/sd/FIRMWARE'].push(['worker_esp32_6.1.0.bin', 1229339]);
+  TREE['/sd/FIRMWARE'].push(['worker_esp32_6.1.0.bin', 1229339], ['WORKER', null]);
+  TREE['/sd/FIRMWARE/WORKER'] = [['esp32', null], ['esp32s3', null], ['esp32c3', null]];
+  ['esp32', 'esp32s3', 'esp32c3'].forEach((bd) => { TREE['/sd/FIRMWARE/WORKER/' + bd] = [['worker.bin', 1229339], ['worker.bootloader.bin', 24992], ['worker.partitions.bin', 3072], ['boot_app0.bin', 8192], ['flash_args', 160]]; });
 
   /* Programmation USB simulée (aperçu) : mêmes étapes et messages que le MASTER réel. */
   let fl = { busy: false, kind: '', file: '', step: '', progress: 0, ok: null, result: '', chip: '', baud: 0, last: 0, log: [] };
@@ -62,22 +64,60 @@
     if (fl.busy) return fail(409, 'une programmation est déjà en cours');
     const esp = b.kind === 'esp';
     fl = { busy: true, kind: b.kind, file: b.path, step: '', progress: 0, ok: null, result: '', chip: '', baud: esp ? 115200 : 9600, last: 0, log: [] };
-    const script = esp ? [[1, '» connexion (pont USB-série)', 'Mise en mode téléchargement (essai 1/8)…'], [3, 'Puce détectée : esp32 — firmware compilé pour esp32', 'Vitesse de transfert : 460800 bauds'], [4, '» préparation de la mémoire flash', 'Flash configurée : 4 Mo'],
+    const script = esp ? [[1, '» connexion (pont USB-série)', 'Mise en mode téléchargement (essai 1/8)…'], [3, 'Puce détectée : ' + (det.board || 'esp32') + ' — firmware compilé pour ' + (/esp32s3/.test(b.path) ? 'esp32s3' : /esp32c3/.test(b.path) ? 'esp32c3' : 'esp32'), 'Vitesse de transfert : 460800 bauds'], [4, '» préparation de la mémoire flash', 'Flash configurée : 4 Mo'],
       [8, 'Écriture de ' + b.path.split('/').pop().replace('.bin', '.bootloader.bin') + ' (24992 octets) à 0x01000', '  MD5 vérifié : 4f1c…'], [12, 'Écriture de boot_app0.bin (8192 octets) à 0x0E000', '» écriture de la mémoire flash'],
       [40, 'Écriture de ' + b.path.split('/').pop() + ' (912384 octets) à 0x10000', null], [70, null, null], [92, '  MD5 vérifié : 9a3e…', '» redémarrage de la carte']]
       : [[2, '» reset de la carte et synchronisation', 'Profil : ' + (b.profile || 'ATmega328P_Optiboot')], [5, '» écriture de la mémoire flash', null], [40, null, null], [70, '» vérification (relecture)', null], [95, null, null]];
     let i = 0;
     flLog((esp ? 'Programmation ESP32 : 4 fichier(s), 948640 octets' : 'Programmation Arduino : ' + b.path));
     const t = setInterval(() => {
-      if (i < script.length) { const [p, a, c] = script[i++]; fl.progress = p; if (a) { flLog(a); if (a.startsWith('»')) fl.step = a.slice(2); } if (c) flLog(c); if (esp && p === 3) fl.chip = 'esp32'; return; }
+      if (i < script.length) { const [p, a, c] = script[i++]; fl.progress = p; if (a) { flLog(a); if (a.startsWith('»')) fl.step = a.slice(2); } if (c) flLog(c); if (esp && p === 3) fl.chip = det.board || 'esp32'; return; }
       clearInterval(t);
       fl.busy = false; fl.ok = true; fl.progress = 100; fl.step = 'terminé';
-      fl.result = esp ? 'firmware écrit et vérifié (MD5) sur esp32 — moniteur à 115200 bauds' : '35138 octets programmés et vérifiés (signature 1E950F) — moniteur réglé à 9600 bauds';
+      fl.result = esp ? 'firmware écrit et vérifié (MD5) sur ' + (fl.chip || 'esp32') + ' — moniteur à 115200 bauds' : '35138 octets programmés et vérifiés (signature 1E950F) — moniteur réglé à 9600 bauds';
       flLog('✔ ' + fl.result);
       serialAdd(esp ? '\nets Jun  8 2016 00:22:57\nrst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\n# ESP32 LAB — ' + b.path.split('/').pop() + '\n' : '\n[24] BME280 pret\nTemperature: 22.8 C  Humidite: 47.1 %  Pression: 1013.2 hPa\n');
       ev('S', 'usb', 'flash ' + b.kind + ' : ' + fl.result);
     }, 700);
     return ok({ ok: true });
+  }
+  /* Carte branchée sur l'USB du MASTER : identifiée automatiquement (ESP32-S3 dans l'aperçu). */
+  let det = { busy: false, seq: 1, board: 'esp32s3', profile: '', text: 'ESP32-S3 détecté : prêt pour le firmware worker ou un projet' };
+  const usbInfo = (chip, vid) => ({ host: true, connected: true, chip, vid_pid: vid, baud: fl.baud || 115200, flashing: fl.busy || det.busy, rx_total: 18234 + serialTotal, detect: clone(det) });
+  function detectStart() {
+    if (fl.busy || det.busy) return fail(409, 'carte déjà en cours de programmation ou d\'identification');
+    det = { busy: true, seq: det.seq, board: '', profile: '', text: 'identification en cours…' };
+    setTimeout(() => { det = { busy: false, seq: det.seq + 1, board: 'esp32s3', profile: '', text: 'ESP32-S3 détecté : prêt pour le firmware worker ou un projet' }; ev('S', 'usb', det.text); }, 2200);
+    return ok({ ok: true });
+  }
+  /* Veille du labo simulée : appareils du point d'accès, alertes et alarmes de capteurs. */
+  const vl = { armed: false, armedAt: 0, last: 0, count: 0, alerts: [], known: [{ mac: 'B8:27:EB:4A:11:02', name: 'Raspberry Pi' }, { mac: '5C:CF:7F:22:90:1B', name: 'Mon téléphone' }], rules: [],
+    stations: [['B8:27:EB:4A:11:02', 0], ['5C:CF:7F:22:90:1B', 0]].concat(workers.filter((w) => w.state !== 'OFFLINE').map((w) => [w.mac, w.id])).map(([mac, worker]) => ({ mac, worker, connected: true, at: Date.now() - rnd(60, 3000) * 1000 })) };
+  const vlAlert = (kind, text) => { vl.last++; if (kind !== 'veille') vl.count++; vl.alerts.unshift({ seq: vl.last, at: Date.now(), kind, text }); if (vl.alerts.length > 48) vl.alerts.pop(); ev(kind === 'veille' ? 'I' : 'W', 'veille', text); };
+  function veilleJson(since) {
+    const now = Date.now();
+    return { armed: vl.armed, armed_age_s: vl.armed ? Math.round((now - vl.armedAt) / 1000) : 0, last: vl.last, count: vl.count,
+      alerts: vl.alerts.filter((a) => a.seq > since).map((a) => ({ seq: a.seq, age_s: Math.round((now - a.at) / 1000), kind: a.kind, text: a.text })),
+      known: clone(vl.known), rules: vl.rules.map((r, idx) => Object.assign({ idx }, r)),
+      stations: vl.stations.map((s) => { const k = vl.known.find((x) => x.mac === s.mac); return { mac: s.mac, connected: s.connected, since_s: Math.round((now - s.at) / 1000), worker: s.worker, name: k ? k.name : '', known: !!k || s.worker > 0 }; }) };
+  }
+  function veillePost(b) {
+    if (typeof b.armed === 'boolean') {
+      if (b.armed && !vl.armed) {
+        vl.armed = true; vl.armedAt = Date.now(); vl.count = 0; vlAlert('veille', 'veille activée');
+        setTimeout(() => { if (!vl.armed) return; const mac = '3C:22:FB:9E:41:7A'; vl.stations = vl.stations.filter((s) => s.mac !== mac).concat({ mac, worker: 0, connected: true, at: Date.now() }); if (!vl.known.some((k) => k.mac === mac)) vlAlert('wifi', 'appareil inconnu connecté au Wi-Fi du labo (' + mac + ')'); }, 6000);
+      } else if (!b.armed && vl.armed) { vl.armed = false; vlAlert('veille', 'veille désactivée'); }
+      return ok({ ok: true });
+    }
+    if (typeof b.mac === 'string') {
+      if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i.test(b.mac)) return fail(400, 'requête invalide (adresse MAC AA:BB:CC:DD:EE:FF, opérateur > < =)');
+      vl.known = vl.known.filter((k) => k.mac !== b.mac.toUpperCase());
+      if (b.known !== false) vl.known.push({ mac: b.mac.toUpperCase(), name: b.name || 'appareil' });
+      return ok({ ok: true });
+    }
+    if (b.rule) { if (vl.rules.length >= 8) return fail(409, 'liste pleine'); vl.rules.push({ source: b.rule.source, key: b.rule.key, op: b.rule.op, value: Number(b.rule.value), label: b.rule.label || b.rule.key, active: false }); return ok({ ok: true }); }
+    if (typeof b.delete_rule === 'number') { vl.rules.splice(b.delete_rule, 1); return ok({ ok: true }); }
+    return fail(400, 'requête invalide');
   }
   const wlog = [];
   let wlogSeq = 0;
@@ -93,6 +133,13 @@
 
   function step() {
     const now = Date.now();
+    if (typeof vl !== 'undefined' && vl.armed) vl.rules.forEach((r) => {
+      const f = feeds[r.source + '/' + r.key];
+      if (!f) return;
+      const hit = r.op === '>' ? f.v > r.value : r.op === '<' ? f.v < r.value : Math.abs(f.v - r.value) < 0.001;
+      if (hit && !r.active && (!r.last || now - r.last > 30000)) { r.last = now; vlAlert('capteur', `${r.label} : ${r.source}/${r.key} = ${f.v.toFixed(2)} (${r.op} ${r.value})`); }
+      r.active = hit;
+    });
     master.temp = +(22.8 + Math.sin(now / 90000) * 0.8 + rnd(-0.1, 0.1)).toFixed(1);
     master.humidity = +(47 + Math.cos(now / 120000) * 3 + rnd(-0.4, 0.4)).toFixed(1);
     Object.values(feeds).forEach((f) => {
@@ -158,6 +205,7 @@
       worker_capacity: 10,
       workers: workers.map((w) => Object.assign(clone(w), { age_ms: w.state === 'OFFLINE' ? Date.now() - w.offSince : Math.round(rnd(100, 1900)) })),
       feeds: Object.values(feeds).map((f) => ({ source: f.source, key: f.key, value: +f.v.toFixed(f.v < 10 ? 2 : 1), unit: f.unit, ip: f.ip, age_ms: Date.now() - f.at, count: f.count })),
+      veille: { armed: vl.armed, last: vl.last, count: vl.count },
       event_seq: seq,
       events: [],
       netmon: nmState()
@@ -295,7 +343,7 @@
       if (p === '/api/events') { const since = Number(q('since') || 0); return ok({ last: seq, events: events.filter((e) => e.seq > since) }); }
       if (p === '/api/logout') { admin = false; return ok({ ok: true }); }
       if (p === '/api/selftest') return ok({ ok: true, checks: [['Mémoire vive', true, '187 412 octets libres'], ['Fragmentation', true, 'plus grand bloc 110 592 octets'], ['PSRAM', true, '8192 Ko'], ['microSD', true, 'montée'], ['Internet (STA)', true, '192.168.1.42'], ['Heure (NTP)', true, 'synchronisée'], ['Capteur DHT', true, 'mesure valide'], ['Workers', true, '4 en ligne / 10'], ['Portail captif', true, 'actif'], ['USB hôte', true, 'carte connectée']].map(([name, o, detail]) => ({ name, ok: o, detail })) });
-      if (p === '/api/system/info') return ok({ version: '6.0.0', codename: 'NEXUS', idf: 'v6.1', target: 'esp32s3', chip_revision: 2, cores: 2, flash_size: 16777216, psram_total: 8388608, ap_mac: 'DC:DA:0C:21:5E:F1', reset_reason: 'mise sous tension', board_variant: 'YD-ESP32-S3 N16R8', worker_capacity: 10, job_capacity: 32, captive_portal: true, uptime_ms: up(), sd_total: 31902400512, sd_free: 31211069440, ota: { running: 'ota_0', next: 'ota_1', slot_size: 4194304, app_version: '6.0.0', build_date: 'Sep 26 2026', build_time: '10:12:44', idf: 'v6.1', update_available: false, busy: false }, usb: { host: true, connected: true, chip: 'CH340', vid_pid: '1A86:7523', baud: 115200, flashing: false, rx_total: 18234 } });
+      if (p === '/api/system/info') return ok({ version: '6.0.0', codename: 'NEXUS', idf: 'v6.1', target: 'esp32s3', chip_revision: 2, cores: 2, flash_size: 16777216, psram_total: 8388608, ap_mac: 'DC:DA:0C:21:5E:F1', reset_reason: 'mise sous tension', board_variant: 'YD-ESP32-S3 N16R8', worker_capacity: 10, job_capacity: 32, captive_portal: true, uptime_ms: up(), sd_total: 31902400512, sd_free: 31211069440, ota: { running: 'ota_0', next: 'ota_1', slot_size: 4194304, app_version: '6.0.0', build_date: 'Sep 26 2026', build_time: '10:12:44', idf: 'v6.1', update_available: false, busy: false }, usb: usbInfo('CH340', '1A86:7523') });
       if (p === '/api/jobs') return ok(clone(jobs));
       if (p === '/api/job' && method === 'POST') { const id = newJob(String(b.type).toUpperCase(), b.worker, b.priority); return ok({ accepted: true, id, target_worker: Number(b.worker) || 0 }); }
       if (p === '/api/job/cancel') { const j = jobs.find((x) => x.id === Number(b.id)); if (j && (j.status === 'QUEUED' || j.status === 'RUNNING')) { const w = workers.find((x) => x.id === j.worker); if (w) { w.state = 'READY'; w.job = '-'; } j.status = 'CANCELLED'; return ok({ ok: true }); } return ok({ ok: false, error: 'job introuvable ou terminé' }); }
@@ -338,7 +386,7 @@
       if (p === '/api/usb/serial' && method === 'GET') {
         const since = Number(q('since') || 0), keep = serialTotal - serialBuf.length;
         const data = since <= keep ? serialBuf.slice(-2000) : serialBuf.slice(serialBuf.length - (serialTotal - since));
-        return ok({ pos: serialTotal, data, usb: { host: true, connected: true, chip: 'CH340', vid_pid: '1A86:7523', baud: fl.baud || 115200, flashing: fl.busy, rx_total: 18234 + serialTotal } });
+        return ok({ pos: serialTotal, data, usb: usbInfo('CH340', '1A86:7523') });
       }
       if (p === '/api/usb/serial') { if (b.baud) fl.baud = Number(b.baud); if (b.data) serialAdd('> ' + b.data.replace(/\r?\n$/, '') + '\nOK\n'); return ok({ ok: true }); }
       if (p === '/api/avr/flash') return new Promise((res) => setTimeout(() => res({ ok: true, message: `${String(b.path).split('/').pop()} : 14 322 octets écrits et vérifiés (${b.profile})` }), 1800));
@@ -362,7 +410,9 @@
       }
       if (p === '/api/netmon/arm') { nm.armed = !!b.on; if (!nm.armed) { nm.frames = []; nm.metric = {}; nm.seq = 0; } return ok({ ok: true, armed: nm.armed }); }
       if (p === '/api/usb/flash') return flashStart(b);
-      if (p === '/api/usb/flash/status') { const since = Number(q('since') || 0); return ok(Object.assign(clone(fl), { log: fl.log.filter((l) => l.seq > since), usb: { host: true, connected: true, chip: 'CP210x', vid_pid: '10C4:EA60', baud: fl.baud || 115200, flashing: fl.busy, rx_total: 18234 + serialTotal } })); }
+      if (p === '/api/usb/flash/status') { const since = Number(q('since') || 0); return ok(Object.assign(clone(fl), { log: fl.log.filter((l) => l.seq > since), usb: usbInfo('CP210x', '10C4:EA60') })); }
+      if (p === '/api/usb/detect') return detectStart();
+      if (p === '/api/veille') return method === 'POST' ? veillePost(b) : ok(veilleJson(Number(q('since') || 0)));
       if (p === '/api/worker/log') { const id = Number(q('id') || 0), since = Number(q('since') || 0); return ok({ last: wlogSeq, lines: wlog.filter((l) => l.seq > since && (!id || l.id === id)).map((l) => ({ seq: l.seq, id: l.id, age_ms: Date.now() - l.t, text: l.text })) }); }
       if (p === '/api/worker/gpio' && method === 'GET') {
         if (!q('pin')) return ok({ chip: 'ESP32-D0WD-V3', pins: gpioPins.map((x) => ({ pin: x, adc: gpioAdc.includes(x) })) });

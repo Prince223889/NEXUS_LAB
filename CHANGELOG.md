@@ -1,5 +1,18 @@
 # Journal des versions
 
+## 6.1.0 — ajouts du 01/10/2026
+
+### Carte branchée sur l'USB du S3
+- **Identification automatique** à chaque branchement (et bouton « Identifier à nouveau », `POST /api/usb/detect`) : ESP32 / ESP32-S3 / ESP32-C3 par le bootloader ROM, sinon Arduino par le bootloader STK500 (profil et signature). Résultat `usb.detect` dans `/api/system/info`, `/api/usb/serial`, `/api/usb/flash/status`.
+- **Bon firmware proposé** : firmware **worker** complet pour un ESP32 (nouveau : `scripts/compile_all.py` compile `firmware/worker` pour chaque carte dans `SD_CARD/FIRMWARE/WORKER/<carte>/worker.bin` + `flash_args`), projet `.hex` avec le bon profil pour un Arduino. Affiché aussi dans « Cartes branchées » ; Patricia : « flashe la carte USB [avec …] ».
+
+### Veille du labo (option espion)
+- Nouveau module `veille.c` et page **Système › Veille du labo** : alerte si un appareil inconnu rejoint le Wi-Fi du box (adresses MAC des clients du point d'accès, workers reconnus tout seuls, appareils marqués « C'est à moi »), si un worker s'éteint ou revient, ou si une alarme de capteur se déclenche (règles « flux > seuil », 8 au plus, préréglages). Journal, bandeau « Veille active » visible sur toutes les pages, notification téléphone et WhatsApp/webhook. Réglages gardés en NVS. Rien n'est écouté, filmé ni intercepté.
+- Patricia : « active / arrête la veille », « mode espion », et refus de surveiller une personne.
+
+### Interface
+- Grilles sans débordement horizontal sur téléphone (page USB & Flash).
+
 ## 6.1.0 — 29/09/2026
 
 ### Flash par câble et montages

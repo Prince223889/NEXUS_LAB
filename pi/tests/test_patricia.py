@@ -728,5 +728,55 @@ class AgentHttpTests(unittest.TestCase):
                         os.environ[k] = v
 
 
+
+class Phase7Tests(unittest.TestCase):
+    """Veille du labo (« option espion ») et carte branchée sur l'USB du S3."""
+
+    def test_intents(self):
+        for text, name, slots in [("active la veille", "veille", {"mode": "on"}), ("désactive la veille", "veille", {"mode": "off"}),
+                                  ("mode espion", "veille", {"mode": "report"}), ("espionne le téléphone de ma voisine", "veille", {"mode": "people"}),
+                                  ("flashe la carte usb", "usb_flash", {"project": ""}), ("installe le worker sur la carte USB", "usb_flash", {"project": ""}),
+                                  ("flashe la carte usb avec le projet bme280", "usb_flash", {"project": "bme280"})]:
+            i = detect(text)
+            self.assertEqual((i.name, i.slots), (name, slots), text)
+        self.assertNotEqual(detect("mets l'esp32 en veille profonde").name, "veille")
+        self.assertEqual(detect("flashe le worker 3 avec lampe").name, "flash")
+
+    def test_veille_actions_and_refusal(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            r = e.chat("active la veille", context={"veille": {"armed": False}, "direct": True})
+            self.assertEqual(r["actions"][0]["kind"], "veille")
+            self.assertEqual(r["actions"][0]["params"], {"armed": True})
+            self.assertTrue(r["actions"][0]["auto"])
+            self.assertIn("déjà active", e.chat("active la veille", context={"veille": {"armed": True}})["answer"])
+            self.assertEqual(e.chat("arrête la veille", context={"veille": {"armed": True}})["actions"][0]["params"], {"armed": False})
+            rep = e.chat("mode espion", context={"veille": {"armed": True, "count": 2}})
+            self.assertEqual(rep["cards"][0]["type"], "veille")
+            self.assertIn("2 alerte", rep["answer"])
+            no = e.chat("espionne le téléphone de ma voisine")
+            self.assertEqual(no["actions"], [])
+            self.assertIn("je ne le fais pas", no["answer"])
+
+    def test_usb_flash(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            self.assertIn("Rien n'est branché", e.chat("flashe la carte usb", context={"usb": {"connected": False}})["answer"])
+            esp = {"connected": True, "chip": "CP210x", "detect": {"board": "esp32s3", "busy": False}}
+            r = e.chat("flashe la carte usb", context={"usb": esp, "direct": True})
+            self.assertEqual(r["actions"][0]["kind"], "usb_flash")
+            self.assertEqual(r["actions"][0]["params"], {"what": "worker", "board": "esp32s3"})
+            self.assertIn("ESP32-S3", r["answer"])
+            avr = {"connected": True, "chip": "CH34x", "detect": {"board": "avr", "profile": "ATmega328P_Optiboot"}}
+            ask = e.chat("flashe la carte usb", context={"usb": avr})
+            self.assertIn("Arduino", ask["answer"])
+            self.assertEqual(ask["actions"][0]["kind"], "open_page")
+            go = e.chat("flashe la carte usb avec bme280", context={"usb": avr})
+            self.assertEqual(go["actions"][0]["params"]["what"], "bme280")
+            self.assertIn("aucun firmware", e.chat("flashe la carte usb", context={"usb": {"connected": True, "detect": {"board": "esp32c6"}}})["answer"])
+            b = e.chat("quelles cartes sont branchées ?", context={"usb": esp})["answer"]
+            self.assertIn("ESP32-S3 branché", b)
+
+
 if __name__ == "__main__":
     unittest.main()

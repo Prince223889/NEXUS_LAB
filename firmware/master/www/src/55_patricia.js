@@ -36,6 +36,7 @@
       const clean = JSON.parse(JSON.stringify(spec)); if (clean.options) delete clean.options.wifi_pass;
       ctx.studio = { spec: clean, warnings: warnings.slice(0, 12) };
     }
+    if (st.veille) ctx.veille = st.veille;
     ctx.direct = !!prefs.direct;   // Patricia ne dit pas « confirme » quand l'interface agit d'elle-même
     return ctx;
   }
@@ -300,6 +301,7 @@
       case 'fleet': return `<div class="pa-card"><div class="pa-card-h">${icon('car')}Flotte</div><div class="row wrap"><a class="btn sm" href="#vehicles">${icon('radar')}Ouvrir l'écran Flotte</a><button class="btn sm danger" data-estop>${icon('stop')}ARRÊT</button></div></div>`;
       case 'lab': { const st = A.S.state || {}; const ws = st.workers || []; return `<div class="pa-card"><div class="pa-card-h">${icon('cpu')}Workers</div><div class="pa-workers">${ws.map((w) => `<span class="pa-w ${w.state === 'OFFLINE' ? 'off' : ''}" title="${esc(w.state)}">W${w.id}<small>${esc(w.state || '')}</small></span>`).join('') || '<span class="muted small">Aucun</span>'}</div></div>`; }
       case 'boards': return `<div class="pa-card" data-boards><div class="pa-card-h">${icon('cpu')}<span class="grow">Cartes branchées</span><a class="btn sm ghost" href="#boards">${icon('chevron')}Détails</a></div><div class="pa-boards-body small muted">Inventaire…</div></div>`;
+      case 'veille': return `<div class="pa-card" data-veille><div class="pa-card-h">${icon('shield')}<span class="grow">Veille du labo</span><a class="btn sm ghost" href="#veille">${icon('chevron')}Ouvrir</a></div><div class="pa-veille-body small muted">Lecture du journal…</div></div>`;
       case 'pi_projects': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('sd')}Sur la microSD du Pi</div><div class="chips">${c.items.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : '';
       default: return '';
     }
@@ -358,7 +360,49 @@
       else if (a.kind === 'flash_studio') { status(`${icon('zap')} Flash de « ${esc(p.title)} » sur le worker ${esc(p.worker)} : suis les étapes dans la fenêtre ouverte.`); A.flashPipeline({ spec: p.spec, title: p.title, worker: p.worker, auto: true }); report(a.id, true, { worker: p.worker }); }
       else if (a.kind === 'build_studio') { await buildStudioFlow(p, row, a, log); }
       else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
+      else if (a.kind === 'veille') { const v = await A.veilleArm(p.armed); status(`${icon('shield')} Veille du labo ${v.armed ? 'activée : je te préviens si un appareil inconnu rejoint le Wi-Fi du box, si un worker s\'éteint ou si une alarme de capteur se déclenche' : 'arrêtée'}.`); report(a.id, true, { armed: v.armed }); }
+      else if (a.kind === 'usb_flash') { await usbFlashFlow(p, row, a); }
     } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
+  }
+  /* Carte branchée sur l'USB du S3 : identification (ESP32/S3/C3 ou Arduino), choix du bon firmware, flash
+   * et moniteur dans la page USB & Flash. Sans projet : firmware worker pour un ESP32. */
+  async function usbFlashFlow(p, row, a) {
+    const say = (t) => { row.innerHTML = `<div class="small">${t}</div>`; };
+    const usbNow = async () => ((await A.api('/api/system/info')) || {}).usb || {};
+    let usb = await usbNow();
+    if (!usb.connected) throw new Error('Aucune carte branchée sur le port USB du S3 (câble OTG).');
+    let adv = A.usbAdvice(usb);
+    if (adv.state !== 'ok') {
+      say(`${icon('refresh')} J'identifie la carte branchée…`);
+      if (adv.state !== 'busy') { try { await A.postJSON('/api/usb/detect', {}); } catch (e) { /* déjà en cours */ } }
+      for (let i = 0; i < 40; i++) { await A.sleep(700); usb = await usbNow(); adv = A.usbAdvice(usb); if (adv.state !== 'busy') break; }
+    }
+    if (adv.state !== 'ok') throw new Error(adv.text);
+    let path = null, title = '', ctx = null;
+    const what = p.what && p.what !== 'worker' ? String(p.what) : '';
+    if (what && adv.kind === 'esp') {
+      const n = A.norm(what), slug = n.replace(/[^a-z0-9]+/g, '_');
+      const pr = (A.projects ? A.projects() : []).filter((x) => (x.boards || []).includes(adv.board)).find((x) => x.id === slug || A.norm(x.title) === n || A.norm(x.title).includes(n) || x.id.includes(slug));
+      if (!pr) throw new Error(`Je ne trouve pas « ${what} » parmi les projets compilés pour ${adv.name}.`);
+      path = A.usbFirmwarePath(adv, pr.id); title = pr.title; ctx = { kind: 'esp', id: pr.id, board: adv.board };
+    } else if (what) {
+      const n = A.norm(what).replace(/[^a-z0-9]+/g, '_');
+      const r = await A.api('/api/sd/list?path=' + encodeURIComponent('/sd/PROJECTS/ARDUINO'));
+      const d = (r.items || []).find((f) => f.type === 'd' && (A.norm(f.name).replace(/^\d+_/, '') === n || A.norm(f.name).includes(n)));
+      if (!d) throw new Error(`Je ne trouve pas le projet Arduino « ${what} » sur la microSD (dossier PROJECTS/ARDUINO).`);
+      path = A.usbFirmwarePath(adv, d.name); title = d.name.replace(/^\d+_/, '').replace(/_/g, ' '); ctx = { kind: 'avr', dir: '/sd/PROJECTS/ARDUINO/' + d.name, name: d.name };
+    } else if (adv.kind === 'esp') {
+      path = adv.worker; title = 'firmware worker';
+    } else {
+      A.go('usb');
+      say(`${icon('usb')} ${esc(adv.text)} Choisis le projet dans la page USB &amp; Flash, ou dis « flashe la carte USB avec … ».`);
+      report(a.id, true, { board: adv.board });
+      return;
+    }
+    A.flashPreselect = { board: adv.board, path, ctx, auto: true, profile: adv.profile };
+    A.go('usb');
+    say(`${icon('zap')} Flash de « ${esc(title)} » sur la carte ${esc(adv.name)} branchée au S3 : suis le moniteur de flash.`);
+    report(a.id, true, { board: adv.board, path });
   }
   /* APK créée par le Pi depuis un projet de la mémoire : lien direct + QR dans la conversation. */
   async function apkFlow(p, row, a) {
@@ -473,6 +517,7 @@
     const mode = [r.mode === 'ia' ? 'IA' : r.mode === 'local' ? 'hors ligne' : r.mode, r.notice].filter(Boolean).join(' · ');
     m.innerHTML = `<div>${rich(r.answer)}</div>${cards}${acts}${fu}${sugg}<span class="mode">${esc(mode)}</span>`;
     $$('[data-gen]', m).forEach((box) => renderGenerate(box, P._cards[box.dataset.gen]));
+    $$('[data-veille]', m).forEach((box) => { if (A.veilleReport) A.veilleReport().then((v) => { const b = $('.pa-veille-body', box); b.className = 'pa-veille-body small'; b.innerHTML = `<div><b>${v.armed ? 'Active' : 'Arrêtée'}</b>${v.armed ? ' depuis ' + A.fmtDur(v.armed_age_s * 1000) : ''} · ${v.count || 0} alerte(s)</div>` + ((v.alerts || []).filter((x) => x.kind !== 'veille').slice(0, 6).map((x) => `<div class="pa-row"><span class="grow">${esc(x.text)}</span><span class="muted">${x.age_s < 2 ? 'à l\'instant' : 'il y a ' + A.fmtDur(x.age_s * 1000)}</span></div>`).join('') || '<div class="muted">Rien à signaler.</div>'); }).catch((e) => { $('.pa-veille-body', box).textContent = e.message; }); });
     $$('[data-boards]', m).forEach((box) => { if (A.boardsReport) A.boardsReport().then((rep) => { $('.pa-boards-body', box).className = 'pa-boards-body'; $('.pa-boards-body', box).innerHTML = A.boardsHtml(rep, true); }).catch((e) => { $('.pa-boards-body', box).textContent = e.message; }); });
     (r.actions || []).forEach((a) => {
       const row = m.querySelector(`[data-aid="${a.id}"]`);
@@ -483,7 +528,22 @@
     if (r.project) P.project = r.project;
     log.scrollTop = log.scrollHeight;
   }
+  /* Sans le Pi : la veille et le flash USB restent pilotables à la voix (ils tournent sur le S3). */
+  async function localLabCommand(q) {
+    const t = A.norm(q);
+    if (/\b(veille|mode espion|surveillance du labo|surveille (le|mon) labo)\b/.test(t) && !/\ben veille\b|veille profonde|deep sleep/.test(t)) {
+      const off = /\b(desactiv|arret|arrete|coupe|eteins|stop)/.test(t), on = /\b(activ|lance|allume|demarre|mets|arme|commence)/.test(t);
+      if (on || off) { const v = await A.veilleArm(!off); return { answer: v.armed ? 'Veille du labo activée. Je te préviens si un appareil inconnu rejoint le Wi-Fi du box, si un worker s\'éteint ou si une alarme de capteur se déclenche.' : 'Veille du labo arrêtée.', cards: [{ type: 'veille' }] }; }
+      return { answer: 'Voici la veille du labo :', cards: [{ type: 'veille' }] };
+    }
+    if (/\b(flash|flashe|flasher|installe|programme)\b/.test(t) && /\busb\b/.test(t)) {
+      A.go('usb');
+      return { answer: 'J\'ouvre « USB & Flash » : la carte branchée sur le S3 est identifiée toute seule, choisis le firmware et valide.', cards: [] };
+    }
+    return null;
+  }
   async function localAnswer(q) {
+    try { const lc = await localLabCommand(q); if (lc) return Object.assign({ mode: 'MASTER seul', actions: [] }, lc); } catch (e) { return { answer: e.message, mode: 'MASTER seul', cards: [], actions: [] }; }
     let answer = '', mode = 'local';
     const cat = A.catalogAnswer ? A.catalogAnswer(q) : null;
     try { const r = await A.api('/api/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ q }).toString() }); answer = r.answer || ''; mode = r.mode || mode; }

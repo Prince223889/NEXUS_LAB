@@ -345,6 +345,22 @@ console.log(JSON.stringify(bad));
     check(".patricia_backup" in read(ROOT / "pi" / "patricia" / "analyzer.py"), "les corrections de Patricia doivent garder une sauvegarde")
     st = read(WWW / "src" / "35_studio.js")
     check("data-quick" in st and "every" in st and 'data-act="st-apk"' in st.split("st-flash", 1)[1][:600], "Studio : ajout rapide d'actionneurs, minuterie ou bouton APK absent")
+    # Phase 7 : carte branchée sur l'USB du S3 identifiée toute seule, veille du labo visible et limitée au matériel du labo
+    mm = ROOT / "firmware" / "master" / "main"
+    uf, api_c = read(mm / "usb_flash.c"), read(mm / "web_api.c")
+    check("usb_flash_start_detect" in read(mm / "usb_avr.c") and "usb_avr_probe" in uf and '"/api/usb/detect"' in api_c,
+          "identification automatique de la carte USB du S3 (ESP32 ou Arduino) absente")
+    check("A.usbAdvice" in read(WWW / "src" / "46_flash.js") and "worker.bin" in read(ROOT / "scripts" / "compile_all.py"),
+          "proposition du bon firmware pour la carte USB (worker ESP32 / projet Arduino) absente")
+    vc = read(mm / "veille.c")
+    check("veille.c" in read(mm / "CMakeLists.txt") and "veille_start()" in read(mm / "app_main.c") and "veille_station(" in read(mm / "wifi_lab.c")
+          and '"/api/veille"' in api_c, "veille du labo non branchée dans le firmware")
+    check(not re.search(r"promisc|esp_wifi_set_promiscuous|80211_tx|sniff", vc + read(mm / "wifi_lab.c")),
+          "la veille ne doit jamais capter le trafic Wi-Fi (mode promiscuité interdit)")
+    vj = read(WWW / "src" / "45_veille.js")
+    check("veille-flag" in vj and "Veille active" in vj, "la veille doit rester visible (bandeau « Veille active ») tant qu'elle tourne")
+    check('"veille"' in eng and '"usb_flash"' in eng and "def _h_veille" in eng and "je ne le fais pas" in eng,
+          "Patricia : veille, refus de surveiller une personne ou flash USB absents")
 
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):

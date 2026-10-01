@@ -1,4 +1,5 @@
 #include "usb_avr.h"
+#include "usb_flash.h"
 #include "lab_config.h"
 #include "event_log.h"
 #include "led_status.h"
@@ -154,6 +155,9 @@ static void cdc_connect_task(void *arg)
                 apply_line(s_baud, true);
                 s_ready = true;
                 evlog_add('S', "usb", "carte USB détectée : %s %04X:%04X", s_chip, vid, pid);
+                /* Identification automatique : ESP32 (bootloader ROM) ou Arduino (bootloader STK500). */
+                char derr[96];
+                if (usb_flash_start_detect(1500, derr, sizeof(derr)) != ESP_OK) ESP_LOGW(TAG, "détection : %s", derr);
             } else {
                 ESP_LOGW(TAG, "périphérique %04X:%04X non série ou non pris en charge", vid, pid);
                 s_new_vid = 0;
@@ -201,6 +205,7 @@ void usb_avr_info_json(cJSON *obj)
     cJSON_AddNumberToObject(obj, "baud", s_baud);
     cJSON_AddBoolToObject(obj, "flashing", s_flashing);
     cJSON_AddNumberToObject(obj, "rx_total", s_mon_total);
+    usb_flash_detect_json(cJSON_AddObjectToObject(obj, "detect"));
 }
 
 /* ---------- moniteur série ---------- */
@@ -451,6 +456,35 @@ esp_err_t usb_link_set_baud(uint32_t baud)
 void usb_link_set_lines(bool dtr, bool rts)
 {
     if (s_dev) cdc_acm_host_set_control_line_state(s_dev, dtr, rts);
+}
+
+esp_err_t usb_avr_probe(char *profile, size_t cap)
+{
+    if (!s_ready || !s_dev || s_flashing) return ESP_ERR_INVALID_STATE;
+    s_flashing = true;
+    esp_err_t found = ESP_ERR_NOT_FOUND;
+    const uint8_t sync[] = {0x30, 0x20}, enter[] = {0x50, 0x20}, rsig[] = {0x75, 0x20}, leave[] = {0x51, 0x20};
+    for (size_t i = 0; i < sizeof(PROFILES) / sizeof(PROFILES[0]) && found != ESP_OK; i++) {
+        const avr_profile_t *pf = &PROFILES[i];
+        if (apply_line(pf->baud, true) != ESP_OK) continue;
+        reset_target();
+        bool in_sync = false;
+        for (int k = 0; k < 4 && !in_sync; k++) in_sync = stk_cmd(sync, sizeof(sync), NULL, 0, 200) == ESP_OK;
+        if (!in_sync) continue;
+        uint8_t sig[3] = {0};
+        if (stk_cmd(enter, sizeof(enter), NULL, 0, 500) == ESP_OK && stk_cmd(rsig, sizeof(rsig), sig, 3, 500) == ESP_OK) {
+            uint32_t sv = ((uint32_t)sig[0] << 16) | ((uint32_t)sig[1] << 8) | sig[2];
+            if (sv == pf->sig) {
+                if (profile && cap) strlcpy(profile, pf->name, cap);
+                found = ESP_OK;
+            }
+        }
+        stk_cmd(leave, sizeof(leave), NULL, 0, 300);
+    }
+    reset_target();               /* le programme déjà présent redémarre */
+    apply_line(s_baud, true);
+    s_flashing = false;
+    return found;
 }
 
 esp_err_t usb_avr_flash_hex(const char *path, const char *profile, char *result, size_t cap)

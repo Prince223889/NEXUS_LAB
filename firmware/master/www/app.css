@@ -644,7 +644,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 @media (max-width: 640px) {
   body { font-size: 14.5px; }
   h1 { font-size: 18px; }
-  .g-2, .g-3 { grid-template-columns: 1fr; }
+  .g-2, .g-3 { grid-template-columns: minmax(0, 1fr); }
   .g-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .span-2, .span-3 { grid-column: auto; }
   .form-grid { grid-template-columns: 1fr; }
@@ -816,3 +816,7 @@ body.pa-listening .pa-orb { animation: pa-spin 1.6s linear infinite, pa-pulse 1s
 .bd-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--warn, #d97706); }
 .bd-dot.ok { background: var(--ok, #16a34a); }
 .bd-dot.bad { background: var(--text-3, #94a3b8); }
+.bd-dot.alert { background: var(--bad, #dc2626); }
+
+/* Veille du labo : indicateur visible sur toutes les pages tant qu'elle est active */
+.veille-flag { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; white-space: nowrap; margin-right: 6px; }

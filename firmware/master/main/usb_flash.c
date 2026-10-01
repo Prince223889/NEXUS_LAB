@@ -43,6 +43,12 @@ static char s_step[64] = "";
 static char s_result[160] = "";
 static char s_chip[16] = "";
 static uint32_t s_run_baud;
+/* Identification de la carte branchée (indépendante du journal de flash). */
+static volatile bool s_det_busy;
+static uint32_t s_det_seq;
+static char s_det_board[12] = "";
+static char s_det_profile[24] = "";
+static char s_det_text[160] = "";
 
 static void lock(void)
 {
@@ -97,7 +103,7 @@ static void finish(bool ok, const char *fmt, ...)
     evlog_add(ok ? 'S' : 'E', "usb", "flash %s : %s", s_kind, msg);
 }
 
-bool usb_flash_busy(void) { return s_busy; }
+bool usb_flash_busy(void) { return s_busy || s_det_busy; }
 
 void usb_flash_status_json(cJSON *obj, uint32_t since)
 {
@@ -208,6 +214,7 @@ static void avr_task(void *arg)
 esp_err_t usb_flash_start_avr(const char *hex_path, const char *profile, char *err, size_t cap)
 {
     if (s_busy) { snprintf(err, cap, "une programmation est déjà en cours"); return ESP_ERR_INVALID_STATE; }
+    if (s_det_busy) { snprintf(err, cap, "identification de la carte en cours, réessayez dans quelques secondes"); return ESP_ERR_INVALID_STATE; }
     if (!usb_avr_ready()) { snprintf(err, cap, "aucune carte branchée sur le port USB du MASTER"); return ESP_ERR_INVALID_STATE; }
     struct stat st;
     if (stat(hex_path, &st) != 0) { snprintf(err, cap, "fichier introuvable : %s", hex_path); return ESP_ERR_NOT_FOUND; }
@@ -624,6 +631,7 @@ static void esp_task(void *arg)
 esp_err_t usb_flash_start_esp(const char *bin_path, char *err, size_t cap)
 {
     if (s_busy) { snprintf(err, cap, "une programmation est déjà en cours"); return ESP_ERR_INVALID_STATE; }
+    if (s_det_busy) { snprintf(err, cap, "identification de la carte en cours, réessayez dans quelques secondes"); return ESP_ERR_INVALID_STATE; }
     if (!usb_avr_ready()) { snprintf(err, cap, "aucune carte branchée sur le port USB du MASTER"); return ESP_ERR_INVALID_STATE; }
     struct stat st;
     if (stat(bin_path, &st) != 0) { snprintf(err, cap, "fichier introuvable : %s", bin_path); return ESP_ERR_NOT_FOUND; }
@@ -639,4 +647,89 @@ esp_err_t usb_flash_start_esp(const char *bin_path, char *err, size_t cap)
         return ESP_ERR_NO_MEM;
     }
     return ESP_OK;
+}
+
+/* ======================= identification de la carte branchée ======================= */
+
+static const char *board_name(const char *b)
+{
+    if (!strcmp(b, "avr")) return "Arduino (ATmega)";
+    if (!strcmp(b, "esp32")) return "ESP32";
+    if (!strcmp(b, "esp32s3")) return "ESP32-S3";
+    if (!strcmp(b, "esp32c3")) return "ESP32-C3";
+    if (!strcmp(b, "esp32s2")) return "ESP32-S2";
+    if (!strcmp(b, "esp32c6")) return "ESP32-C6";
+    if (!strcmp(b, "esp32h2")) return "ESP32-H2";
+    return b;
+}
+
+static void detect_task(void *arg)
+{
+    vTaskDelay(pdMS_TO_TICKS((uint32_t)(uintptr_t)arg));
+    char board[12] = "", profile[24] = "", text[160] = "";
+    uint16_t vid = usb_link_vid();
+    bool arduino_vid = vid == 0x2341 || vid == 0x2A03 || vid == 0x1B4F;   /* Arduino, Arduino.org, SparkFun */
+    bool esp_vid = vid == 0x303A;                                       /* USB natif Espressif */
+    if (usb_avr_ready() && !arduino_vid && usb_link_begin() == ESP_OK) {
+        usb_link_set_baud(115200);
+        bool ok = false;
+        for (int a = 0; a < 4 && !ok; a++) {
+            lines_seq(esp_vid ^ (a >= 2));
+            vTaskDelay(pdMS_TO_TICKS(30));
+            usb_link_rx_clear();
+            ok = sync_once();
+        }
+        if (ok) {
+            const char *chip = detect_chip();
+            strlcpy(board, chip ? chip : "esp", sizeof(board));
+        }
+        hard_reset();   /* la carte redémarre sur son programme */
+        usb_link_end();
+    }
+    if (!board[0] && !esp_vid && usb_avr_ready() && usb_avr_probe(profile, sizeof(profile)) == ESP_OK) strlcpy(board, "avr", sizeof(board));
+
+    if (!usb_avr_ready()) snprintf(text, sizeof(text), "carte débranchée pendant l'identification");
+    else if (!strcmp(board, "avr")) snprintf(text, sizeof(text), "Arduino détecté (bootloader %s) : flashez un projet .hex", profile);
+    else if (!strcmp(board, "esp")) snprintf(text, sizeof(text), "ESP détecté, modèle non reconnu");
+    else if (board[0]) snprintf(text, sizeof(text), "%s détecté : prêt pour le firmware worker ou un projet", board_name(board));
+    else snprintf(text, sizeof(text), "carte non identifiée : bootloader muet (ESP32 : maintenez BOOT et appuyez sur EN, puis réessayez)");
+    lock();
+    strlcpy(s_det_board, board, sizeof(s_det_board));
+    strlcpy(s_det_profile, profile, sizeof(s_det_profile));
+    strlcpy(s_det_text, text, sizeof(s_det_text));
+    s_det_seq++;
+    unlock();
+    evlog_add(board[0] ? 'S' : 'W', "usb", "%s", text);
+    s_det_busy = false;
+    vTaskDelete(NULL);
+}
+
+esp_err_t usb_flash_start_detect(uint32_t delay_ms, char *err, size_t cap)
+{
+    if (s_busy || s_det_busy) { if (err && cap) snprintf(err, cap, "carte déjà en cours de programmation ou d'identification"); return ESP_ERR_INVALID_STATE; }
+    if (!usb_avr_ready()) { if (err && cap) snprintf(err, cap, "aucune carte branchée sur le port USB du MASTER"); return ESP_ERR_INVALID_STATE; }
+    lock();
+    s_det_board[0] = s_det_profile[0] = 0;
+    strlcpy(s_det_text, "identification en cours…", sizeof(s_det_text));
+    unlock();
+    s_det_busy = true;
+    if (xTaskCreate(detect_task, "usb_detect", 6144, (void *)(uintptr_t)(delay_ms > 10000 ? 10000 : delay_ms), 5, NULL) != pdPASS) {
+        s_det_busy = false;
+        if (err && cap) snprintf(err, cap, "tâche impossible à créer");
+        return ESP_ERR_NO_MEM;
+    }
+    return ESP_OK;
+}
+
+void usb_flash_detect_json(cJSON *obj)
+{
+    if (!obj) return;
+    bool present = usb_avr_ready();
+    lock();
+    cJSON_AddBoolToObject(obj, "busy", s_det_busy);
+    cJSON_AddNumberToObject(obj, "seq", s_det_seq);
+    cJSON_AddStringToObject(obj, "board", present ? s_det_board : "");
+    cJSON_AddStringToObject(obj, "profile", present ? s_det_profile : "");
+    cJSON_AddStringToObject(obj, "text", present ? s_det_text : "");
+    unlock();
 }

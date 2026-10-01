@@ -103,6 +103,21 @@ def detect(text: str) -> Intent:
         return Intent("thanks", 0.9)
     if IDENTITY.search(ft):
         return Intent("identity", 0.95, {"text": raw, "relation": bool(re.search(r"\b(pour moi|ma copine|mon amie|ma cherie|ma femme|amoureuse|on est quoi|tu m.aimes)\b", ft))})
+    if re.search(r"\b(espionne[rz]?|espionnage|pirate[rz]?|hacke[rz]?|mettre sur ecoute|ecoute[rz]? (les|la|le|mes|ses))\b", ft) \
+            and re.search(r"\b(voisins?|quelqu.un|personnes?|gens|copine|copain|femme|mari|ex|collegues?|enfants?|telephone d|messages? d|conversations?|appels?|camera d|wifi d)", ft):
+        return Intent("veille", 0.95, {"mode": "people"})
+    if re.search(r"\b(veille|mode espion|option espion|espion|surveillance (du|de mon|de mon) labo|surveille (le|mon) labo|surveiller (le|mon) labo)\b", ft) \
+            and not re.search(r"\ben veille\b|veille profonde|deep[- ]?sleep|mise en veille", ft):
+        off = re.search(r"\b(desactive[rz]?|arrete[rz]?|coupe[rz]?|eteins|eteindre|stoppe[rz]?|stop|enleve[rz]?|retire[rz]?)\b", ft)
+        on = re.search(r"\b(active[rz]?|lance[rz]?|allume[rz]?|demarre[rz]?|mets|mettre|arme[rz]?|commence[rz]?|enclenche[rz]?)\b", ft)
+        return Intent("veille", 0.92, {"mode": "off" if off else "on" if on else "report"})
+    if re.search(r"\busb\b", ft) and re.search(r"\b(flash|flashe|flasher|flashes|flashez|televerse|televerser|installe|installer|charge|charger|programme|programmer|mets|mettre)\b", ft) \
+            and not re.search(r"\b(c.est quoi|qu.est[- ]ce que|comment (on|faire|fonctionne)|explique)\b", ft):
+        m = re.search(r"(?:avec|le projet|projet|programme)\s+(?:le |la |l'|du |de la )?([\w -]{3,60}?)(?:\s+(?:sur|dans|pour|par)\b|$|[.?!])", ft)
+        proj = re.sub(r"^(?:le |la |l')?(?:projet|programme)\s+", "", m.group(1).strip()) if m else ""
+        if re.fullmatch(r"(worker|le worker|firmware worker|du worker)", proj) or proj.startswith("worker"):
+            proj = ""
+        return Intent("usb_flash", 0.92, {"project": proj})
     if BOARDS_Q.search(ft) or (re.search(r"\bcheck[- ]?up\b|\bbilan\b|\binventaire\b", ft) and re.search(r"\b(cartes?|tout|materiel|branche|connecte|usb)\b", ft)):
         return Intent("boards", 0.9, {"checkup": bool(re.search(r"check[- ]?up|bilan|teste|test", ft))})
     f = files_intent(raw, ft)

@@ -15,6 +15,9 @@ esp_err_t usb_avr_flash_hex(const char *path, const char *profile, char *result,
 /* Rappel facultatif de progression (0-100 %, étape) appelé pendant usb_avr_flash_hex ; NULL pour désactiver. */
 typedef void (*usb_progress_cb_t)(int pct, const char *step);
 void usb_avr_set_progress_cb(usb_progress_cb_t cb);
+/* Cherche un bootloader Arduino (STK500v1) en essayant chaque profil ; écrit le nom du profil qui répond
+ * (signature de l'ATmega vérifiée). ESP_ERR_NOT_FOUND si aucun ne répond. Redémarre ensuite la carte. */
+esp_err_t usb_avr_probe(char *profile, size_t cap);
 /* Moniteur série. */
 esp_err_t usb_serial_set_baud(uint32_t baud);
 esp_err_t usb_serial_write(const uint8_t *data, size_t len);
