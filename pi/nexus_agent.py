@@ -9,6 +9,14 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from io import BytesIO
 from urllib.parse import parse_qs,urlparse
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from patricia import api as patricia_api
+from patricia.engine import Engine
+from patricia.fleet import Arena
+from patricia.fleet_net import FleetService
+from patricia.knowledge import Knowledge
+from patricia.memory import Memory
 
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv("NEXUS_DATA","/srv/nexus"))
@@ -27,6 +35,9 @@ WHATSAPP_VERIFY_TOKEN=os.getenv("NEXUS_WHATSAPP_VERIFY_TOKEN","")
 WHATSAPP_APP_SECRET=os.getenv("NEXUS_WHATSAPP_APP_SECRET","")
 WHATSAPP_ALLOWLIST={re.sub(r"\D","",x) for x in os.getenv("NEXUS_WHATSAPP_ALLOWLIST","").split(",") if re.sub(r"\D","",x)}
 AI_CONFIG=DATA/"assistant-config.json"
+PATRICIA_DB=Path(os.getenv("NEXUS_PATRICIA_DB",str(DATA/"patricia"/"memory.sqlite3")))
+FLEET_KEY=os.getenv("NEXUS_FLEET_KEY","")
+ENGINE=None; FLEET=None
 CLI=os.getenv("ARDUINO_CLI","arduino-cli")
 PORT=int(os.getenv("NEXUS_PORT","8088"))
 BUILD_WORKERS=max(1,min(4,int(os.getenv("NEXUS_BUILD_WORKERS","1"))))
@@ -369,6 +380,34 @@ def build_android(job):
     finally:
         with lock: active.pop(jid,None)
 
+class AgentHost:
+    """Ce que Patricia peut demander à l'agent : files de compilation, projets, bibliothèques, flotte."""
+    def __init__(self,fleet): self.fleet=fleet
+    def queue_build(self,pid,board):
+        if board not in BOARDS: raise ValueError("Carte non autorisée")
+        if not project_dir(pid): raise ValueError("Projet introuvable sur le Pi : enregistre-le d’abord.")
+        jid=uuid.uuid4().hex[:12]
+        with connect() as c: c.execute("INSERT INTO jobs(id,project,board,status,priority,created,stage) VALUES(?,?,?,?,?,?,?)",(jid,pid,board,"queued",60,now(),"en attente"))
+        event("INFO","build","Compilation demandée par Patricia",jid,pid,board,"queued"); wake.set(); return {"id":jid,"status":"queued"}
+    def queue_apk(self,pid):
+        if platform.machine().lower() not in ("x86_64","amd64"): raise ValueError("Le Pi 4 ARM64 ne peut pas exécuter les outils Android de Google : construis l’APK sur un PC avec scripts/build_project_apk.bat puis importe-la (Studio APK).")
+        if not project_dir(pid): raise ValueError("Projet introuvable sur le Pi.")
+        jid=uuid.uuid4().hex[:12]
+        with connect() as c: c.execute("INSERT INTO jobs(id,project,board,status,priority,created,stage,kind) VALUES(?,?,?,?,?,?,?,?)",(jid,pid,"android","queued",50,now(),"en attente APK","android"))
+        wake.set(); return {"id":jid,"status":"queued"}
+    def user_projects(self):
+        return [p.name for p in sorted(USER_PROJECTS.iterdir()) if p.is_dir() and ID.fullmatch(p.name)] if USER_PROJECTS.exists() else []
+    def recent_builds(self):
+        with connect() as c: return [dict(r) for r in c.execute("SELECT id,project,board,status,error,kind FROM jobs ORDER BY created DESC LIMIT 20")]
+    def install_library(self,name):
+        if not re.fullmatch(r"[A-Za-z0-9 _.+-]{2,80}",name or ""): raise ValueError("Nom de bibliothèque refusé")
+        p=subprocess.run([CLI,"lib","install",name],capture_output=True,text=True,timeout=300,shell=False)
+        if p.returncode: raise ValueError(("arduino-cli : "+(p.stderr or p.stdout))[:300])
+        event("INFO","arduino","Bibliothèque installée par Patricia: "+name); return {"installed":name}
+
+def patricia_llm_config():
+    return assistant_config()
+
 def worker_loop():
     while not stop.is_set():
         with connect() as c: row=c.execute("SELECT * FROM jobs WHERE status='queued' ORDER BY priority DESC,created LIMIT 1").fetchone()
@@ -453,6 +492,7 @@ class Api(BaseHTTPRequestHandler):
             with apk.open("rb") as f: shutil.copyfileobj(f,self.wfile)
             return
         if not (path.startswith("/download/apps/") or path.startswith("/download/firmware/")) and self.denied(): return
+        if ENGINE and patricia_api.handle(self,"GET",path,q,ENGINE,FLEET,body_json): return
         if path=="/api/v1/assistant/config":
             cfg=assistant_config()
             self.sendj(200,{"endpoint":cfg["endpoint"],"model":cfg["model"],"configured":bool(cfg["endpoint"] and cfg["key"]),"key_set":bool(cfg["key"])}); return
@@ -594,6 +634,7 @@ class Api(BaseHTTPRequestHandler):
         path=urlparse(self.path).path
         if path=="/webhooks/whatsapp": self.whatsapp_webhook(); return
         if self.denied(): return
+        if ENGINE and patricia_api.handle(self,"POST",path,{},ENGINE,FLEET,body_json): return
         if path=="/api/v1/storage/upload":
             try: target=shared_path(parse_qs(urlparse(self.path).query).get("path",[""])[0])
             except ValueError as e: self.sendj(400,{"error":str(e)}); return
@@ -733,11 +774,17 @@ def main():
     if len(TOKEN)<32: raise SystemExit("NEXUS_TOKEN absent/trop court : configure un jeton aléatoire de 32 caractères.")
     for p in (DATA,PROJECTS,USER_PROJECTS,FIRMWARE,BUILDS,APPS,DB.parent): p.mkdir(parents=True,exist_ok=True)
     init(); index_fw()
+    global ENGINE,FLEET
+    FLEET=FleetService(FLEET_KEY,Arena(float(os.getenv("NEXUS_ARENA_W","4")),float(os.getenv("NEXUS_ARENA_H","4")),float(os.getenv("NEXUS_ARENA_CELL","0.5"))))
+    FLEET.start()
+    ENGINE=Engine(Memory(PATRICIA_DB),Knowledge(CATALOG),AgentHost(FLEET),patricia_llm_config)
+    print("Patricia prête ; pilotage:", "actif" if FLEET.transport else FLEET.error,flush=True)
     for i in range(BUILD_WORKERS): threading.Thread(target=worker_loop,name=f"nexus-builder-{i+1}",daemon=True).start()
     server=ThreadingHTTPServer(("0.0.0.0",PORT),Api); print("NEXUS-AGENT sur le port",PORT,"; workers de compilation:",BUILD_WORKERS,flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
     finally:
+        if FLEET: FLEET.stop()
         stop.set(); wake.set(); server.shutdown(); server.server_close()
         with lock:
             for p in active.values():
