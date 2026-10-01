@@ -60,13 +60,21 @@ def transcribe(wav_bytes: bytes) -> str:
         return json.loads(rec.FinalResult()).get("text", "").strip()
 
 
-def synthesize(text: str) -> bytes:
+def _speed() -> str:
+    """Débit de la voix Piper : > 1 = plus lent (1.15 par défaut, pour bien suivre les explications)."""
+    try:
+        return f"{min(2.0, max(0.6, float(os.getenv('NEXUS_PIPER_SPEED', '1.15')))):.2f}"
+    except ValueError:
+        return "1.15"
+
+
+def synthesize(text: str, speed: float | None = None) -> bytes:
     text = " ".join(str(text or "").split())[:1200]
     if not text:
         raise ValueError("Texte vide.")
     if not PIPER_VOICE.is_file():
         raise RuntimeError("Voix Piper absente : " + str(PIPER_VOICE))
-    p = subprocess.run([PIPER_BIN, "--model", str(PIPER_VOICE), "--output_file", "-"], input=text.encode("utf-8"),
+    p = subprocess.run([PIPER_BIN, "--model", str(PIPER_VOICE), "--length_scale", f"{min(2.0, max(0.6, speed)):.2f}" if speed else _speed(), "--output_file", "-"], input=text.encode("utf-8"),
                        capture_output=True, timeout=60, shell=False)
     if p.returncode != 0 or not p.stdout.startswith(b"RIFF"):
         raise RuntimeError("Piper a échoué : " + p.stderr.decode("utf-8", "replace")[-200:])

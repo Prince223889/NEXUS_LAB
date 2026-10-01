@@ -24,6 +24,19 @@ Toute action matérielle (flash, job, déplacement, installation) est une **prop
 - **APK NEXUS** (Android) : micro et synthèse natifs du téléphone, hors ligne si le pack français est installé. Autorisation micro demandée au premier appui.
 - **Navigateur** : la reconnaissance vocale du navigateur n'existe qu'en HTTPS ; sur `http://192.168.4.1` Patricia enregistre le micro et l'envoie au Pi (Vosk) si `--voice` est installé.
 - Appui long sur le bouton flottant = parler directement. Mode « mains libres » dans l'écran Patricia.
+- **Réglages → Voix activée** : décoché, Patricia ne parle plus et répond seulement par écrit. Le curseur « Débit » ralentit ou accélère la voix (0,92 par défaut, un peu plus lent que la normale). Elle choisit une voix féminine française quand le téléphone ou le navigateur en propose une.
+- Sur le Pi (Piper), `NEXUS_PIPER_SPEED` règle la lenteur de base (1,15 par défaut ; plus grand = plus lent).
+
+## Personnalité
+
+Réglages → **Personnalité** :
+
+| Style | Comportement |
+|---|---|
+| **Scientifique** (par défaut) | Neutre et pédagogue : explique pas à pas, donne le pourquoi, corrige les erreurs avec douceur. |
+| **Complice** | Même pédagogie, plus chaleureuse : te taquine sur tes erreurs, t'encourage, te pose parfois une question personnelle légère. Voix un peu plus aiguë. |
+
+Le style est gardé dans sa mémoire (fait « style de patricia »). Même en mode complice, elle reste sobre pour l'arrêt d'urgence, le pilotage des voitures, le flash et les diagnostics, et n'a jamais de contenu sexuel.
 
 ## Installation sur le Pi
 

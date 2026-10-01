@@ -20,6 +20,7 @@ import time
 from typing import Any, Callable
 
 from . import diagnose as diag
+from . import style as persona
 from .intents import detect, workers_in
 from .knowledge import BOARDS, Knowledge
 from .llm import ChatClient, LLMError, tool_schema
@@ -81,6 +82,8 @@ class Engine:
                 resp["notice"] = note + " — réponse locale à la place."
         resp.setdefault("intent", intent.name)
         resp.setdefault("mode", "local")
+        if resp["mode"] == "local":   # l'IA applique déjà le style par son prompt
+            resp = self._styled(resp, intent.name)
         self.mem.log("assistant", resp["answer"], session, intent.name, context.get("project"))
         return resp
 
@@ -101,6 +104,15 @@ class Engine:
         a = self.mem.propose_action(kind, params, summary, risk, CONFIRM_TTL)
         return {"id": a["id"], "kind": kind, "params": params, "summary": summary, "risk": risk, "executor": executor,
                 "needs_confirm": risk not in ("aucun",)}
+
+    def style(self) -> str:
+        return persona.normalize(self.mem.facts().get(persona.STYLE_KEY))
+
+    def _styled(self, resp: dict, intent: str) -> dict:
+        resp = persona.flavor(resp, intent, self.style(), getattr(self, "rng", None))
+        if resp.get("speak") is None:
+            resp["speak"] = _speakable(resp["answer"])
+        return resp
 
     def _name(self) -> str:
         return self.mem.facts().get("prenom", "")
@@ -132,6 +144,10 @@ class Engine:
 
     def _h_greet(self, text, s, ctx):
         return self.greeting()
+
+    def hello(self) -> dict:
+        """Accueil affiché à l'ouverture de l'écran, avec le style choisi."""
+        return self._styled(self.greeting(), "greet")
 
     def _h_thanks(self, text, s, ctx):
         return self._resp("Avec plaisir ! Je garde tout en mémoire pour la suite.", "thanks", suggestions=["Mes projets", "Mes notes"])
@@ -583,7 +599,7 @@ class Engine:
             "labo": {"workers": [{k: w.get(k) for k in ("id", "state", "chip", "label")} for w in (lab.get("workers") or [])][:10]} if lab else "inconnu",
             "projet_ouvert": ctx.get("project"),
         }
-        messages = [{"role": "system", "content": PERSONA + "\n\nContexte (JSON) :\n" + json.dumps(context, ensure_ascii=False)[:9000]}]
+        messages = [{"role": "system", "content": PERSONA + persona.PROMPTS[self.style()] + "\n\nContexte (JSON) :\n" + json.dumps(context, ensure_ascii=False)[:9000]}]
         for h in self.mem.history(session, 12)[:-1]:
             if h["role"] in ("user", "assistant"):
                 messages.append({"role": h["role"], "content": h["text"][:2000]})

@@ -70,7 +70,7 @@ def handle(h: Any, method: str, path: str, query: dict, engine, fleet_service, b
 def _get(h, path, q, engine, fleet_service) -> bool:
     mem = engine.mem
     if path == "/api/v1/patricia/hello":
-        h.sendj(200, engine.greeting())
+        h.sendj(200, engine.hello())
     elif path == "/api/v1/patricia/memory":
         h.sendj(200, {"notes": mem.notes(limit=300), "projects": mem.projects(), "facts": mem.facts(),
                       "followups": mem.due_followups(10), "stats": mem.stats(), "catalog": engine.kb.summary()})
@@ -141,7 +141,11 @@ def _post(h, path, b, engine, fleet_service) -> bool:
     elif path == "/api/v1/patricia/wipe":
         h.sendj(200, {"removed": mem.wipe(str(b.get("what", "")))})
     elif path == "/api/v1/patricia/tts":
-        audio = voice.synthesize(str(b.get("text", "")))
+        try:
+            speed = float(b["speed"]) if b.get("speed") not in (None, "") else None
+        except (TypeError, ValueError):
+            speed = None
+        audio = voice.synthesize(str(b.get("text", "")), speed)
         h.send_response(200)
         h.send_header("Content-Type", "audio/wav")
         h.send_header("Content-Length", str(len(audio)))

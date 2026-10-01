@@ -9,7 +9,7 @@
   const P = (A.Patricia = {});
   const SESSION = store.get('patricia.session', null) || ('s' + Date.now().toString(36));
   store.set('patricia.session', SESSION);
-  const prefs = Object.assign({ speak: false, handsfree: false, voice: '' }, store.get('patricia.prefs', {}));
+  const prefs = Object.assign({ speak: false, handsfree: false, voice: '', rate: 0.92, style: 'scientifique' }, store.get('patricia.prefs', {}));
   const savePrefs = () => store.set('patricia.prefs', prefs);
   let piOk = null, voiceCaps = { stt: false, tts: false };
 
@@ -115,11 +115,13 @@
     speak(text) {
       text = String(text || '').replace(/[•#*`]/g, ' ').slice(0, 600);
       if (!text.trim()) return Promise.resolve();
+      const pitch = prefs.style === 'complice' ? 1.12 : 1.03;
+      if (window.NexusNative && window.NexusNative.speakWith) { window.NexusNative.speakWith(text, prefs.rate, pitch); return new Promise((r) => setTimeout(r, Math.min(20000, 66 * text.length / prefs.rate))); }
       if (window.NexusNative && window.NexusNative.speak) { window.NexusNative.speak(text); return new Promise((r) => setTimeout(r, Math.min(15000, 60 * text.length))); }
       if (window.speechSynthesis) {
         return new Promise((res) => {
           const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'fr-FR'; u.rate = 1.03; u.pitch = 1.05;
+          u.lang = 'fr-FR'; u.rate = prefs.rate; u.pitch = pitch;
           const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
           const v = vs.find((x) => x.name === prefs.voice) || vs.find((x) => /female|amelie|audrey|julie|denise|hortense|google/i.test(x.name)) || vs[0];
           if (v) u.voice = v;
@@ -128,7 +130,7 @@
         });
       }
       if (voiceCaps.tts) {
-        return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+        return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text, speed: 1 / prefs.rate }) })
           .then((r) => r.blob()).then((b) => new Promise((res) => { const a = new Audio(URL.createObjectURL(b)); a.onended = res; a.onerror = res; a.play().catch(res); }));
       }
       return Promise.resolve();
@@ -470,15 +472,29 @@
       <div>Micro : <b>${Voice.native() ? 'natif Android (APK NEXUS)' : Voice.web() ? 'reconnaissance du navigateur' : Voice.rec() ? 'Vosk sur le Pi' : 'indisponible ici'}</b></div>
       ${Voice.available() ? '' : `<div class="banner warn">${icon('alert')}<div>${esc(Voice.why())}</div></div>`}
       <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b>${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
+      <label class="switch"><input type="checkbox" id="ps-speak" ${prefs.speak ? 'checked' : ''}><span class="track"></span>Voix activée (sinon Patricia écrit seulement)</label>
+      <label class="field">Débit de la voix : <b id="ps-rate-v">${Math.round(prefs.rate * 100)} %</b><input type="range" id="ps-rate" min="0.7" max="1.2" step="0.02" value="${prefs.rate}"></label>
       <label class="field">Voix de lecture<select class="input" id="ps-voice"><option value="">Automatique</option>${voices.map((v) => `<option ${v.name === prefs.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
-      <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div></div>`;
+      <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div>
+      <div class="card span-2"><div class="card-h"><h2>Personnalité</h2></div><div class="card-b stack small">
+      <div class="seg" id="ps-style"><button data-st="scientifique" class="${prefs.style !== 'complice' ? 'on' : ''}">Scientifique</button><button data-st="complice" class="${prefs.style === 'complice' ? 'on' : ''}">Complice</button></div>
+      <div class="hint"><b>Scientifique</b> (par défaut) : pédagogue et neutre, elle explique pas à pas et te corrige. <b>Complice</b> : même rigueur, mais taquine et chaleureuse ; elle te pose de petites questions et redevient sérieuse dès qu'il s'agit de sécurité.</div></div></div></div>`;
     const presets = { ollama: { ep: 'http://127.0.0.1:11434/v1/chat/completions', model: 'qwen2.5:1.5b' }, online: { ep: 'https://', model: '' }, local: { ep: '', model: '' } };
     try { const c = await pi('/api/v1/assistant/config'); $('#ps-ep', el).value = c.endpoint || ''; $('#ps-model', el).value = c.model || ''; $('#ps-state', el).textContent = c.endpoint ? 'IA configurée' + (c.key_set ? ' · clé enregistrée' : '') : 'Mode hors ligne'; }
     catch (e) { $('#ps-state', el).textContent = 'Pi injoignable : ' + e.message; }
     $('#ps-preset', el).onclick = (e) => { const b = e.target.closest('[data-p]'); if (!b) return; const p = presets[b.dataset.p]; $('#ps-ep', el).value = p.ep; $('#ps-model', el).value = p.model; $$('#ps-preset button', el).forEach((x) => x.classList.toggle('on', x === b)); };
     $('#ps-save', el).onclick = async () => { try { const r = await piJSON('/api/v1/assistant/config', { endpoint: $('#ps-ep', el).value.trim(), model: $('#ps-model', el).value.trim(), key: $('#ps-key', el).value }); $('#ps-key', el).value = ''; $('#ps-state', el).textContent = r.endpoint ? 'IA enregistrée' : 'Mode hors ligne'; toast('Réglages de Patricia enregistrés', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
     $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); };
-    $('#ps-test', el).onclick = () => Voice.speak('Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
+    $('#ps-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak && window.speechSynthesis) speechSynthesis.cancel(); };
+    $('#ps-rate', el).oninput = (e) => { prefs.rate = Number(e.target.value); $('#ps-rate-v', el).textContent = Math.round(prefs.rate * 100) + ' %'; savePrefs(); };
+    $('#ps-style', el).onclick = async (e) => {
+      const b = e.target.closest('[data-st]'); if (!b) return;
+      prefs.style = b.dataset.st; savePrefs();
+      $$('#ps-style button', el).forEach((x) => x.classList.toggle('on', x === b));
+      try { await piJSON('/api/v1/patricia/facts', { key: 'style de patricia', value: prefs.style }); toast(prefs.style === 'complice' ? 'Mode complice activé 😉' : 'Mode scientifique activé', 'ok'); }
+      catch (err) { toast('Pi injoignable : le style sera appliqué à la prochaine connexion. ' + err.message, 'warn'); }
+    };
+    $('#ps-test', el).onclick = () => Voice.speak(prefs.style === 'complice' ? 'Coucou, c\'est Patricia. Alors, tu me montres ce que tu as branché aujourd\'hui ?' : 'Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
   }
 
   /* ------------------------------------------------------------ enregistrement */

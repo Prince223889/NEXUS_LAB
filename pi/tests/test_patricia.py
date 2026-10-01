@@ -330,6 +330,35 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(e.confirm(r["actions"][0]["id"])["result"]["installed"], "Adafruit BME280 Library")
 
 
+class StyleTests(unittest.TestCase):
+    def test_flavor_rules(self):
+        from patricia import style
+        rng = random.Random(1)
+        base = {"answer": "Voici le câblage.", "speak": "x"}
+        self.assertEqual(style.flavor(dict(base), "greet", "scientifique", rng), base)
+        self.assertEqual(style.flavor(dict(base), "estop", "complice", rng), base)
+        self.assertEqual(style.flavor(dict(base, actions=[{"id": 1}]), "greet", "complice", rng)["answer"], base["answer"])
+        r = style.flavor(dict(base), "greet", "complice", rng)
+        self.assertTrue(r["answer"].endswith("Voici le câblage.") or "Voici le câblage." in r["answer"])
+        self.assertNotEqual(r["answer"], base["answer"])
+        self.assertIsNone(r["speak"])
+        self.assertEqual(style.normalize("COMPLICE"), "complice")
+        self.assertEqual(style.normalize("autre"), "scientifique")
+
+    def test_engine_style_from_memory(self):
+        with tempfile.TemporaryDirectory() as td:
+            e = new_engine(td)
+            e.rng = random.Random(3)
+            self.assertEqual(e.style(), "scientifique")
+            plain = e.hello()["answer"]
+            e.mem.remember("style de patricia", "complice")
+            self.assertEqual(e.style(), "complice")
+            h = e.hello()
+            self.assertNotEqual(h["answer"], plain)
+            self.assertTrue(h["speak"])
+            stop = e.chat("arrête tout")
+            self.assertFalse(any(o in stop["answer"] for o in __import__("patricia.style").style.OPENERS))
+
 class AgentHttpTests(unittest.TestCase):
     """Démarre le vrai serveur de l'agent sur un port libre, avec des dossiers temporaires."""
 
