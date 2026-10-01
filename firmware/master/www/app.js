@@ -1,4 +1,4 @@
-/* ESP32 LAB — app.js généré depuis www/src (13 fichiers). Ne pas modifier : éditez www/src. */
+/* ESP32 LAB — app.js généré depuis www/src (15 fichiers). Ne pas modifier : éditez www/src. */
 /* ---- 10_core.js ---- */
 /* ESP32 LAB 6 — application web du MASTER (PC, tablette, téléphone).
  * Fichier source : les fichiers de www/src/ sont concaténés dans www/app.js par tools/bundle_www.py
@@ -159,7 +159,13 @@
     resistor: '<path d="M2 12h4l1.5-4 3 8 3-8 3 8 1.5-4h4"/>',
     wave: '<path d="M2 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0"/>',
     box: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
-    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/>'
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
+    'mic-off': '<path d="M3 3l18 18"/><path d="M9 9v2a3 3 0 0 0 5 2.2M15 9.3V6a3 3 0 0 0-5.7-1.3"/><path d="M5 11a7 7 0 0 0 11.5 5.4M19 11a7 7 0 0 1-.6 2.8M12 18v3M8 21h8"/>',
+    volume: '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+    car: '<path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13.5" r="1"/><circle cx="16.5" cy="13.5" r="1"/><path d="M5 19v2M19 19v2"/>',
+    brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>',
+    phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'
   };
   function icon(name, cls) {
     return `<svg class="${cls || ''}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.info}</svg>`;
@@ -1876,7 +1882,7 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function pollJob(jobId,el,target){let last=null;for(let n=0;n<360;n++){const {data:j}=await pi('/api/v1/jobs/'+encodeURIComponent(jobId));if(last!==j.stage||n%5===0){last=j.stage;target.innerHTML=`<div class="row"><b>${esc(j.stage||j.status)}</b><span class="grow"></span><span>${Math.max(0,Number(j.progress)||0)}%</span></div><progress max="100" value="${Math.max(0,Number(j.progress)||0)}" style="width:100%"></progress><div class="muted">${esc(j.status)} · ${Number(j.elapsed||0).toFixed(1)} s écoulées</div>${j.error?`<div class="banner bad">${esc(j.error)}</div>`:''}${j.log?`<details><summary>Journal de construction</summary><pre class="small mono">${esc(j.log.slice(-12000))}</pre></details>`:''}`;}if(['success','failed','canceled'].includes(j.status))return j;await delay(1800);}throw new Error('Délai de surveillance dépassé. Le job continue peut-être sur le Pi.');}
 async function buildFirmware(el){const id=$('#pi-project',el).value;if(!id)return toast('Choisis un projet enregistré.','warn');const box=$('#pi-build-status',el);try{if(!cfg.token)throw new Error('Saisis le jeton du Pi.');box.textContent='Lecture du projet enregistré…';const files=await projectFiles(id);const meta=JSON.parse(files['project.json']);const board=meta.board||meta.spec?.board||'esp32';box.textContent='Envoi des sources au Pi…';const {data}=await pi('/api/v1/build',{method:'POST',body:JSON.stringify({project_id:id,board,files})});const job=await pollJob(data.id,el,box);if(job.status!=='success')return;const signed=await pi('/api/v1/jobs/'+data.id+'/firmware-link');const fw=signed.data;const fwUrl=new URL(fw.url);if(fwUrl.protocol!=='http:'||fwUrl.port!=='8088'||!/^192\.168\.4\.\d+$/.test(fwUrl.hostname))throw new Error('Le lien du Pi doit utiliser son adresse Wi‑Fi ESP32-LAB (192.168.4.x:8088).');box.innerHTML+=`<div class="banner ok">Firmware sur la microSD du Pi · ${Number(fw.size||0).toLocaleString()} octets · SHA‑256 ${esc(fw.sha256.slice(0,16))}… · lien temporaire signé (5 min).</div>`;await offerFlash(el,id,data.id,fw.sha256,board,box);}catch(e){box.innerHTML=`<div class="banner bad">${esc(e.message)}</div>`;}}
 async function offerFlash(el,id,jobId,digest,board,box){let state;try{state=await A.api('/api/state');}catch(e){box.innerHTML+='<div class="hint">MASTER S3 non joignable; le binaire reste stocké sur la carte du Pi.</div>';return;}const workers=state.workers||[];const choices=workers.filter(w=>!['OFFLINE','PROJECT'].includes(w.state));if(!choices.length){box.innerHTML+='<div class="hint">Aucun worker disponible. Binaire conservé sur la microSD du Pi.</div>';return;}const row=document.createElement('div');row.className='row';const sel=document.createElement('select');sel.className='input';choices.forEach(w=>{const o=document.createElement('option');o.value=w.id;o.textContent='Worker '+w.id+' · '+(w.state||'disponible');sel.append(o);});const b=document.createElement('button');b.className='btn danger';b.textContent='Vérifier la carte et flasher';row.append(sel,b);box.append(row);b.onclick=async()=>{try{const info=await A.api('/api/worker/info?id='+encodeURIComponent(sel.value));const chip=String(info.chip||'').toLowerCase();if((board==='esp32s3'&&!chip.includes('s3'))||(board==='esp32c3'&&!chip.includes('c3'))||(board==='esp32'&&(!chip.includes('esp32')||chip.includes('s3')||chip.includes('c3'))))throw new Error('Carte incompatible : '+(info.chip||'modèle inconnu'));if(!await A.confirmBox('Confirmer le flash',`Le Pi a compilé ${id}; le worker téléchargera l’artefact depuis la microSD Pi et revérifiera SHA‑256 (${digest.slice(0,12)}…). Le MASTER S3 va autoriser le flash du worker ${sel.value}.`,'Flasher',true))return;const fresh=await pi('/api/v1/jobs/'+encodeURIComponent(jobId)+'/firmware-link');const remoteUrl=fresh.data.url;const target=new URL(remoteUrl);if(target.protocol!=='http:'||target.port!=='8088'||!/^192\.168\.4\.\d+$/.test(target.hostname))throw new Error('Adresse Pi non autorisée pour le réseau ESP32-LAB.');await A.post('/api/worker/flash/remote',{id:sel.value,url:remoteUrl,sha256:digest,mode:'project'});b.disabled=true;b.textContent='Flash envoyé';await monitorFlash(sel.value,box);}catch(e){toast(e.message,'bad');}};}
-async function monitorFlash(id,box){const started=performance.now();const row=document.createElement('div');row.className='hint';row.textContent='Surveillance S3 : démarrage du transfert…';box.append(row);let since=0;for(let i=0;i<50;i++){await delay(1200);try{const log=await A.api(`/api/worker/log?id=${encodeURIComponent(id)}&since=${since}`);since=log.last||since;if(log.data)row.textContent=log.data.slice(-900);const state=await A.api('/api/state');const w=(state.workers||[]).find(x=>String(x.id)===String(id));if(w&&['ONLINE','READY','IDLE'].includes(w.state)){row.textContent='Worker revenu en ligne après le flash · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées. Vérifie ses valeurs et son câblage au banc.';return;}}catch(e){}}row.textContent+=' · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées sans retour final. Consulte le journal et l’état du worker sur le S3.';}
+async function monitorFlash(id,box){const started=performance.now();const row=document.createElement('div');row.className='hint';row.textContent='Surveillance S3 : démarrage du transfert…';box.append(row);let since=0;for(let i=0;i<50;i++){await delay(1200);try{const log=await A.api(`/api/worker/log?id=${encodeURIComponent(id)}&since=${since}`);since=log.last||since;const txt=(log.lines||[]).map(x=>x.text||'').join('\n');if(txt)row.textContent=txt.slice(-900);const state=await A.api('/api/state');const w=(state.workers||[]).find(x=>String(x.id)===String(id));if(w&&['ONLINE','READY','IDLE'].includes(w.state)){row.textContent='Worker revenu en ligne après le flash · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées. Vérifie ses valeurs et son câblage au banc.';return;}}catch(e){}}row.textContent+=' · '+((performance.now()-started)/1000).toFixed(1)+' s mesurées sans retour final. Consulte le journal et l’état du worker sur le S3.';}
 async function buildApk(el){const id=$('#pi-project',el).value;if(!id)return toast('Choisis un projet enregistré.','warn');const box=$('#pi-apk-result',el);try{const files=await projectFiles(id);const {data}=await pi('/api/v1/android/build',{method:'POST',body:JSON.stringify({project_id:id,files})});const job=await pollJob(data.id,el,box);if(job.status!=='success')return;const url=cleanUrl(cfg.url)+'/download/apps/'+encodeURIComponent(id)+'/'+encodeURIComponent(data.id)+'.apk';const qr=await pi('/api/v1/jobs/'+encodeURIComponent(data.id)+'/qr');const object=URL.createObjectURL(qr.data);box.innerHTML=`<div class="banner ok">APK du projet prête · SHA‑256 ${esc((job.sha256||'').slice(0,16))}… · durée ${Number(job.elapsed||0).toFixed(1)} s.</div><div class="row" style="align-items:flex-start;gap:18px;flex-wrap:wrap"><a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">Télécharger l’APK</a><img src="${object}" alt="QR de téléchargement de l’APK" width="180" height="180" style="background:#fff;padding:8px;border-radius:12px"><span class="small muted">Scanne sur le même Wi‑Fi que le Pi. Cette APK debug doit être installée manuellement sur Android.</span></div>`;}catch(e){box.innerHTML=`<div class="banner bad">${esc(e.message)}</div>`;}}
 async function uploadApk(el){const id=$('#pi-project',el).value,file=$('#pi-apk-file',el).files[0],box=$('#pi-apk-result',el);if(!id)return toast('Choisis d’abord un projet enregistré.','warn');if(!file)return toast('Choisis l’APK projet créée sur Windows.','warn');if(file.size>40*1024*1024)return toast('APK trop grande (limite 40 Mo).','bad');try{box.textContent='Envoi et vérification de l’APK sur le Pi…';const r=await fetch(cleanUrl(cfg.url)+'/api/v1/android/import',{method:'POST',headers:{Authorization:'Bearer '+cfg.token,'X-Nexus-Project':id,'Content-Type':'application/vnd.android.package-archive'},body:file,cache:'no-store'});const data=await r.json();if(!r.ok)throw new Error(data.error||('Pi HTTP '+r.status));renderApkResult(el,data.id,id,data.sha256,data.size,0);}catch(e){box.innerHTML=`<div class="banner bad">${esc(e.message)}</div>`;}}
 async function renderApkResult(el,jobId,id,digest,size,elapsed){const box=$('#pi-apk-result',el);try{const url=cleanUrl(cfg.url)+'/download/apps/'+encodeURIComponent(id)+'/'+encodeURIComponent(jobId)+'.apk';const qr=await pi('/api/v1/jobs/'+encodeURIComponent(jobId)+'/qr');if(box._qrObject)URL.revokeObjectURL(box._qrObject);box._qrObject=URL.createObjectURL(qr.data);box.innerHTML=`<div class="banner ok">APK projet prête · ${(Number(size)||0).toLocaleString()} octets · SHA‑256 ${esc((digest||'').slice(0,16))}… · ${Number(elapsed||0).toFixed(1)} s.</div><div class="row" style="align-items:flex-start;gap:18px;flex-wrap:wrap"><a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">Télécharger l’APK</a><img src="${box._qrObject}" alt="QR de téléchargement de l’APK projet" width="180" height="180" style="background:#fff;padding:8px;border-radius:12px"><span class="small muted">Scanne sur le même Wi‑Fi que le Pi. Android demandera de confirmer l’installation.</span></div>`;}catch(e){box.innerHTML=`<div class="banner bad">APK importée, mais QR indisponible : ${esc(e.message)}</div>`;}}
@@ -1888,6 +1894,7 @@ A.piProjects=async()=>{const {data}=await pi('/api/v1/projects');return data.ite
 A.piReadProject=async id=>{const {data}=await pi('/api/v1/projects/'+encodeURIComponent(id)+'/files');return data.files||{};};
 A.piSaveProject=async(id,files)=>{const {data}=await pi('/api/v1/projects/save',{method:'POST',body:JSON.stringify({project_id:id,files})});return data;};
 A.piRequest=async(path,opts)=>{const {data}=await pi(path,opts);return data;};
+A.piBase=()=>cleanUrl(cfg.url);A.piToken=()=>cfg.token;
 A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
 })();
 /* ---- 37_project_builder.js ---- */
@@ -3295,62 +3302,9 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
 
   /* La page « USB & Flash » (moniteur série + programmation Arduino/ESP32) est dans 46_flash.js. */
 
-  /* ================================================================ */
-  /* Assistant                                                        */
-  /* ================================================================ */
-  const SUGGEST = ['Quel est l\'état du labo ?', 'Lance un check-up de tous les workers', 'Comment brancher un BME280 ?', 'Pourquoi mon DHT22 renvoie nan ?', 'Quelle broche pour un capteur analogique ?', 'Benchmark de la flotte'];
-  A.page({
-    id: 'assistant', title: 'Assistant', icon: 'chat', group: 'build',
-    desc: 'Questions sur le labo, le câblage et les capteurs',
-    render(el) {
-      const hist = store.get('chat', []);
-      el.innerHTML = `<div class="grid g-3"><div class="card span-2" style="display:flex;flex-direction:column"><div class="chat" id="ch-log"></div>
-        <div class="chips scroll" style="padding:0 12px 10px" id="ch-sug">${SUGGEST.map((s) => `<button class="chip">${esc(s)}</button>`).join('')}</div>
-        <form class="chat-input" id="ch-form"><input class="input" id="ch-in" placeholder="Posez votre question…" maxlength="500" autocomplete="off"><button class="btn primary" type="submit">${icon('play')}<span class="hide-sm">Envoyer</span></button></form></div>
-        <div class="stack"><div class="card pad small"><h3 style="margin-bottom:8px">Ce que sait faire l'assistant</h3><ul style="margin:0;padding-left:18px;color:var(--text-2)"><li>Résumer l'état du laboratoire (workers, jobs, mémoire, microSD).</li><li>Lancer des actions sûres : « check-up », « benchmark », « scan i2c », « ping », « identifie ».</li><li>Répondre sur les capteurs du catalogue : câblage, bibliothèques, pièges.</li><li>Avec une IA en ligne configurée (Réglages) : réponses complètes, réservées à l'administrateur.</li></ul></div>
-          <div class="card pad small"><h3 style="margin-bottom:8px">Confidentialité</h3><p class="muted">En mode local, rien ne quitte le MASTER. Le mode en ligne n'envoie que votre question et un résumé de l'état du labo.</p><button class="btn sm" style="margin-top:10px" id="ch-clear">${icon('trash')}Effacer la conversation</button></div></div></div>`;
-      const log = $('#ch-log', el);
-      const push = (who, text, extra) => {
-        const m = document.createElement('div');
-        m.className = 'msg ' + who;
-        m.innerHTML = linkify(esc(text)) + (extra ? `<span class="mode">${esc(extra)}</span>` : '');
-        log.appendChild(m);
-        log.scrollTop = log.scrollHeight;
-        return m;
-      };
-      if (!hist.length) push('bot', 'Bonjour ! Je connais l\'état du laboratoire et les ' + ((window.LAB.MODULES || []).length) + ' modules du catalogue. Posez une question ou choisissez une suggestion.');
-      hist.forEach((h) => push(h.who, h.text, h.extra));
-      const ask = async (q) => {
-        q = q.trim();
-        if (!q) return;
-        push('me', q);
-        const wait = push('bot', '…');
-        let r = null;
-        const local = catalogAnswer(q);
-        try {
-          if (A.piRequest) r = await A.piRequest('/api/v1/assistant/chat', { method: 'POST', body: JSON.stringify({ q }) });
-        } catch (e) { /* Le Pi peut être arrêté : le MASTER garde ses réponses locales. */ }
-        if (!r) {
-          try { r = await api('/api/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ q }).toString() }); }
-          catch (e) { r = { answer: e.status === 429 ? 'Patientez une seconde entre deux questions.' : 'Assistant injoignable : ' + e.message, mode: 'erreur' }; }
-        }
-        let answer = r.answer || '';
-        if (local && (r.mode === 'local' || r.mode === 'erreur')) answer = local + (answer && r.mode === 'local' ? '\n\n' + answer : '');
-        const extra = [r.mode === 'online' ? 'IA en ligne' : r.mode === 'research' ? 'recherche web' : r.mode === 'local' ? 'mode local' : r.mode].concat(r.actions || []).filter(Boolean).join(' · ');
-        wait.innerHTML = linkify(esc(answer)) + `<span class="mode">${esc(extra)}</span>`;
-        log.scrollTop = log.scrollHeight;
-        const h = store.get('chat', []).concat([{ who: 'me', text: q }, { who: 'bot', text: answer, extra }]).slice(-40);
-        store.set('chat', h);
-        if (r.actions && r.actions.length) A.refreshState();
-      };
-      $('#ch-form', el).addEventListener('submit', (e) => { e.preventDefault(); const i = $('#ch-in', el); ask(i.value); i.value = ''; });
-      $('#ch-sug', el).addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) ask(b.textContent); });
-      $('#ch-clear', el).onclick = () => { store.set('chat', []); A.refresh(); };
-      setTimeout(() => $('#ch-in', el).focus(), 50);
-    }
-  });
-  const linkify = (h) => h.replace(/(#library\?p=[a-z0-9_]+)/g, '<a href="$1" style="color:inherit;text-decoration:underline">ouvrir la fiche</a>');
+  /* La page « Patricia » (assistante) est dans 55_patricia.js ; elle réutilise catalogAnswer ci-dessous. */
   /* Réponses immédiates tirées du catalogue embarqué (fonctionne sans Internet). */
+  A.catalogAnswer = catalogAnswer;
   function catalogAnswer(q) {
     const LAB = window.LAB, nq = A.norm(q);
     if (!LAB.MODULES) return null;
@@ -3572,6 +3526,608 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
           <h3 style="margin:14px 0 8px">Protocole capteurs</h3><p class="muted">UDP port 4213 : <code>LAB|appareil|clé|valeur|unité</code> — publiez depuis n'importe quel microcontrôleur.</p><div class="row" style="margin-top:14px"><a class="btn" href="?demo#dash">${icon('eye')}Voir la démo</a></div></div></div>`;
     }
   };
+})();
+/* ---- 55_patricia.js ---- */
+/* Patricia — assistante du laboratoire (remplace l'ancienne page « Assistant »).
+ * Le cerveau tourne sur le Raspberry Pi (pi/patricia) : mémoire durable, diagnostic, IA locale ou en ligne,
+ * pilotage de flotte. Sans Pi, la page garde les réponses locales du catalogue et l'agent du MASTER.
+ * Voix : pont natif de l'APK NEXUS (reconnaissance Android), sinon Web Speech du navigateur (HTTPS ou
+ * localhost requis par les navigateurs pour le micro), sinon enregistrement WAV transcrit par Vosk sur le Pi. */
+(function () {
+  'use strict';
+  const A = window.APP, $ = A.$, $$ = A.$$, esc = A.esc, icon = A.icon, toast = A.toast, store = A.store;
+  const P = (A.Patricia = {});
+  const SESSION = store.get('patricia.session', null) || ('s' + Date.now().toString(36));
+  store.set('patricia.session', SESSION);
+  const prefs = Object.assign({ speak: false, handsfree: false, voice: '' }, store.get('patricia.prefs', {}));
+  const savePrefs = () => store.set('patricia.prefs', prefs);
+  let piOk = null, voiceCaps = { stt: false, tts: false };
+
+  /* ------------------------------------------------------------ appels Pi */
+  /* Délai maximal : 8 s pour la mémoire, 150 s pour une réponse d'IA locale sur le Pi 4. */
+  async function pi(path, opts, ms) {
+    if (!A.piRequest) throw new Error('Compagnon Pi non chargé');
+    const ctl = window.AbortController ? new AbortController() : null;
+    const t = ctl ? setTimeout(() => ctl.abort(), ms || 8000) : null;
+    try { return await A.piRequest(path, Object.assign({}, opts || {}, ctl ? { signal: ctl.signal } : {})); }
+    catch (e) { throw e.name === 'AbortError' ? new Error('le Pi ne répond pas (' + Math.round((ms || 8000) / 1000) + ' s)') : e; }
+    finally { if (t) clearTimeout(t); }
+  }
+  const piJSON = (path, body, ms) => pi(path, { method: 'POST', body: JSON.stringify(body || {}) }, ms);
+  P.pi = pi; P.piJSON = piJSON;
+
+  function labContext() {
+    const st = A.S.state || {};
+    return { lab: st.master ? { master: st.master, workers: (st.workers || []).map((w) => ({ id: w.id, state: w.state, chip: w.chip, label: w.label })), worker_capacity: st.worker_capacity, jobs: st.jobs } : null, project: P.project || null };
+  }
+
+  /* ------------------------------------------------------------ texte riche */
+  function rich(text) {
+    let h = esc(text || '');
+    h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => `<pre class="pa-code">${code}</pre>`);
+    h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    h = h.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+    h = h.replace(/(#library\?p=[a-z0-9_]+)/g, '<a href="$1">ouvrir la fiche</a>');
+    return h;
+  }
+
+  /* ------------------------------------------------------------ voix */
+  const Voice = (P.voice = {
+    native: () => !!(window.NexusNative && window.NexusNative.listen),
+    web: () => !!(window.SpeechRecognition || window.webkitSpeechRecognition) && window.isSecureContext,
+    rec: () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext && voiceCaps.stt,
+    available() { return this.native() || this.web() || this.rec(); },
+    why() {
+      if (!window.isSecureContext) return 'Les navigateurs n\'ouvrent le micro que sur une page sécurisée (HTTPS). Utilise l\'application Android NEXUS (micro natif), ou dans Chrome : chrome://flags → « Insecure origins treated as secure » → ajoute http://192.168.4.1.';
+      return 'Ce navigateur n\'a pas de reconnaissance vocale. Essaie Chrome, l\'application Android NEXUS, ou installe Vosk sur le Pi (pi/setup_patricia.sh --voice).';
+    },
+    listening: false,
+    stopFn: null,
+    listen(onText, onState) {
+      if (this.listening) { this.stop(); return; }
+      if (this.native()) {
+        window.__nexusVoice = (ok, text) => { this.listening = false; onState(false); if (ok && text) onText(text); else if (!ok) toast(text || 'Rien entendu', 'warn'); };
+        this.listening = true; onState(true);
+        window.NexusNative.listen('fr-FR');
+        this.stopFn = () => { try { window.NexusNative.stopListening(); } catch (e) { /* ignoré */ } };
+        return;
+      }
+      if (this.web()) {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const r = new SR();
+        r.lang = 'fr-FR'; r.interimResults = true; r.maxAlternatives = 1; r.continuous = false;
+        let final = '';
+        r.onresult = (e) => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) final += e.results[i][0].transcript; else interim += e.results[i][0].transcript; } onState(true, final + interim); };
+        r.onerror = (e) => { if (e.error !== 'no-speech' && e.error !== 'aborted') toast('Micro : ' + (e.error === 'not-allowed' ? 'accès refusé' : e.error), 'warn'); };
+        r.onend = () => { this.listening = false; onState(false); if (final.trim()) onText(final.trim()); };
+        this.listening = true; onState(true);
+        r.start();
+        this.stopFn = () => r.stop();
+        return;
+      }
+      if (this.rec()) { this.recordWav(onText, onState); return; }
+      toast(this.why(), 'warn', 9000);
+    },
+    stop() { if (this.stopFn) this.stopFn(); this.stopFn = null; },
+    /* Enregistrement PCM 16 kHz mono → WAV → Vosk sur le Pi (fonctionne sans Internet). */
+    async recordWav(onText, onState) {
+      let stream;
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } }); }
+      catch (e) { toast('Micro refusé : ' + e.message, 'warn'); return; }
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ctx.createMediaStreamSource(stream);
+      const proc = ctx.createScriptProcessor(4096, 1, 1);
+      const chunks = []; let silent = 0, heard = false;
+      proc.onaudioprocess = (e) => {
+        const d = e.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d));
+        let rms = 0; for (let i = 0; i < d.length; i++) rms += d[i] * d[i]; rms = Math.sqrt(rms / d.length);
+        if (rms > 0.02) { heard = true; silent = 0; } else if (heard && ++silent > Math.ceil(ctx.sampleRate * 1.4 / 4096)) finish();
+      };
+      src.connect(proc); proc.connect(ctx.destination);
+      this.listening = true; onState(true, 'J\'écoute… (silence = fin)');
+      const timer = setTimeout(() => finish(), 15000);
+      const self = this;
+      let done = false;
+      async function finish() {
+        if (done) return; done = true; clearTimeout(timer);
+        proc.disconnect(); src.disconnect(); stream.getTracks().forEach((t) => t.stop());
+        const rate = ctx.sampleRate; ctx.close();
+        self.listening = false; onState(false);
+        const wav = encodeWav(chunks, rate, 16000);
+        try {
+          const r = await fetch(A.piBase() + '/api/v1/patricia/stt', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'audio/wav' }, body: wav });
+          const j = await r.json(); if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+          if (j.text) onText(j.text); else toast('Rien compris, réessaie plus près du micro.', 'warn');
+        } catch (e) { toast('Transcription : ' + e.message, 'bad'); }
+      }
+      this.stopFn = finish;
+    },
+    speak(text) {
+      text = String(text || '').replace(/[•#*`]/g, ' ').slice(0, 600);
+      if (!text.trim()) return Promise.resolve();
+      if (window.NexusNative && window.NexusNative.speak) { window.NexusNative.speak(text); return new Promise((r) => setTimeout(r, Math.min(15000, 60 * text.length))); }
+      if (window.speechSynthesis) {
+        return new Promise((res) => {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'fr-FR'; u.rate = 1.03; u.pitch = 1.05;
+          const vs = speechSynthesis.getVoices().filter((v) => /^fr/i.test(v.lang));
+          const v = vs.find((x) => x.name === prefs.voice) || vs.find((x) => /female|amelie|audrey|julie|denise|hortense|google/i.test(x.name)) || vs[0];
+          if (v) u.voice = v;
+          u.onend = res; u.onerror = res;
+          speechSynthesis.cancel(); speechSynthesis.speak(u);
+        });
+      }
+      if (voiceCaps.tts) {
+        return fetch(A.piBase() + '/api/v1/patricia/tts', { method: 'POST', headers: { Authorization: 'Bearer ' + A.piToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+          .then((r) => r.blob()).then((b) => new Promise((res) => { const a = new Audio(URL.createObjectURL(b)); a.onended = res; a.onerror = res; a.play().catch(res); }));
+      }
+      return Promise.resolve();
+    }
+  });
+  function encodeWav(chunks, inRate, outRate) {
+    const total = chunks.reduce((n, c) => n + c.length, 0), ratio = inRate / outRate, n = Math.floor(total / ratio);
+    const flat = new Float32Array(total); let o = 0; chunks.forEach((c) => { flat.set(c, o); o += c.length; });
+    const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (p, s) => { for (let i = 0; i < s.length; i++) v.setUint8(p + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, outRate, true); v.setUint32(28, outRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, flat[Math.floor(i * ratio)])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+
+  /* ------------------------------------------------------------ cartes */
+  const STATUS_LABEL = { idee: 'idée', conception: 'conception', cablage: 'câblage', code: 'code', test: 'essais', termine: 'terminé', pause: 'en pause' };
+  function cardHtml(c, i) {
+    switch (c.type) {
+      case 'projects': return `<div class="pa-card"><div class="pa-card-h">${icon('folder')}Projets</div>${(c.items || []).map((p) => `<button class="pa-row" data-say="On reprend ${esc(p.title)}"><b>${esc(p.title)}</b><span class="badge">${esc(p.status_label || STATUS_LABEL[p.status] || p.status)}</span><span class="muted small grow ellipsis">${esc(p.next_step || '')}</span></button>`).join('')}</div>`;
+      case 'project': { const p = c.project || {}; return `<div class="pa-card"><div class="pa-card-h">${icon('folder')}${esc(p.title)} <span class="badge accent">${esc(p.status_label || '')}</span></div><div class="small">${esc(p.goal || '')}</div>${p.modules && p.modules.length ? `<div class="chips" style="margin-top:6px">${p.modules.map((m) => `<span class="chip">${esc(m)}</span>`).join('')}</div>` : ''}${p.next_step ? `<div class="hint" style="margin-top:6px">Prochaine étape : ${esc(p.next_step)}</div>` : ''}</div>`; }
+      case 'note': return `<div class="pa-card"><div class="pa-card-h">${icon('pin')}Note enregistrée</div><div class="small">${esc(c.note.body)}</div></div>`;
+      case 'notes': return `<div class="pa-card"><div class="pa-card-h">${icon('pin')}Notes</div>${c.items.slice(0, 12).map((n) => `<div class="pa-row"><span class="badge">${esc(n.kind)}</span><span class="grow small">${esc(n.body.slice(0, 180))}</span><span class="muted small">${esc((n.at || '').slice(0, 10))}</span></div>`).join('')}</div>`;
+      case 'memory': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('history')}Souvenirs</div>${c.items.map((h) => `<div class="pa-row"><span class="badge">${esc(h.kind)}</span><span class="grow small"><b>${esc(h.title)}</b> — ${esc(h.snippet || '')}</span></div>`).join('')}</div>` : '';
+      case 'catalog': return `<div class="pa-card"><div class="pa-card-h">${icon('book')}Bibliothèque</div>${(c.items || []).map((p) => `<a class="pa-row" href="#library?p=${esc(p.id)}"><b>${esc(p.title)}</b><span class="muted small grow ellipsis">${esc((p.boards || []).join(' · '))}</span>${icon('chevron')}</a>`).join('')}</div>`;
+      case 'diagnosis': return `<div class="pa-card ${c.severity === 'bad' ? 'bad' : ''}"><div class="pa-card-h">${icon('alert')}Diagnostic (${esc(c.kind)})</div>${(c.findings || []).map((f) => `<details class="pa-find" ${f.severity === 'bad' ? 'open' : ''}><summary><span class="badge ${f.severity === 'bad' ? 'bad' : f.severity === 'warn' ? 'warn' : 'info'}">${f.severity === 'bad' ? 'erreur' : f.severity === 'warn' ? 'attention' : 'info'}</span> ${esc(f.title)}${f.line ? ` · ligne ${f.line}` : ''}</summary><div class="small">${esc(f.explanation)}</div>${(f.fixes || []).length ? `<ul class="small">${f.fixes.map((x) => `<li>${rich(x)}</li>`).join('')}</ul>` : ''}${f.evidence ? `<pre class="pa-code">${esc(f.evidence)}</pre>` : ''}</details>`).join('') || '<div class="small muted">Aucune signature connue.</div>'}</div>`;
+      case 'generate': return `<div class="pa-card" data-gen="${i}"><div class="pa-card-h">${icon('code')}${esc(c.title || 'Projet')} · ${esc(c.board)}</div><div class="pa-gen-body small muted">Génération…</div></div>`;
+      case 'fleet': return `<div class="pa-card"><div class="pa-card-h">${icon('car')}Flotte</div><div class="row wrap"><a class="btn sm" href="#vehicles">${icon('radar')}Ouvrir l'écran Flotte</a><button class="btn sm danger" data-estop>${icon('stop')}ARRÊT</button></div></div>`;
+      case 'lab': { const st = A.S.state || {}; const ws = st.workers || []; return `<div class="pa-card"><div class="pa-card-h">${icon('cpu')}Workers</div><div class="pa-workers">${ws.map((w) => `<span class="pa-w ${w.state === 'OFFLINE' ? 'off' : ''}" title="${esc(w.state)}">W${w.id}<small>${esc(w.state || '')}</small></span>`).join('') || '<span class="muted small">Aucun</span>'}</div></div>`; }
+      case 'pi_projects': return (c.items || []).length ? `<div class="pa-card"><div class="pa-card-h">${icon('sd')}Sur la microSD du Pi</div><div class="chips">${c.items.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : '';
+      default: return '';
+    }
+  }
+  function renderGenerate(box, c) {
+    const body = $('.pa-gen-body', box);
+    let res;
+    try { res = window.LAB.generate({ board: c.board || 'esp32', title: c.title || 'Projet', modules: (c.modules || []).map((id) => ({ id })) }); }
+    catch (e) { body.textContent = 'Génération impossible : ' + e.message; return; }
+    const mont = window.LAB.montageSvg ? window.LAB.montageSvg(res, { title: c.title }) : null;
+    body.className = 'pa-gen-body';
+    body.innerHTML = `<div class="seg" style="margin-bottom:8px"><button data-t="wiring" class="${c.show === 'code' ? '' : 'on'}">Câblage</button><button data-t="code" class="${c.show === 'code' ? 'on' : ''}">Code</button><button data-t="libs">Bibliothèques</button></div>
+      <div data-p="wiring" ${c.show === 'code' ? 'hidden' : ''}>${mont ? `<div class="pa-svg">${mont.svg}</div>` : ''}<table class="pa-wire"><tbody>${res.wiring.map((w) => `<tr><td>${esc(w.mod || '')}</td><td>${esc(w.pin)}</td><td>→</td><td><b>${esc(w.to)}</b></td></tr>`).join('')}</tbody></table>${res.warnings.length ? `<div class="banner warn small">${icon('alert')}<div>${res.warnings.map(esc).join('<br>')}</div></div>` : ''}</div>
+      <div data-p="code" ${c.show === 'code' ? '' : 'hidden'}>${A.codeBlock(res.code, '360px')}</div>
+      <div data-p="libs" hidden><ul class="small">${(res.libs || []).map((l) => `<li>${esc(l.name || l)} ${esc(l.ver || '')}</li>`).join('') || '<li>Aucune bibliothèque externe</li>'}</ul><div class="hint">Variables publiées : ${(res.outs || []).map((o) => `<code>${esc(o.key)}</code> (${esc(o.unit || '')})`).join(', ') || '—'}</div></div>
+      <div class="row wrap" style="margin-top:8px"><button class="btn sm" data-a="copy">${icon('copy')}Copier le code</button><button class="btn sm" data-a="dl">${icon('download')}.ino</button><button class="btn sm" data-a="studio">${icon('wand')}Ouvrir dans le Studio</button><button class="btn sm primary" data-a="save">${icon('save')}Enregistrer sur le Pi</button></div>`;
+    body.addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-t]');
+      if (t) { $$('[data-t]', body).forEach((b) => b.classList.toggle('on', b === t)); $$('[data-p]', body).forEach((p) => { p.hidden = p.dataset.p !== t.dataset.t; }); return; }
+      const a = e.target.closest('[data-a]'); if (!a) return;
+      if (a.dataset.a === 'copy') A.copyText(res.code);
+      if (a.dataset.a === 'dl') A.download((c.project || 'projet') + '.ino', res.code);
+      if (a.dataset.a === 'studio') A.openInStudio({ title: c.title, board: c.board || 'esp32', modules: (c.modules || []).map((id) => ({ id })), rules: [], options: {} }, 'wiring');
+      if (a.dataset.a === 'save') await saveToPi(c, res);
+    });
+  }
+  async function saveToPi(c, res) {
+    const id = (c.project || A.norm(c.title || 'projet').replace(/[^a-z0-9]+/g, '_')).slice(0, 60).replace(/^_+|_+$/g, '') || 'projet';
+    const meta = { title: c.title, board: res.board, spec: { board: res.board, title: c.title, modules: (c.modules || []).map((x) => ({ id: x })) }, outs: res.outs, wiring: res.wiring, created_by: 'Patricia' };
+    const readme = `# ${c.title}\n\nCarte : ${res.boardName}\n\n## Câblage\n\n${res.wiring.map((w) => `- ${w.mod || ''} ${w.pin} → ${w.to}`).join('\n')}\n\n## Bibliothèques\n\n${(res.libs || []).map((l) => `- ${l.name || l} ${l.ver || ''}`).join('\n') || '- aucune'}\n`;
+    try { await A.piSaveProject(id, { [id + '.ino']: res.code, 'project.json': JSON.stringify(meta, null, 2), 'README.md': readme }); toast('Projet « ' + id + ' » enregistré sur la microSD du Pi', 'ok'); return id; }
+    catch (e) { toast('Pi : ' + e.message, 'bad'); return null; }
+  }
+
+  /* ------------------------------------------------------------ actions confirmées */
+  const RISK = { aucun: '', faible: 'info', moyen: 'warn', 'élevé': 'bad' };
+  function actionHtml(a) {
+    return `<div class="pa-action" data-aid="${esc(a.id)}"><div class="grow"><div class="small"><b>${esc(a.summary)}</b></div><div class="hint">${a.executor === 'ui' ? 'Exécuté par le MASTER S3' : 'Exécuté par le Pi'}${a.risk && a.risk !== 'aucun' ? ` · risque ${esc(a.risk)}` : ''}</div></div>
+      <button class="btn sm" data-cancel>Annuler</button><button class="btn sm ${a.risk === 'élevé' ? 'danger' : 'primary'}" data-confirm>${a.needs_confirm ? 'Confirmer' : 'Faire'}</button></div>`;
+  }
+  async function runAction(el, a, log) {
+    const row = el.closest('.pa-action');
+    const status = (t, cls) => { row.innerHTML = `<div class="small ${cls || ''}">${t}</div>`; };
+    let res;
+    try { res = await piJSON(`/api/v1/patricia/actions/${a.id}/confirm`, {}, 300000); }
+    catch (e) { status(esc(e.message), 'bad-text'); return; }
+    if (!res.execute_in_ui) { status(`${icon('check')} Fait : ${esc(a.summary)}${res.result && res.result.id ? ' · job ' + esc(res.result.id) : ''}`); if (a.kind === 'build' && res.result && res.result.id) watchBuild(res.result.id, row, log); return; }
+    const p = res.params || a.params;
+    try {
+      if (a.kind === 's3_job') { const r = await A.post('/api/job', { type: p.type, worker: p.worker || 0, priority: 60 }); status(`${icon('check')} Job ${esc(p.type)} n° ${r.id} envoyé au MASTER`); report(a.id, true, r); }
+      else if (a.kind === 'open_page') { A.go(p.page, p.q || undefined); }
+      else if (a.kind === 'save_project') { const card = log.querySelector('[data-gen]'); status('Enregistrement…'); const c = card && P._cards[card.dataset.gen]; if (c) { const res2 = window.LAB.generate({ board: c.board, title: c.title, modules: c.modules.map((id) => ({ id })) }); const id = await saveToPi(c, res2); status(id ? `${icon('check')} Enregistré : ${esc(id)}` : 'Échec'); report(a.id, !!id, { id }); } }
+      else if (a.kind === 'flash') { await flashFlow(p, row, a, log); }
+      else if (a.kind === 'verify') { await verifyFlow(p.worker, p.seconds || 20, row, a, log); }
+    } catch (e) { status(esc(e.message)); report(a.id, false, { error: e.message }); }
+  }
+  async function report(aid, ok, details, serial) {
+    try { return await piJSON(`/api/v1/patricia/actions/${aid}/report`, { ok, details, serial_log: serial || '' }); } catch (e) { return null; }
+  }
+  async function watchBuild(jid, row, log) {
+    for (let i = 0; i < 400; i++) {
+      await A.sleep(2500);
+      let j; try { j = await pi('/api/v1/jobs/' + encodeURIComponent(jid)); } catch (e) { continue; }
+      row.innerHTML = `<div class="small">Compilation ${esc(j.project)} (${esc(j.board)}) : ${esc(j.stage || j.status)} · ${j.progress || 0} %</div>`;
+      if (j.status === 'success') { row.innerHTML = `<div class="small">${icon('check')} Compilation réussie · SHA-256 ${esc((j.sha256 || '').slice(0, 12))}…</div>`; return j; }
+      if (j.status === 'failed' || j.status === 'canceled') {
+        row.innerHTML = `<div class="small">Compilation échouée : ${esc(j.error || '')}</div>`;
+        if (j.log) P.ask(j.log.split('\n').slice(-60).join('\n'), { silent: true, label: 'Journal de compilation envoyé à Patricia' });
+        return j;
+      }
+    }
+    return null;
+  }
+  /* Compile sur le Pi → vérifie la puce → OTA autorisée par le S3 → lit le journal → verdict. */
+  async function flashFlow(p, row, a, log) {
+    const say = (t) => { row.innerHTML = `<div class="small">${t}</div>`; };
+    const info = await A.api('/api/worker/info?id=' + encodeURIComponent(p.worker));
+    const chip = String(info.chip || '').toLowerCase(), board = p.board || 'esp32';
+    if ((board === 'esp32s3' && !chip.includes('s3')) || (board === 'esp32c3' && !chip.includes('c3')) || (board === 'esp32' && (chip.includes('s3') || chip.includes('c3'))))
+      throw new Error(`Le worker ${p.worker} est un ${info.chip || 'modèle inconnu'}, le projet vise ${board}.`);
+    say('Compilation sur le Pi…');
+    const q = await piJSON('/api/v1/build', { project_id: p.project, board, priority: 70 });
+    const j = await watchBuild(q.id, row, log);
+    if (!j || j.status !== 'success') { report(a.id, false, { stage: 'build' }); return; }
+    if (!(await A.confirmBox('Flasher le worker ' + p.worker, `« ${p.title || p.project} » (${board}), SHA-256 ${String(j.sha256).slice(0, 16)}… Le worker quitte le mode labo pendant le projet (BOOT 3 s pour revenir).`, 'Flasher maintenant', true))) { say('Flash annulé.'); report(a.id, false, { stage: 'annule' }); return; }
+    const link = await pi('/api/v1/jobs/' + encodeURIComponent(q.id) + '/firmware-link');
+    await A.post('/api/worker/flash/remote', { id: p.worker, url: link.url, sha256: j.sha256, mode: 'project' });
+    say('OTA autorisée par le S3 ; transfert et redémarrage du worker…');
+    await verifyFlow(p.worker, 25, row, a, log, true);
+  }
+  async function readSerial(worker, seconds, onTick) {
+    let since = 0, text = '', usbPos = 0;
+    try { const l = await A.api(`/api/worker/log?id=${encodeURIComponent(worker)}&since=0`); since = l.last || 0; } catch (e) { /* ignoré */ }
+    try { if (A.S.admin) { const u = await A.api('/api/usb/serial?since=0'); usbPos = u.pos || 0; } } catch (e) { /* pas d'USB */ }
+    const t0 = Date.now();
+    while (Date.now() - t0 < seconds * 1000) {
+      await A.sleep(1500);
+      try { const l = await A.api(`/api/worker/log?id=${encodeURIComponent(worker)}&since=${since}`); since = l.last || since; (l.lines || []).forEach((x) => { text += (x.text || '') + '\n'; }); } catch (e) { /* worker en redémarrage */ }
+      try { if (A.S.admin) { const u = await A.api('/api/usb/serial?since=' + usbPos); usbPos = u.pos || usbPos; if (u.data) text += u.data; } } catch (e) { /* ignoré */ }
+      if (onTick) onTick(Math.round((Date.now() - t0) / 1000), text);
+    }
+    return text;
+  }
+  async function verifyFlow(worker, seconds, row, a, log, afterFlash) {
+    const text = await readSerial(worker, seconds, (s, t) => { row.innerHTML = `<div class="small">${afterFlash ? 'Flash envoyé. ' : ''}Lecture du moniteur du worker ${worker} : ${s}/${seconds} s</div>${t ? `<pre class="pa-code">${esc(t.slice(-600))}</pre>` : ''}`; });
+    const r = await report(a.id, true, { worker }, text || '');
+    const v = r && r.verdict ? r.verdict.verdict : 'incertain';
+    row.innerHTML = `<div class="small"><span class="badge ${v === 'ok' ? 'ok' : v === 'echec' ? 'bad' : 'warn'}">${v === 'ok' ? 'fonctionne' : v === 'echec' ? 'échec' : 'incertain'}</span> ${esc(r ? r.answer : 'Verdict indisponible')}</div>${!text ? '<div class="hint">Aucune sortie reçue. Pour une vérification fiable, branche la carte en USB au S3 (moniteur série) ou active « Envoyer au MASTER » dans le Studio.</div>' : ''}`;
+    if (r && prefs.speak) Voice.speak(r.speak || r.answer);
+  }
+
+  /* ------------------------------------------------------------ conversation */
+  P._cards = [];
+  function bubble(log, who, html, extra) {
+    const m = document.createElement('div');
+    m.className = 'msg ' + who + (who === 'bot' ? ' pa-msg' : '');
+    m.innerHTML = html + (extra ? `<span class="mode">${esc(extra)}</span>` : '');
+    log.appendChild(m); log.scrollTop = log.scrollHeight;
+    return m;
+  }
+  function renderReply(log, m, r) {
+    const cards = (r.cards || []).map((c) => { P._cards.push(c); return cardHtml(c, P._cards.length - 1); }).join('');
+    const acts = (r.actions || []).map(actionHtml).join('');
+    const fu = r.followup ? `<div class="pa-follow"><div class="small"><b>${esc(r.followup.question)}</b></div><div class="chips">${(r.followup.choices || []).map((c) => `<button class="chip" data-say="${esc(c)}" ${r.followup.id ? `data-fu="${r.followup.id}"` : ''}>${esc(c)}</button>`).join('')}</div></div>` : '';
+    const sugg = (r.suggestions || []).length ? `<div class="chips pa-sugg">${r.suggestions.map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : '';
+    const mode = [r.mode === 'ia' ? 'IA' : r.mode === 'local' ? 'hors ligne' : r.mode, r.notice].filter(Boolean).join(' · ');
+    m.innerHTML = `<div>${rich(r.answer)}</div>${cards}${acts}${fu}${sugg}<span class="mode">${esc(mode)}</span>`;
+    $$('[data-gen]', m).forEach((box) => renderGenerate(box, P._cards[box.dataset.gen]));
+    (r.actions || []).forEach((a) => {
+      const row = m.querySelector(`[data-aid="${a.id}"]`);
+      row.querySelector('[data-confirm]').onclick = (e) => runAction(e.target, a, log);
+      row.querySelector('[data-cancel]').onclick = () => { piJSON(`/api/v1/patricia/actions/${a.id}/cancel`, {}).catch(() => {}); row.innerHTML = '<div class="small muted">Annulé.</div>'; };
+    });
+    if (r.project) P.project = r.project;
+    log.scrollTop = log.scrollHeight;
+  }
+  async function localAnswer(q) {
+    let answer = '', mode = 'local';
+    const cat = A.catalogAnswer ? A.catalogAnswer(q) : null;
+    try { const r = await A.api('/api/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ q }).toString() }); answer = r.answer || ''; mode = r.mode || mode; }
+    catch (e) { answer = ''; }
+    return { answer: [cat, answer].filter(Boolean).join('\n\n') || 'Le Pi est injoignable et je n\'ai pas de réponse locale. Vérifie la connexion dans « Compagnon Pi ».', mode: 'MASTER seul · ' + mode, cards: [], actions: [] };
+  }
+  P.ask = async function (q, opts) {
+    opts = opts || {};
+    const log = P.log; if (!log) { store.set('patricia.pending', q); A.go('assistant'); return; }
+    q = String(q || '').trim(); if (!q) return;
+    bubble(log, 'me', esc(opts.label || (q.length > 400 ? q.slice(0, 400) + '…' : q)));
+    const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
+    let r;
+    try { r = await piJSON('/api/v1/patricia/chat', { q, session: SESSION, context: labContext() }, 150000); piOk = true; }
+    catch (e) { piOk = false; r = await localAnswer(q); }
+    renderReply(log, m, r);
+    setPiState();
+    if (prefs.speak && !opts.silent) { await Voice.speak(r.speak || r.answer); if (prefs.handsfree && !Voice.listening) startMic(); }
+  };
+
+  /* ------------------------------------------------------------ page */
+  let micBtn = null, inputEl = null;
+  function startMic() {
+    if (!micBtn) return;
+    Voice.listen((text) => { inputEl.value = ''; P.ask(text); }, (on, partial) => {
+      micBtn.classList.toggle('listening', on); document.body.classList.toggle('pa-listening', on);
+      if (partial != null && inputEl) inputEl.placeholder = partial || 'Je t\'écoute…';
+      if (!on && inputEl) inputEl.placeholder = 'Parle-moi ou écris… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)';
+    });
+  }
+  function setPiState() {
+    const b = $('#pa-state'); if (!b) return;
+    b.className = 'badge ' + (piOk ? 'ok' : piOk === false ? 'warn' : '');
+    b.textContent = piOk ? 'Pi connecté' : piOk === false ? 'Pi injoignable · mode MASTER' : 'Connexion…';
+  }
+
+  function chatTab(el) {
+    el.innerHTML = `<div class="grid g-3 pa-layout"><div class="card span-2 pa-chatcard"><div class="chat pa-chat" id="pa-log"></div>
+      <form class="pa-input" id="pa-form"><button type="button" class="pa-mic" id="pa-mic" title="Parler à Patricia" aria-label="Activer le micro">${icon('mic')}</button>
+      <textarea class="input" id="pa-in" rows="1" maxlength="8000" placeholder="Parle-moi ou écris… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"></textarea>
+      <button class="btn primary" type="submit" aria-label="Envoyer">${icon('play')}<span class="hide-sm">Envoyer</span></button></form>
+      <div class="row wrap pa-toggles"><label class="switch"><input type="checkbox" id="pa-speak" ${prefs.speak ? 'checked' : ''}><span class="track"></span>${icon('volume')} Réponses à voix haute</label>
+      <label class="switch"><input type="checkbox" id="pa-hands" ${prefs.handsfree ? 'checked' : ''}><span class="track"></span>Conversation mains libres</label>
+      <button class="btn sm ghost" id="pa-paste" type="button">${icon('terminal')}Coller un journal d'erreur</button></div></div>
+      <div class="stack"><div class="card pad small"><h3 style="margin-bottom:8px">Patricia peut</h3><ul class="pa-list">
+        <li>${icon('wand')}Concevoir tes projets : composants, câblage sans conflit, code, bibliothèques.</li>
+        <li>${icon('history')}Se souvenir de tout : notes, mesures, décisions, prochaines étapes.</li>
+        <li>${icon('alert')}Trouver la cause d'une erreur de compilation, de flash ou du moniteur série.</li>
+        <li>${icon('zap')}Compiler sur le Pi, flasher un worker et vérifier qu'il fonctionne.</li>
+        <li>${icon('car')}Piloter jusqu'à 9 voitures avec anticollision ; « stop » arrête tout.</li>
+        <li>${icon('phone')}Préparer l'application Android de ton projet.</li></ul>
+        <p class="hint" style="margin-top:8px">Toute action sur le matériel te demande une confirmation. L'arrêt d'urgence, lui, est immédiat.</p></div>
+        <div class="card pad small"><h3 style="margin-bottom:8px">Essaie</h3><div class="chips" id="pa-try">${['Je veux faire une serre connectée avec un ESP32-S3', 'Comment brancher un HC-SR04 ?', 'Note que la pompe consomme 300 mA', 'On reprend', 'État du labo', 'Toutes les voitures en ligne'].map((s) => `<button class="chip" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div></div></div></div>`;
+    const log = (P.log = $('#pa-log', el));
+    micBtn = $('#pa-mic', el); inputEl = $('#pa-in', el);
+    const send = () => { const v = inputEl.value; inputEl.value = ''; inputEl.style.height = ''; P.ask(v); };
+    $('#pa-form', el).addEventListener('submit', (e) => { e.preventDefault(); send(); });
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(200, inputEl.scrollHeight) + 'px'; });
+    micBtn.onclick = () => { if (Voice.listening) Voice.stop(); else startMic(); };
+    if (!Voice.available()) micBtn.classList.add('pa-mic-off');
+    $('#pa-speak', el).onchange = (e) => { prefs.speak = e.target.checked; savePrefs(); if (!prefs.speak && window.speechSynthesis) speechSynthesis.cancel(); };
+    $('#pa-hands', el).onchange = (e) => { prefs.handsfree = e.target.checked; if (prefs.handsfree) prefs.speak = true; $('#pa-speak', el).checked = prefs.speak; savePrefs(); };
+    $('#pa-paste', el).onclick = async () => { const t = await A.modal({ title: 'Journal à analyser', html: '<textarea class="textarea" id="pa-logtxt" rows="12" placeholder="Colle ici la sortie de compilation, d\'esptool ou du moniteur série"></textarea>', ok: 'Analyser', onOpen: (m) => $('#pa-logtxt', m).focus() }).then((ok) => ok && $('#pa-logtxt') ? $('#pa-logtxt').value : null); if (t) P.ask(t, { label: 'Journal d\'erreur (' + t.split('\n').length + ' lignes)' }); };
+    el.addEventListener('click', (e) => {
+      const s = e.target.closest('[data-say]'); if (s) { if (s.dataset.fu) piJSON('/api/v1/patricia/followups/' + s.dataset.fu, { status: /plus tard|non/i.test(s.dataset.say) ? 'dismissed' : 'done' }).catch(() => {}); P.ask(s.dataset.say); return; }
+      if (e.target.closest('[data-estop]')) A.fleetStop && A.fleetStop();
+    });
+    const pending = store.get('patricia.pending', null);
+    (async () => {
+      const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
+      try { const r = await pi('/api/v1/patricia/hello'); piOk = true; renderReply(log, m, r); if (prefs.speak) Voice.speak(r.speak || r.answer); }
+      catch (e) { piOk = false; renderReply(log, m, { answer: 'Bonjour ! Je suis Patricia. Le Raspberry Pi n\'est pas joignable : je réponds avec le catalogue du MASTER en attendant. Configure le Pi dans « Compagnon Pi » pour la mémoire, l\'IA et le pilotage.', cards: [], actions: [], mode: 'MASTER seul', suggestions: ['Comment brancher un BME280 ?', 'État du labo'] }); }
+      setPiState();
+      try { voiceCaps = await pi('/api/v1/patricia/voice'); if (Voice.available()) micBtn.classList.remove('pa-mic-off'); } catch (e) { /* voix du Pi indisponible */ }
+      if (pending) { store.set('patricia.pending', null); P.ask(pending); }
+    })();
+    setTimeout(() => inputEl.focus(), 60);
+  }
+
+  /* ------------------------------------------------------------ mémoire */
+  async function memoryTab(el) {
+    el.innerHTML = '<div class="card pad muted">Chargement de la mémoire…</div>';
+    let d;
+    try { d = await pi('/api/v1/patricia/memory'); }
+    catch (e) { el.innerHTML = `<div class="banner warn">${icon('alert')}<div>La mémoire vit sur le Pi : ${esc(e.message)}. Configure-le dans <a href="#companion">Compagnon Pi</a>.</div></div>`; return; }
+    const st = d.stats;
+    el.innerHTML = `<div class="grid g-3"><div class="card span-2"><div class="card-h"><h2 class="grow">Notes (${st.notes})</h2><input class="input" id="pm-q" placeholder="Filtrer…" style="max-width:200px"><button class="btn sm primary" id="pm-add">${icon('plus')}Note</button></div><div class="card-b flush" id="pm-notes"></div></div>
+      <div class="stack"><div class="card"><div class="card-h"><h2>Ce que Patricia sait de toi</h2></div><div class="card-b" id="pm-facts"></div></div>
+      <div class="card pad small"><h3>Mémoire</h3><p class="muted">${st.conversations} messages · ${st.projects} projets · recherche ${st.fts ? 'plein texte' : 'simple'}<br>Fichier : <code>${esc(st.path)}</code> (microSD 64 Go du Pi)</p>
+      <div class="row wrap" style="margin-top:8px"><button class="btn sm" id="pm-export">${icon('download')}Exporter</button><button class="btn sm danger" id="pm-wipe">${icon('trash')}Effacer les conversations</button></div></div></div>
+      <div class="card span-3"><div class="card-h"><h2 class="grow">Journal des projets (${st.projects})</h2><button class="btn sm" id="pm-newp">${icon('plus')}Projet</button></div><div class="card-b flush" id="pm-projects"></div></div></div>`;
+    const drawNotes = () => {
+      const q = A.norm($('#pm-q', el).value || '');
+      const items = d.notes.filter((n) => !q || A.norm(n.title + ' ' + n.body + ' ' + n.tags.join(' ')).includes(q));
+      $('#pm-notes', el).innerHTML = items.map((n) => `<div class="list-item"><div class="icon-tile ${n.kind === 'erreur' ? 'bad' : n.kind === 'mesure' ? 'info' : n.kind === 'decision' ? 'ok' : 'accent'}">${icon(n.pinned ? 'pin' : 'file')}</div><div class="grow"><div style="font-weight:600">${esc(n.title)}</div><div class="small muted">${esc(n.body.slice(0, 240))}</div><div class="hint">${esc(n.kind)} · ${esc((n.updated || '').replace('T', ' ').slice(0, 16))}${n.project ? ' · ' + esc(n.project) : ''}${n.tags.length ? ' · ' + n.tags.map(esc).join(', ') : ''}</div></div><button class="btn sm icon ghost" data-pin="${n.id}" title="Épingler">${icon('pin')}</button><button class="btn sm icon ghost" data-edit="${n.id}" title="Modifier">${icon('edit')}</button><button class="btn sm icon ghost" data-del="${n.id}" title="Supprimer">${icon('trash')}</button></div>`).join('') || '<div class="empty">Aucune note.</div>';
+    };
+    const drawFacts = () => { $('#pm-facts', el).innerHTML = Object.entries(d.facts).map(([k, v]) => `<div class="row" style="margin-bottom:6px"><span class="grow small"><b>${esc(k)}</b> : ${esc(v)}</span><button class="btn sm icon ghost" data-fdel="${esc(k)}">${icon('x')}</button></div>`).join('') + `<form class="row" id="pm-fform" style="margin-top:8px"><input class="input" name="k" placeholder="ex. prénom" style="width:40%"><input class="input" name="v" placeholder="valeur" style="width:40%"><button class="btn sm">${icon('plus')}</button></form>`; };
+    const drawProjects = () => {
+      $('#pm-projects', el).innerHTML = d.projects.map((p) => `<div class="list-item"><div class="icon-tile accent">${icon('folder')}</div><div class="grow"><div style="font-weight:600">${esc(p.title)}</div><div class="small muted">${esc(p.goal || '')}</div><div class="hint">${p.board ? esc(p.board) + ' · ' : ''}${p.modules.map(esc).join(', ')}${p.log.length ? ' · dernier : ' + esc(p.log[p.log.length - 1].text) : ''}</div></div>
+        <select class="input" data-status="${esc(p.id)}" style="width:auto">${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}" ${k === p.status ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <button class="btn sm" data-say="On reprend ${esc(p.title)}">${icon('chat')}</button><button class="btn sm icon ghost" data-pdel="${esc(p.id)}">${icon('trash')}</button></div>`).join('') || '<div class="empty">Aucun projet. Décris une idée à Patricia.</div>';
+    };
+    drawNotes(); drawFacts(); drawProjects();
+    $('#pm-q', el).oninput = drawNotes;
+    const reload = () => memoryTab(el);
+    el.addEventListener('submit', async (e) => { if (e.target.id !== 'pm-fform') return; e.preventDefault(); const f = new FormData(e.target); if (!f.get('k')) return; await piJSON('/api/v1/patricia/facts', { key: f.get('k'), value: f.get('v') }); reload(); });
+    el.addEventListener('change', async (e) => { const s = e.target.closest('[data-status]'); if (!s) return; const p = d.projects.find((x) => x.id === s.dataset.status); await piJSON('/api/v1/patricia/projects', { id: p.id, title: p.title, status: s.value }); toast('Statut mis à jour', 'ok'); });
+    el.addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      try {
+        if (b.id === 'pm-add' || b.dataset.edit) {
+          const n = b.dataset.edit ? d.notes.find((x) => String(x.id) === b.dataset.edit) : null;
+          const t = await A.modal({ title: n ? 'Modifier la note' : 'Nouvelle note', html: `<textarea class="textarea" id="pm-txt" rows="8">${esc(n ? n.body : '')}</textarea>`, ok: 'Enregistrer', onOpen: (m) => $('#pm-txt', m).focus() }).then((ok) => ok && $('#pm-txt') ? $('#pm-txt').value : null);
+          if (t) { if (n) await piJSON('/api/v1/patricia/notes/' + n.id, { body: t }); else await piJSON('/api/v1/patricia/notes', { text: t }); reload(); }
+        } else if (b.dataset.del) { if (await A.confirmBox('Supprimer la note', 'Patricia l\'oubliera définitivement.', 'Supprimer', true)) { await piJSON('/api/v1/patricia/notes/' + b.dataset.del, { delete: true }); reload(); } }
+        else if (b.dataset.pin) { const n = d.notes.find((x) => String(x.id) === b.dataset.pin); await piJSON('/api/v1/patricia/notes/' + n.id, { pinned: !n.pinned }); reload(); }
+        else if (b.dataset.fdel) { await piJSON('/api/v1/patricia/facts', { key: b.dataset.fdel, delete: true }); reload(); }
+        else if (b.dataset.pdel) { if (await A.confirmBox('Supprimer le projet du journal', 'Les fichiers sur la microSD ne sont pas touchés.', 'Supprimer', true)) { await piJSON(`/api/v1/patricia/projects/${b.dataset.pdel}/delete`, {}); reload(); } }
+        else if (b.id === 'pm-newp') { const t = await A.modal({ title: 'Nouveau projet', input: '', label: 'Nom du projet', ok: 'Créer' }); if (t) { await piJSON('/api/v1/patricia/projects', { title: t, status: 'idee' }); reload(); } }
+        else if (b.id === 'pm-export') { const data = await pi('/api/v1/patricia/export'); A.download('patricia-memoire-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 2), 'application/json'); }
+        else if (b.id === 'pm-wipe') { if (await A.confirmBox('Effacer les conversations', 'Les notes, projets et préférences sont conservés.', 'Effacer', true)) { await piJSON('/api/v1/patricia/wipe', { what: 'conversations' }); reload(); } }
+        else if (b.dataset.say) { A.go('assistant'); setTimeout(() => P.ask(b.dataset.say), 300); }
+      } catch (err) { toast(err.message, 'bad'); }
+    });
+  }
+
+  /* ------------------------------------------------------------ réglages */
+  async function settingsTab(el) {
+    const voices = (window.speechSynthesis ? speechSynthesis.getVoices() : []).filter((v) => /^fr/i.test(v.lang));
+    el.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h2>Cerveau de Patricia</h2></div><div class="card-b stack">
+      <div class="seg" id="ps-preset"><button data-p="local">Hors ligne (règles)</button><button data-p="ollama">IA locale sur le Pi</button><button data-p="online">IA en ligne</button></div>
+      <label class="field">Adresse « chat/completions » (vue depuis le Pi)<input class="input" id="ps-ep" placeholder="http://127.0.0.1:11434/v1/chat/completions"></label>
+      <label class="field">Modèle<input class="input" id="ps-model" placeholder="qwen2.5:1.5b"></label>
+      <label class="field">Clé API (vide = conserver ; inutile pour Ollama)<input class="input" id="ps-key" type="password" autocomplete="off"></label>
+      <div class="row"><button class="btn primary" id="ps-save">${icon('save')}Enregistrer</button><span class="small muted" id="ps-state"></span></div>
+      <div class="hint">IA locale : <code>sudo bash pi/setup_patricia.sh --ollama</code> installe Ollama et le modèle qwen2.5:1.5b (~1 Go) sur la microSD. Sur un Pi 4 de 4 Go, compte quelques secondes à quelques dizaines de secondes par réponse. Les actions matérielles restent toujours à confirmer.</div></div></div>
+      <div class="card"><div class="card-h"><h2>Voix</h2></div><div class="card-b stack small">
+      <div>Micro : <b>${Voice.native() ? 'natif Android (APK NEXUS)' : Voice.web() ? 'reconnaissance du navigateur' : Voice.rec() ? 'Vosk sur le Pi' : 'indisponible ici'}</b></div>
+      ${Voice.available() ? '' : `<div class="banner warn">${icon('alert')}<div>${esc(Voice.why())}</div></div>`}
+      <div>Vosk (Pi) : <b>${voiceCaps.stt ? 'installé' : 'absent'}</b> · Piper (Pi) : <b>${voiceCaps.tts ? 'installé' : 'absent'}</b></div>
+      <label class="field">Voix de lecture<select class="input" id="ps-voice"><option value="">Automatique</option>${voices.map((v) => `<option ${v.name === prefs.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+      <button class="btn sm" id="ps-test">${icon('volume')}Tester la voix</button></div></div></div>`;
+    const presets = { ollama: { ep: 'http://127.0.0.1:11434/v1/chat/completions', model: 'qwen2.5:1.5b' }, online: { ep: 'https://', model: '' }, local: { ep: '', model: '' } };
+    try { const c = await pi('/api/v1/assistant/config'); $('#ps-ep', el).value = c.endpoint || ''; $('#ps-model', el).value = c.model || ''; $('#ps-state', el).textContent = c.endpoint ? 'IA configurée' + (c.key_set ? ' · clé enregistrée' : '') : 'Mode hors ligne'; }
+    catch (e) { $('#ps-state', el).textContent = 'Pi injoignable : ' + e.message; }
+    $('#ps-preset', el).onclick = (e) => { const b = e.target.closest('[data-p]'); if (!b) return; const p = presets[b.dataset.p]; $('#ps-ep', el).value = p.ep; $('#ps-model', el).value = p.model; $$('#ps-preset button', el).forEach((x) => x.classList.toggle('on', x === b)); };
+    $('#ps-save', el).onclick = async () => { try { const r = await piJSON('/api/v1/assistant/config', { endpoint: $('#ps-ep', el).value.trim(), model: $('#ps-model', el).value.trim(), key: $('#ps-key', el).value }); $('#ps-key', el).value = ''; $('#ps-state', el).textContent = r.endpoint ? 'IA enregistrée' : 'Mode hors ligne'; toast('Réglages de Patricia enregistrés', 'ok'); } catch (e) { toast(e.message, 'bad'); } };
+    $('#ps-voice', el).onchange = (e) => { prefs.voice = e.target.value; savePrefs(); };
+    $('#ps-test', el).onclick = () => Voice.speak('Bonjour, je suis Patricia, ton assistante de laboratoire. On construit quoi aujourd\'hui ?');
+  }
+
+  /* ------------------------------------------------------------ enregistrement */
+  A.page({
+    id: 'assistant', title: 'Patricia', icon: 'sparkles', group: 'build', mobile: true, short: 'Patricia',
+    desc: 'Assistante : projets, mémoire, diagnostic, flash, pilotage, voix',
+    render(el, q) {
+      const tab = (q && q.tab) || 'chat';
+      el.innerHTML = `<div class="pa-hero"><div class="pa-orb" aria-hidden="true"><span></span></div><div class="grow"><div class="eyebrow">NEXUS · ASSISTANTE</div><h2>Patricia</h2><div class="small muted">Je conçois, je retiens, je corrige et je pilote avec toi.</div></div><span class="badge" id="pa-state">Connexion…</span></div>
+        <div class="tabs" id="pa-tabs">${[['chat', 'chat', 'Conversation'], ['memory', 'history', 'Mémoire'], ['settings', 'cog', 'Réglages']].map(([k, ic, t]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${icon(ic)}${t}</button>`).join('')}</div><div class="tab-panel" id="pa-panel"></div>`;
+      const panel = $('#pa-panel', el);
+      const show = (k) => { $$('#pa-tabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.tab === k)); P.log = null; (k === 'memory' ? memoryTab : k === 'settings' ? settingsTab : chatTab)(panel); };
+      $('#pa-tabs', el).onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); };
+      show(tab);
+      setPiState();
+      return () => { P.log = null; micBtn = null; inputEl = null; Voice.stop(); };
+    }
+  });
+  A.commands.push({ title: 'Parler à Patricia', group: 'Action', icon: 'mic', run: () => { A.go('assistant'); setTimeout(startMic, 400); } },
+    { title: 'Mémoire de Patricia', group: 'Page', icon: 'history', run: () => A.go('assistant', { tab: 'memory' }) });
+
+  /* Bouton flottant : Patricia accessible depuis toutes les pages (appui long = micro). */
+  function fab() {
+    if ($('#pa-fab')) return;
+    const b = document.createElement('button');
+    b.id = 'pa-fab'; b.className = 'pa-fab'; b.title = 'Patricia (appui long : micro)'; b.setAttribute('aria-label', 'Ouvrir Patricia');
+    b.innerHTML = icon('sparkles');
+    let t = null, long = false;
+    b.addEventListener('pointerdown', () => { long = false; t = setTimeout(() => { long = true; A.go('assistant'); setTimeout(startMic, 450); }, 550); });
+    b.addEventListener('pointerup', () => { clearTimeout(t); if (!long) A.go('assistant'); });
+    b.addEventListener('pointerleave', () => clearTimeout(t));
+    document.body.appendChild(b);
+  }
+  window.addEventListener('hashchange', () => { const f = $('#pa-fab'); if (f) f.hidden = (location.hash || '').startsWith('#assistant'); });
+  setTimeout(() => { fab(); const f = $('#pa-fab'); if (f) f.hidden = (location.hash || '').startsWith('#assistant'); }, 800);
+})();
+/* ---- 56_vehicles.js ---- */
+/* Flotte de véhicules : carte de l'aire de jeu, inscription, destinations, manette et ARRÊT D'URGENCE.
+ * Le superviseur tourne sur le Pi (pi/patricia/fleet.py) ; chaque voiture porte firmware/vehicle.
+ * Cette page envoie des ordres explicites (un clic = une confirmation) ; l'arrêt est toujours immédiat. */
+(function () {
+  'use strict';
+  const A = window.APP, $ = A.$, esc = A.esc, icon = A.icon, toast = A.toast;
+  const COLORS = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#0891b2', '#db2777', '#65a30d', '#7c3aed'];
+  const STATE = { pret: 'prêt', route: 'en route', attente: 'attend', arrive: 'arrivé', perdu: 'PERDU', conflit: 'CONFLIT', arret: 'arrêt', manuel: 'manuel', bloque: 'obstacle' };
+  const pj = (path, body) => A.piRequest(path, { method: 'POST', body: JSON.stringify(body || {}) });
+
+  A.fleetStop = async (vid) => {
+    try { await pj('/api/v1/fleet/estop', vid ? { vid } : {}); toast(vid ? `Arrêt envoyé à ${vid}` : 'ARRÊT D\'URGENCE envoyé à toute la flotte', 'ok'); }
+    catch (e) { toast('Arrêt via le Pi impossible : ' + e.message + ' — coupe l\'alimentation des véhicules.', 'bad', 10000); }
+  };
+
+  A.page({
+    id: 'vehicles', title: 'Flotte de véhicules', short: 'Véhicules', icon: 'car', group: 'build',
+    desc: 'Piloter jusqu\'à 9 voitures sans collision, avec arrêt d\'urgence',
+    render(el) {
+      let snap = null, sel = null, mode = 'goal', placing = null, timer = null, joy = null;
+      el.innerHTML = `<div class="banner warn">${icon('alert')}<div><b>Non testé sur de vrais véhicules.</b> Commence roues en l'air, puis une voiture à basse vitesse. Garde un coupe-circuit physique sur chaque batterie : le Wi-Fi n'est pas un système de sécurité. <a href="#" id="vh-doc">Règles de sécurité</a></div></div>
+        <div class="grid g-3"><div class="card span-2"><div class="card-h"><h2 class="grow">Aire de jeu</h2>
+          <div class="seg" id="vh-mode"><button data-m="goal" class="on">Destination</button><button data-m="obstacle">Obstacles</button></div>
+          <button class="btn danger pa-estop" id="vh-estop">${icon('stop')}ARRÊT</button><button class="btn" id="vh-release">${icon('play')}Lever l'arrêt</button></div>
+          <div class="card-b"><canvas id="vh-map" class="vh-map" aria-label="Carte de l'aire de jeu"></canvas><div class="hint" id="vh-hint">Choisis un véhicule à droite, puis clique une cellule pour l'y envoyer.</div></div></div>
+        <div class="stack"><div class="card"><div class="card-h"><h2 class="grow">Véhicules</h2><span class="badge" id="vh-state">…</span></div><div class="card-b flush" id="vh-list"></div></div>
+          <div class="card"><div class="card-h"><h2>Manette</h2></div><div class="card-b"><div class="vh-joy" id="vh-joy"><span></span></div><div class="hint">Maintiens et déplace (barre d'espace = ARRÊT) : le superviseur coupe l'avance si un autre véhicule ou un obstacle est devant.</div></div></div>
+          <div class="card"><div class="card-h"><h2>Aire</h2></div><div class="card-b"><form class="row wrap" id="vh-arena"><label class="field" style="width:30%">Largeur m<input class="input" name="w" type="number" step="0.1" min="0.5" max="50"></label><label class="field" style="width:30%">Hauteur m<input class="input" name="h" type="number" step="0.1" min="0.5" max="50"></label><label class="field" style="width:30%">Cellule m<input class="input" name="c" type="number" step="0.05" min="0.2" max="2"></label><button class="btn sm">Appliquer</button></form><div class="hint">La cellule doit être plus grande que le véhicule + la marge d'erreur de position (0,5 m conseillé pour des voitures de 20 cm).</div></div></div>
+          <div class="card"><div class="card-h"><h2>Journal</h2></div><div class="card-b small" id="vh-events" style="max-height:220px;overflow:auto"></div></div></div></div>`;
+      const cv = $('#vh-map', el), ctx = cv.getContext('2d');
+      const geom = () => { const a = snap.arena, W = cv.clientWidth, s = W / a.width_m; cv.width = W * devicePixelRatio; cv.height = a.height_m * s * devicePixelRatio; cv.style.height = (a.height_m * s) + 'px'; return { s: s * devicePixelRatio, a }; };
+      function draw() {
+        if (!snap || !snap.arena) return;
+        const { s, a } = geom(), H = cv.height, css = getComputedStyle(document.documentElement);
+        const tx = (x) => x * s, ty = (y) => H - y * s;
+        ctx.clearRect(0, 0, cv.width, H);
+        ctx.strokeStyle = css.getPropertyValue('--line') || '#ddd'; ctx.lineWidth = 1;
+        for (let i = 0; i <= a.cols; i++) { ctx.beginPath(); ctx.moveTo(tx(i * a.cell_m), 0); ctx.lineTo(tx(i * a.cell_m), H); ctx.stroke(); }
+        for (let j = 0; j <= a.rows; j++) { ctx.beginPath(); ctx.moveTo(0, ty(j * a.cell_m)); ctx.lineTo(cv.width, ty(j * a.cell_m)); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(120,120,120,.45)';
+        a.obstacles.forEach(([cx, cy]) => ctx.fillRect(tx(cx * a.cell_m), ty((cy + 1) * a.cell_m), a.cell_m * s, a.cell_m * s));
+        snap.vehicles.forEach((v, i) => {
+          const col = COLORS[i % COLORS.length];
+          ctx.fillStyle = col + '33';
+          v.held.forEach(([cx, cy]) => ctx.fillRect(tx(cx * a.cell_m), ty((cy + 1) * a.cell_m), a.cell_m * s, a.cell_m * s));
+          if (v.path.length) { ctx.strokeStyle = col; ctx.setLineDash([6, 5]); ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath(); ctx.moveTo(tx(v.x), ty(v.y)); v.path.forEach(([cx, cy]) => ctx.lineTo(tx((cx + 0.5) * a.cell_m), ty((cy + 0.5) * a.cell_m))); ctx.stroke(); ctx.setLineDash([]); }
+          if (v.goal) { ctx.strokeStyle = col; ctx.lineWidth = 2 * devicePixelRatio; const gx = tx((v.goal[0] + 0.5) * a.cell_m), gy = ty((v.goal[1] + 0.5) * a.cell_m); ctx.beginPath(); ctx.arc(gx, gy, a.cell_m * s * 0.25, 0, 7); ctx.stroke(); }
+          const r = Math.max(8, a.cell_m * s * 0.28), x = tx(v.x), y = ty(v.y);
+          ctx.save(); ctx.translate(x, y); ctx.rotate(-v.heading);
+          ctx.fillStyle = ['perdu', 'conflit', 'arret'].includes(v.state) ? '#dc2626' : col;
+          ctx.beginPath(); ctx.moveTo(r * 1.3, 0); ctx.lineTo(-r, r * 0.85); ctx.lineTo(-r * 0.6, 0); ctx.lineTo(-r, -r * 0.85); ctx.closePath(); ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = css.getPropertyValue('--text') || '#111'; ctx.font = `${11 * devicePixelRatio}px system-ui`; ctx.fillText(v.id + (sel === v.id ? ' ◀' : ''), x + r + 3, y - r);
+        });
+        if (snap.estop) { ctx.fillStyle = 'rgba(220,38,38,.12)'; ctx.fillRect(0, 0, cv.width, H); }
+      }
+      function list() {
+        const st = $('#vh-state', el);
+        st.className = 'badge ' + (!snap.enabled ? 'warn' : snap.estop ? 'bad' : 'ok');
+        st.textContent = !snap.enabled ? 'Pilotage inactif' : snap.estop ? 'ARRÊT ACTIF' : `${snap.vehicles.length} véhicule(s)`;
+        const ann = (snap.announced || []).map((v) => `<div class="list-item"><div class="icon-tile warn">${icon('car')}</div><div class="grow"><b>${esc(v.id)}</b><div class="hint">s'est annoncé · batterie ${(v.battery_mv / 1000).toFixed(2)} V</div></div><button class="btn sm primary" data-place="${esc(v.id)}">Placer</button></div>`).join('');
+        $('#vh-list', el).innerHTML = (snap.error ? `<div class="hint" style="padding:12px 16px">${esc(snap.error)}</div>` : '') + snap.vehicles.map((v, i) => `<div class="list-item click ${sel === v.id ? 'vh-sel' : ''}" data-vid="${esc(v.id)}"><div class="icon-tile" style="color:${COLORS[i % COLORS.length]}">${icon('car')}</div><div class="grow"><b>${esc(v.id)}</b> <span class="badge ${['perdu', 'conflit', 'arret', 'bloque'].includes(v.state) ? 'bad' : v.state === 'route' ? 'accent' : ''}">${STATE[v.state] || esc(v.state)}</span><div class="hint">(${v.x.toFixed(2)} ; ${v.y.toFixed(2)}) m · ${v.front_mm >= 0 ? v.front_mm + ' mm devant · ' : ''}${v.battery_mv ? (v.battery_mv / 1000).toFixed(2) + ' V · ' : ''}${v.age_s.toFixed(1)} s${v.note ? ' · ' + esc(v.note) : ''}</div></div><button class="btn sm icon ghost" data-stop="${esc(v.id)}" title="Arrêter">${icon('stop')}</button><button class="btn sm icon ghost" data-rm="${esc(v.id)}" title="Retirer">${icon('x')}</button></div>`).join('') + ann || '<div class="empty">Aucun véhicule. Flashe <code>firmware/vehicle</code> sur une voiture : elle apparaîtra ici.</div>';
+        $('#vh-events', el).innerHTML = (snap.events || []).slice().reverse().map((e) => `<div class="${e.level === 'bad' ? 'bad-text' : ''}">${esc(e.msg)}</div>`).join('') || '<span class="muted">—</span>';
+        const f = $('#vh-arena', el); if (f && document.activeElement.form !== f) { f.w.value = snap.arena.width_m; f.h.value = snap.arena.height_m; f.c.value = snap.arena.cell_m; }
+      }
+      async function poll() {
+        try { snap = await A.piRequest('/api/v1/fleet'); }
+        catch (e) { $('#vh-list', el).innerHTML = `<div class="hint" style="padding:12px 16px">Pi injoignable : ${esc(e.message)}. Configure-le dans <a href="#companion">Compagnon Pi</a>.</div>`; $('#vh-state', el).textContent = 'Pi injoignable'; return; }
+        list(); draw();
+      }
+      const cellAt = (ev) => { const r = cv.getBoundingClientRect(), a = snap.arena, s = r.width / a.width_m; const x = (ev.clientX - r.left) / s, y = (r.height - (ev.clientY - r.top)) / s; return { x, y, cx: Math.floor(x / a.cell_m), cy: Math.floor(y / a.cell_m) }; };
+      cv.addEventListener('click', async (ev) => {
+        if (!snap) return;
+        const c = cellAt(ev), a = snap.arena, center = [(c.cx + 0.5) * a.cell_m, (c.cy + 0.5) * a.cell_m];
+        try {
+          if (placing) { await pj('/api/v1/fleet/register', { vid: placing, x: center[0], y: center[1], heading: 0 }); toast(`${placing} placé : oriente-le vers la droite de la carte (cap 0)`, 'ok'); placing = null; $('#vh-hint', el).textContent = 'Choisis un véhicule, puis clique une cellule.'; }
+          else if (mode === 'obstacle') { const key = c.cx + ',' + c.cy, obs = a.obstacles.filter((o) => o.join(',') !== key); if (obs.length === a.obstacles.length) obs.push([c.cx, c.cy]); await pj('/api/v1/fleet/arena', { width_m: a.width_m, height_m: a.height_m, cell_m: a.cell_m, obstacles: obs }); }
+          else if (sel) { await pj('/api/v1/fleet/goal', { vid: sel, x: center[0], y: center[1], vmax: 0.25 }); }
+          else toast('Choisis d\'abord un véhicule dans la liste.', 'warn');
+          poll();
+        } catch (e) { toast(e.message, 'bad'); }
+      });
+      el.addEventListener('click', async (ev) => {
+        const t = ev.target.closest('[data-stop],[data-rm],[data-place],[data-vid],[data-m]');
+        if (ev.target.id === 'vh-doc') { ev.preventDefault(); A.modal({ title: 'Sécurité des véhicules', html: '<ol class="small"><li>Coupe-circuit physique sur chaque batterie, à portée de main.</li><li>Premier essai roues en l\'air : vérifie que STOP et la perte du Wi-Fi coupent les moteurs.</li><li>Une voiture à la fois, vitesse 0,15 m/s, zone dégagée ; ajoute les autres une par une.</li><li>Le capteur ultrason arrête la voiture seul sous 15 cm.</li><li>La position vient des codeurs de roues : elle dérive. Replace les voitures sur leur case de départ régulièrement.</li><li>Ne laisse jamais une voiture rouler hors de ta vue.</li></ol>', ok: 'Compris', cancel: false }); return; }
+        if (!t) return;
+        try {
+          if (t.dataset.m) { mode = t.dataset.m; el.querySelectorAll('#vh-mode button').forEach((b) => b.classList.toggle('on', b === t)); $('#vh-hint', el).textContent = mode === 'obstacle' ? 'Clique des cellules pour ajouter ou retirer des obstacles (véhicules arrêtés).' : 'Choisis un véhicule, puis clique une cellule.'; }
+          else if (t.dataset.stop) await A.fleetStop(t.dataset.stop);
+          else if (t.dataset.rm) { if (await A.confirmBox('Retirer ' + t.dataset.rm, 'Le véhicule reçoit STOP puis quitte la flotte.', 'Retirer', true)) await pj('/api/v1/fleet/remove', { vid: t.dataset.rm }); }
+          else if (t.dataset.place) { placing = t.dataset.place; $('#vh-hint', el).textContent = `Clique la cellule où se trouve réellement ${placing}, nez tourné vers la droite.`; }
+          else if (t.dataset.vid) { sel = t.dataset.vid; list(); draw(); }
+          poll();
+        } catch (e) { toast(e.message, 'bad'); }
+      });
+      $('#vh-estop', el).onclick = () => A.fleetStop();
+      $('#vh-release', el).onclick = async () => { if (await A.confirmBox('Lever l\'arrêt', 'Les véhicules restent immobiles jusqu\'au prochain ordre.', 'Lever l\'arrêt')) { try { await pj('/api/v1/fleet/release', {}); poll(); } catch (e) { toast(e.message, 'bad'); } } };
+      $('#vh-arena', el).addEventListener('submit', async (e) => { e.preventDefault(); const f = e.target; try { await pj('/api/v1/fleet/arena', { width_m: +f.w.value, height_m: +f.h.value, cell_m: +f.c.value, obstacles: [] }); poll(); } catch (er) { toast(er.message, 'bad'); } });
+      /* Manette : envoie throttle/steer à 10 Hz tant que le doigt est posé ; relâcher = 0. */
+      const pad = $('#vh-joy', el), knob = pad.firstElementChild;
+      const sendJoy = () => { if (joy && sel) pj('/api/v1/fleet/manual', { vid: sel, throttle: joy.t, steer: joy.s }).catch((e) => toast(e.message, 'bad')); };
+      let joyTimer = null;
+      pad.addEventListener('pointerdown', (e) => { if (!sel) { toast('Choisis un véhicule.', 'warn'); return; } pad.setPointerCapture(e.pointerId); joy = { t: 0, s: 0 }; joyTimer = setInterval(sendJoy, 100); move(e); });
+      const move = (e) => { if (!joy) return; const r = pad.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width * 2 - 1, dy = (e.clientY - r.top) / r.height * 2 - 1; joy.s = A.clamp(dx, -1, 1); joy.t = A.clamp(-dy, -1, 1) * 0.6; knob.style.transform = `translate(${joy.s * 40}px, ${-joy.t / 0.6 * 40}px)`; };
+      pad.addEventListener('pointermove', move);
+      const end = () => { if (!joy) return; joy = { t: 0, s: 0 }; sendJoy(); joy = null; clearInterval(joyTimer); knob.style.transform = ''; };
+      pad.addEventListener('pointerup', end); pad.addEventListener('pointercancel', end);
+      const key = (e) => { if (e.key === ' ' && !/INPUT|TEXTAREA|SELECT|BUTTON/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); A.fleetStop(); } };
+      document.addEventListener('keydown', key);
+      window.addEventListener('resize', draw);
+      poll(); timer = setInterval(poll, 300);
+      return () => { clearInterval(timer); clearInterval(joyTimer); document.removeEventListener('keydown', key); window.removeEventListener('resize', draw); };
+    }
+  });
+  A.commands.push({ title: 'ARRÊT D\'URGENCE de la flotte', group: 'Action', icon: 'stop', run: () => A.fleetStop() });
 })();
 /* ---- 90_demo.js ---- */
 /* Mode démonstration : simule un MASTER complet (workers, jobs, capteurs, microSD, USB) quand l'API

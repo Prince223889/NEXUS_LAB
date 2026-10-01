@@ -14,6 +14,9 @@ install -d -o nexus -g nexus -m 0770 "$SHARED_ROOT"/{BUILD_CACHE,ARDUINO,PROJECT
 install -d -m 0750 /etc/nexus
 install -d -m 0755 /opt/nexus/pi /opt/nexus/catalog /opt/nexus/android-template
 install -m 0644 "$SRC/pi/nexus_agent.py" /opt/nexus/pi/nexus_agent.py
+# Patricia (assistante) : paquet Python à côté de l'agent ; sa mémoire vit dans /srv/nexus/patricia.
+install -d -m 0755 /opt/nexus/pi/patricia
+install -m 0644 "$SRC"/pi/patricia/*.py /opt/nexus/pi/patricia/
 install -m 0644 "$SRC/catalog/catalog.json" /opt/nexus/catalog/catalog.json
 if [[ -d "$SRC/mobile" ]]; then
   python3 -c 'import shutil,sys; shutil.copytree(sys.argv[1],sys.argv[2],dirs_exist_ok=True,ignore=shutil.ignore_patterns("build",".gradle"))' "$SRC/mobile" /opt/nexus/android-template
@@ -83,7 +86,7 @@ if [[ -d "$SRC/../SD_CARD" ]]; then
     copy_missing "$SRC/../SD_CARD/$folder" "$SHARED_ROOT/$folder"
   done
 fi
-install -d -o nexus -g nexus -m 0750 /srv/nexus/database /srv/nexus/builds /srv/nexus/packages /srv/nexus/logs /srv/nexus/backups /srv/nexus/gradle
+install -d -o nexus -g nexus -m 0750 /srv/nexus/patricia /srv/nexus/database /srv/nexus/builds /srv/nexus/packages /srv/nexus/logs /srv/nexus/backups /srv/nexus/gradle
 chown -R nexus:nexus /srv/nexus /opt/nexus
 install -m 0644 "$SRC/pi/nexus-agent.service" /etc/systemd/system/nexus-agent.service
 sed -i "s|@NEXUS_SHARED_ROOT@|$SHARED_ROOT|g" /etc/systemd/system/nexus-agent.service
@@ -108,6 +111,8 @@ ANDROID_HOME=/srv/nexus/android-sdk
 NEXUS_PORT=8088
 ARDUINO_CLI=arduino-cli
 NEXUS_APK=/srv/nexus/packages/nexus-lab.apk
+NEXUS_PATRICIA_DB=/srv/nexus/patricia/memory.sqlite3
+NEXUS_FLEET_KEY=
 EOF
   chmod 0600 /etc/nexus/nexus.env
   echo "Jeton créé dans /etc/nexus/nexus.env. Consulte-le localement pour le saisir dans NEXUS."
@@ -133,3 +138,4 @@ if [[ -f "$SRC/packages/nexus-lab.apk" ]]; then install -o nexus -g nexus -m 064
 echo "microSD de 64 Go du Pi montée: $SHARED_ROOT. La microSD 2 Go du S3 reste dans le S3; les appareils échangent par Wi-Fi."
 echo "NEXUS-AGENT installé. Santé: curl http://127.0.0.1:8088/api/v1/health"
 echo "Arduino CLI: $(command -v arduino-cli || printf absent)."
+echo "Patricia : sudo bash pi/setup_patricia.sh --ollama --voice --fleet ajoute l'IA locale, la voix hors ligne et la clé de flotte."

@@ -778,6 +778,12 @@ def main():
     FLEET=FleetService(FLEET_KEY,Arena(float(os.getenv("NEXUS_ARENA_W","4")),float(os.getenv("NEXUS_ARENA_H","4")),float(os.getenv("NEXUS_ARENA_CELL","0.5"))))
     FLEET.start()
     ENGINE=Engine(Memory(PATRICIA_DB),Knowledge(CATALOG),AgentHost(FLEET),patricia_llm_config)
+    def backup_loop():
+        while not stop.is_set():
+            try: ENGINE.mem.backup(SHARED_ROOT/"BACKUPS"/"PATRICIA")
+            except (OSError,sqlite3.Error) as e: print(json.dumps({"at":now(),"component":"patricia","message":"sauvegarde impossible: "+str(e)[:200]}),flush=True)
+            stop.wait(86400)
+    threading.Thread(target=backup_loop,name="patricia-backup",daemon=True).start()
     print("Patricia prête ; pilotage:", "actif" if FLEET.transport else FLEET.error,flush=True)
     for i in range(BUILD_WORKERS): threading.Thread(target=worker_loop,name=f"nexus-builder-{i+1}",daemon=True).start()
     server=ThreadingHTTPServer(("0.0.0.0",PORT),Api); print("NEXUS-AGENT sur le port",PORT,"; workers de compilation:",BUILD_WORKERS,flush=True)

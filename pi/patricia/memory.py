@@ -394,6 +394,23 @@ class Memory:
                 c.execute("DELETE FROM p_search WHERE kind=?", (kind,))
         return n
 
+    def backup(self, folder: Path | str, keep: int = 14) -> Path:
+        """Copie cohérente de la base (API de sauvegarde SQLite) ; garde les `keep` dernières copies."""
+        folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+        dest = folder / f"patricia-{datetime.now(timezone.utc):%Y%m%d}.sqlite3"
+        src = sqlite3.connect(self.path, timeout=15)
+        try:
+            out = sqlite3.connect(dest)
+            with out:
+                src.backup(out)
+            out.close()
+        finally:
+            src.close()
+        for old in sorted(folder.glob("patricia-*.sqlite3"))[:-keep]:
+            old.unlink(missing_ok=True)
+        return dest
+
     def stats(self) -> dict:
         with self.db() as c:
             q = lambda t: c.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]

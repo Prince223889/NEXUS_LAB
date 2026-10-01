@@ -85,6 +85,8 @@ class MemoryTests(unittest.TestCase):
             m.add_followup("On améliore ?", 0, p["id"], ["Oui"])
             m.add_followup("On améliore ?", 0, p["id"], ["Oui"])
             self.assertEqual(len(m.due_followups()), 1)
+            b = m.backup(Path(td) / "bk")
+            self.assertTrue(b.exists() and b.stat().st_size > 0)
             self.assertTrue(m.delete_note(n["id"]))
             self.assertEqual(m.stats()["notes"], 0)
 
@@ -249,6 +251,8 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(r["intent"], "project_new")
             gen = [c for c in r["cards"] if c["type"] == "generate"][0]
             self.assertIn("bme280", gen["modules"])
+            self.assertEqual(gen["title"], "Station météo")
+            self.assertEqual([m for m in gen["modules"] if "oled" in m], ["oled_ssd1306"])
             g = e.greeting()
             self.assertIn("Aboubacar", g["answer"])
             self.assertIsNotNone(g["followup"])

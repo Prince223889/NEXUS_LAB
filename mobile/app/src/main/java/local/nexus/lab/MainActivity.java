@@ -1,5 +1,14 @@
 package local.nexus.lab;
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
+import android.webkit.JavascriptInterface;
+import java.util.ArrayList;
+import java.util.Locale;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -38,8 +47,40 @@ public final class MainActivity extends Activity {
     WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(true);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(false);web.setBackgroundColor(Color.rgb(16,22,33));
     web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return route(r.getUrl());}@Override public void onPageFinished(WebView v,String u){progress.setVisibility(View.GONE);}});
     web.setWebChromeClient(new WebChromeClient(){@Override public void onProgressChanged(WebView v,int n){progress.setProgress(n);progress.setVisibility(n>=100?View.GONE:View.VISIBLE);}@Override public boolean onShowFileChooser(WebView v,ValueCallback<Uri[]> cb,FileChooserParams params){if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=cb;try{startActivityForResult(params.createIntent(),PICK_FILE);return true;}catch(Exception e){fileCallback=null;return false;}}});
-    web.setDownloadListener((u,a,d,m,z)->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(u)));}catch(Exception ignored){}});loadMaster();
+    web.setDownloadListener((u,a,d,m,z)->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(u)));}catch(Exception ignored){}});
+    // Patricia : micro et voix natifs d'Android (les navigateurs refusent le micro sur http://192.168.4.1).
+    web.addJavascriptInterface(new NativeBridge(),"NexusNative");
+    tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null)tts.setLanguage(Locale.FRANCE);});
+    loadMaster();
   }
+
+  /* ---------------------------------------------------------------- voix de Patricia */
+  private static final int REQ_MIC=43; private SpeechRecognizer recognizer; private TextToSpeech tts; private String pendingLang=null;
+  private final class NativeBridge{
+    @JavascriptInterface public boolean available(){return SpeechRecognizer.isRecognitionAvailable(MainActivity.this);}
+    @JavascriptInterface public void listen(String lang){handler.post(()->startListening(lang==null||lang.isEmpty()?"fr-FR":lang));}
+    @JavascriptInterface public void stopListening(){handler.post(()->{if(recognizer!=null)recognizer.stopListening();});}
+    @JavascriptInterface public void speak(String text){handler.post(()->{if(tts!=null&&text!=null)tts.speak(text.length()>3500?text.substring(0,3500):text,TextToSpeech.QUEUE_FLUSH,null,"patricia");});}
+  }
+  private void voiceResult(boolean ok,String text){if(web!=null)web.evaluateJavascript("window.__nexusVoice&&window.__nexusVoice("+ok+","+JSONObject.quote(text==null?"":text)+")",null);}
+  private void startListening(String lang){
+    if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pendingLang=lang;requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},REQ_MIC);return;}
+    if(!SpeechRecognizer.isRecognitionAvailable(this)){voiceResult(false,"Reconnaissance vocale absente : installe l’application Google ou un pack vocal français hors ligne.");return;}
+    if(recognizer==null){recognizer=SpeechRecognizer.createSpeechRecognizer(this);recognizer.setRecognitionListener(new RecognitionListener(){
+      @Override public void onReadyForSpeech(Bundle b){} @Override public void onBeginningOfSpeech(){} @Override public void onRmsChanged(float v){}
+      @Override public void onBufferReceived(byte[] b){} @Override public void onEndOfSpeech(){} @Override public void onEvent(int t,Bundle b){}
+      @Override public void onPartialResults(Bundle b){}
+      @Override public void onError(int e){voiceResult(false,e==SpeechRecognizer.ERROR_NO_MATCH||e==SpeechRecognizer.ERROR_SPEECH_TIMEOUT?"Je n’ai rien entendu.":e==SpeechRecognizer.ERROR_NETWORK||e==SpeechRecognizer.ERROR_NETWORK_TIMEOUT?"Reconnaissance indisponible hors ligne : télécharge le français dans Paramètres › Saisie vocale › Reconnaissance hors ligne.":"Erreur micro "+e);}
+      @Override public void onResults(Bundle b){ArrayList<String> r=b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);voiceResult(r!=null&&!r.isEmpty(),r!=null&&!r.isEmpty()?r.get(0):"");}
+    });}
+    Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE,lang);
+    i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,true);
+    i.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1);
+    recognizer.startListening(i);
+  }
+  @Override public void onRequestPermissionsResult(int req,String[] perms,int[] res){super.onRequestPermissionsResult(req,perms,res);if(req!=REQ_MIC)return;if(res.length>0&&res[0]==PackageManager.PERMISSION_GRANTED&&pendingLang!=null)startListening(pendingLang);else voiceResult(false,"Accès au micro refusé.");pendingLang=null;}
   private JSONObject projectSpec; private LinearLayout projectBody; private String projectTab="blocks"; private String projectCode="";
   private void projectApp(){
     projectSpec=project.optJSONObject("spec"); if(projectSpec==null)projectSpec=project;
@@ -94,5 +135,5 @@ public final class MainActivity extends Activity {
   @Override protected void onActivityResult(int req,int result,Intent data){super.onActivityResult(req,result,data);if(req==PICK_FILE&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}
   @Override public void onBackPressed(){if(web!=null&&web.canGoBack())web.goBack();else super.onBackPressed();}
   private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
-  @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);io.shutdownNow();if(web!=null){web.stopLoading();web.destroy();}super.onDestroy();}
+  @Override protected void onDestroy(){if(recognizer!=null){recognizer.destroy();recognizer=null;}if(tts!=null){tts.shutdown();tts=null;}handler.removeCallbacksAndMessages(null);io.shutdownNow();if(web!=null){web.stopLoading();web.destroy();}super.onDestroy();}
 }

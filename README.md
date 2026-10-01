@@ -28,12 +28,13 @@ Dépôt GitHub : [Prince223889/ESP32-box](https://github.com/Prince223889/ESP32-
 | **Outils** | Brochage interactif ESP32/S3/C3, **carte des adresses I2C** façon `i2cdetect`, budget énergie et autonomie batterie, résistance de LED, pont diviseur, code couleur (dans les deux sens), PWM LEDC, ADC, fuseaux POSIX, convertisseur hexa/binaire |
 | **Fichiers** | Explorateur microSD, glisser-déposer, renommer/supprimer, aperçu du code, **graphique automatique des CSV** |
 | **USB & Flash** | Programmation par câble d'une carte **Arduino** (.hex) **ou ESP32/S3/C3** (.bin, protocole esptool, vérification MD5) avec **moniteur de flash** et aperçu du **montage** ; moniteur série (CDC, CH340, CP210x, FTDI) |
-| **Assistant** | État du labo, actions sûres (« lance un check-up »), réponses sur le câblage des capteurs du catalogue ; IA en ligne optionnelle |
+| **Patricia** | Assistante (texte et **voix**) : crée tes projets avec montage et code, flashe un worker puis **lit le moniteur** pour dire si ça marche, diagnostique les erreurs, garde notes et historique, propose des améliorations ; IA locale (Ollama) ou en ligne facultative. Voir [docs/PATRICIA.md](docs/PATRICIA.md) |
+| **Flotte de véhicules** | Jusqu'à 9 voitures (`firmware/vehicle/`) sur une arène : envoi par clic, formations, joystick, réservation de cases anti-collision, **arrêt général** (Espace). Validé en simulation seulement |
 | **Réglages** | Système, configuration complète, mise à jour OTA (Internet ou fichier), scan réseau, journal filtrable, thème, raccourcis |
 
 À tout moment : **Ctrl K** (ou `/`) ouvre la recherche universelle (pages, actions, capteurs, projets), thème clair/sombre, installable comme une application. Ouvrir `firmware/master/www/index.html?demo` affiche l'interface complète **en mode démonstration**, sans matériel.
 
-Pour utiliser des workers sur des voitures, consultez [docs/SECURITE_VEHICULES.md](docs/SECURITE_VEHICULES.md) avant tout essai : le Wi‑Fi seul ne garantit pas l’évitement de collision.
+Pour utiliser des workers sur des voitures, consultez [docs/SECURITE_VEHICULES.md](docs/SECURITE_VEHICULES.md) avant tout essai : le Wi‑Fi seul ne garantit pas l’évitement de collision. Le superviseur de flotte n'a été validé qu'en simulation.
 
 ## Raspberry Pi 4 et deux cartes SD
 
@@ -53,6 +54,8 @@ L’APK dans la livraison est l’enveloppe mobile générale. Une APK personnal
 ```
 firmware/master/        MASTER ESP32-S3 (ESP-IDF 6.1) — main/ (C), www/ (interface), tools/
 firmware/worker/        Worker Arduino (un seul programme pour les 10 cartes)
+firmware/vehicle/       Firmware des voitures pilotées par Patricia (NXV1, HMAC, dead-man)
+pi/patricia/            Patricia : mémoire, diagnostic, intentions, IA, flotte, voix
 catalog/                Source du catalogue : cartes, bibliothèques, modules, générateur, projets
   src/                  modules par famille + générateur de code (partagé navigateur/Node)
   classics/             49 programmes écrits à la main

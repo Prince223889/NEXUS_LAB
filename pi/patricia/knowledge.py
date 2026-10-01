@@ -110,15 +110,24 @@ class Knowledge:
     def modules_in(self, text: str) -> list[dict]:
         """Composants du catalogue cités dans une phrase (« un BME280 et un écran OLED »)."""
         ft = fold(text)
-        found = []
+        found: list[tuple[frozenset, dict]] = []
         for p in self.projects():
             if p.get("kind") != "module":
                 continue
             names = {fold(p.get("id", "")), fold(p.get("title", ""))}
             names |= {fold(w) for w in re.split(r"[\s/()]+", p.get("title", "")) if len(w) >= 5 and re.search(r"\d", w)}
-            if any(len(n) > 3 and re.search(rf"(?<![a-z0-9]){re.escape(n)}(?![a-z0-9])", ft) for n in names):
-                found.append(p)
-        return found
+            hit = frozenset(n for n in names if len(n) > 3 and re.search(rf"(?<![a-z0-9]){re.escape(n)}(?![a-z0-9])", ft))
+            if hit:
+                found.append((hit, p))
+        # Plusieurs modules reconnus par le même mot (« SSD1306 » : écran 128×64 et 128×32) : on garde le plus
+        # précis (celui dont l'identifiant contient le mot), sinon le premier du catalogue.
+        out: list[dict] = []
+        for hit, p in found:
+            rivals = [q for h, q in found if h == hit]
+            best = next((q for q in rivals if any(n in fold(q.get("id", "")) for n in hit)), rivals[0])
+            if best is p:
+                out.append(p)
+        return out
 
     def advice_for(self, text: str, modules: list[str] | None = None, board: str | None = None) -> list[str]:
         ft = fold(text + " " + " ".join(modules or []))

@@ -160,62 +160,9 @@
 
   /* La page « USB & Flash » (moniteur série + programmation Arduino/ESP32) est dans 46_flash.js. */
 
-  /* ================================================================ */
-  /* Assistant                                                        */
-  /* ================================================================ */
-  const SUGGEST = ['Quel est l\'état du labo ?', 'Lance un check-up de tous les workers', 'Comment brancher un BME280 ?', 'Pourquoi mon DHT22 renvoie nan ?', 'Quelle broche pour un capteur analogique ?', 'Benchmark de la flotte'];
-  A.page({
-    id: 'assistant', title: 'Assistant', icon: 'chat', group: 'build',
-    desc: 'Questions sur le labo, le câblage et les capteurs',
-    render(el) {
-      const hist = store.get('chat', []);
-      el.innerHTML = `<div class="grid g-3"><div class="card span-2" style="display:flex;flex-direction:column"><div class="chat" id="ch-log"></div>
-        <div class="chips scroll" style="padding:0 12px 10px" id="ch-sug">${SUGGEST.map((s) => `<button class="chip">${esc(s)}</button>`).join('')}</div>
-        <form class="chat-input" id="ch-form"><input class="input" id="ch-in" placeholder="Posez votre question…" maxlength="500" autocomplete="off"><button class="btn primary" type="submit">${icon('play')}<span class="hide-sm">Envoyer</span></button></form></div>
-        <div class="stack"><div class="card pad small"><h3 style="margin-bottom:8px">Ce que sait faire l'assistant</h3><ul style="margin:0;padding-left:18px;color:var(--text-2)"><li>Résumer l'état du laboratoire (workers, jobs, mémoire, microSD).</li><li>Lancer des actions sûres : « check-up », « benchmark », « scan i2c », « ping », « identifie ».</li><li>Répondre sur les capteurs du catalogue : câblage, bibliothèques, pièges.</li><li>Avec une IA en ligne configurée (Réglages) : réponses complètes, réservées à l'administrateur.</li></ul></div>
-          <div class="card pad small"><h3 style="margin-bottom:8px">Confidentialité</h3><p class="muted">En mode local, rien ne quitte le MASTER. Le mode en ligne n'envoie que votre question et un résumé de l'état du labo.</p><button class="btn sm" style="margin-top:10px" id="ch-clear">${icon('trash')}Effacer la conversation</button></div></div></div>`;
-      const log = $('#ch-log', el);
-      const push = (who, text, extra) => {
-        const m = document.createElement('div');
-        m.className = 'msg ' + who;
-        m.innerHTML = linkify(esc(text)) + (extra ? `<span class="mode">${esc(extra)}</span>` : '');
-        log.appendChild(m);
-        log.scrollTop = log.scrollHeight;
-        return m;
-      };
-      if (!hist.length) push('bot', 'Bonjour ! Je connais l\'état du laboratoire et les ' + ((window.LAB.MODULES || []).length) + ' modules du catalogue. Posez une question ou choisissez une suggestion.');
-      hist.forEach((h) => push(h.who, h.text, h.extra));
-      const ask = async (q) => {
-        q = q.trim();
-        if (!q) return;
-        push('me', q);
-        const wait = push('bot', '…');
-        let r = null;
-        const local = catalogAnswer(q);
-        try {
-          if (A.piRequest) r = await A.piRequest('/api/v1/assistant/chat', { method: 'POST', body: JSON.stringify({ q }) });
-        } catch (e) { /* Le Pi peut être arrêté : le MASTER garde ses réponses locales. */ }
-        if (!r) {
-          try { r = await api('/api/agent/chat', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ q }).toString() }); }
-          catch (e) { r = { answer: e.status === 429 ? 'Patientez une seconde entre deux questions.' : 'Assistant injoignable : ' + e.message, mode: 'erreur' }; }
-        }
-        let answer = r.answer || '';
-        if (local && (r.mode === 'local' || r.mode === 'erreur')) answer = local + (answer && r.mode === 'local' ? '\n\n' + answer : '');
-        const extra = [r.mode === 'online' ? 'IA en ligne' : r.mode === 'research' ? 'recherche web' : r.mode === 'local' ? 'mode local' : r.mode].concat(r.actions || []).filter(Boolean).join(' · ');
-        wait.innerHTML = linkify(esc(answer)) + `<span class="mode">${esc(extra)}</span>`;
-        log.scrollTop = log.scrollHeight;
-        const h = store.get('chat', []).concat([{ who: 'me', text: q }, { who: 'bot', text: answer, extra }]).slice(-40);
-        store.set('chat', h);
-        if (r.actions && r.actions.length) A.refreshState();
-      };
-      $('#ch-form', el).addEventListener('submit', (e) => { e.preventDefault(); const i = $('#ch-in', el); ask(i.value); i.value = ''; });
-      $('#ch-sug', el).addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) ask(b.textContent); });
-      $('#ch-clear', el).onclick = () => { store.set('chat', []); A.refresh(); };
-      setTimeout(() => $('#ch-in', el).focus(), 50);
-    }
-  });
-  const linkify = (h) => h.replace(/(#library\?p=[a-z0-9_]+)/g, '<a href="$1" style="color:inherit;text-decoration:underline">ouvrir la fiche</a>');
+  /* La page « Patricia » (assistante) est dans 55_patricia.js ; elle réutilise catalogAnswer ci-dessous. */
   /* Réponses immédiates tirées du catalogue embarqué (fonctionne sans Internet). */
+  A.catalogAnswer = catalogAnswer;
   function catalogAnswer(q) {
     const LAB = window.LAB, nq = A.norm(q);
     if (!LAB.MODULES) return null;

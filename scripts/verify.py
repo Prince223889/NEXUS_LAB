@@ -86,8 +86,13 @@ def main() -> int:
     routes = set(re.findall(r'\.uri = "(/api/[^"]+)"', api_c)) | set(re.findall(r'REG\("(/api/[^"]+)"', api_c))
     ui_all = "\n".join(read(p) for p in sorted((WWW / "src").glob("*.js")) if p.name not in ("90_demo.js", "36_companion.js"))
     used = set(re.findall(r"['`](/api/[a-z0-9/_-]+)", ui_all))
-    # Pi companion endpoints are proxied directly over the LAN and are not ESP32 routes.
-    used.discard("/api/v1/assistant/chat")
+    # Les routes /api/v1/… appartiennent à l'agent du Raspberry Pi (pi/nexus_agent.py, pi/patricia/api.py),
+    # pas au MASTER : elles sont vérifiées à part, contre le code du Pi.
+    pi_used = {u for u in used if u.startswith("/api/v1/")}
+    used -= pi_used
+    pi_src = read(ROOT / "pi" / "nexus_agent.py") + read(ROOT / "pi" / "patricia" / "api.py")
+    for u in sorted(pi_used):
+        check(u.rstrip("/") in pi_src, f"l'interface appelle {u} qui n'existe pas dans l'agent du Pi")
     for u in sorted(used):
         ok = u in routes or any(r.endswith("/*") and u.startswith(r[:-1]) for r in routes)
         check(ok, f"l'interface appelle {u} qui n'existe pas dans le firmware")
@@ -206,6 +211,29 @@ console.log(JSON.stringify(bad));
         check(r.returncode == 0, "autotest du banc fantôme en échec : " + (r.stdout.strip().splitlines() or [""])[-1] + r.stderr.strip()[:300])
         if r.returncode == 0:
             print("Banc fantôme : " + r.stdout.strip().splitlines()[-1])
+
+    # 10. Patricia et flotte de véhicules
+    pat = ROOT / "pi" / "patricia"
+    for mod in ("memory", "diagnose", "intents", "knowledge", "llm", "engine", "fleet", "fleet_net", "voice", "api"):
+        check((pat / f"{mod}.py").exists(), f"pi/patricia/{mod}.py manquant")
+    agent = read(ROOT / "pi" / "nexus_agent.py")
+    check("patricia_api.handle" in agent, "les routes de Patricia ne sont pas branchées dans nexus_agent.py")
+    check("patricia" in read(ROOT / "pi" / "install.sh"), "pi/install.sh n'installe pas le paquet patricia")
+    veh = read(ROOT / "firmware" / "vehicle" / "vehicle.ino")
+    vcfg = read(ROOT / "firmware" / "vehicle" / "config.h")
+    fnet = read(pat / "fleet_net.py")
+    check(re.search(r"CMD_PORT = (\d+)", fnet).group(1) in veh and re.search(r"TELEMETRY_PORT = (\d+)", fnet).group(1) in veh,
+          "ports UDP du protocole NXV1 différents entre fleet_net.py et vehicle.ino")
+    for cmd in ("GOTO", "DRIVE", "STOP", "SETPOSE"):
+        check(f'"{cmd}"' in fnet and f'"{cmd}"' in veh, f"commande NXV1 {cmd} absente d'un côté")
+    check(re.search(r'LAB_AP_PASSWORD\s+"([^"]+)"', vcfg).group(1) == ap_w, "mot de passe Wi-Fi du firmware véhicule différent du worker")
+    check("MAX_LEASE_MS" in veh and "bail_expire" in veh, "le firmware véhicule n'arrête plus les moteurs à l'expiration du bail")
+    check("OBSTACLE_STOP_MM" in veh, "le firmware véhicule n'a plus d'arrêt sur obstacle")
+    r = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", str(ROOT / "pi" / "tests")], capture_output=True, text=True, cwd=ROOT)
+    tail = (r.stderr.strip().splitlines() or [""])
+    check(r.returncode == 0, "tests de Patricia en échec : " + " | ".join(l for l in tail if "FAIL" in l or "Error" in l)[:400])
+    if r.returncode == 0:
+        print("Patricia : " + next((l for l in tail if l.startswith("Ran ")), "tests OK"))
 
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):

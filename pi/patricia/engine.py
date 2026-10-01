@@ -721,7 +721,7 @@ def formation(fleet, vids: list[str], kind: str) -> dict:
 
 
 def _title_from(text: str) -> str:
-    m = re.search(r"(?:faire|creer|créer|construire|fabriquer|réaliser|realiser|monter|concevoir)\s+(?:un|une|le|la|des)?\s*(.{4,60}?)(?:\s+avec\b|\s+pour\b|\s+sur\b|[.,!?]|$)", text, re.I)
+    m = re.search(r"(?:faire|creer|créer|construire|fabriquer|réaliser|realiser|monter|concevoir)\s+(?:(?:une|un|les|le|la|des|du)\s+|l['’])?(.{4,60}?)(?:\s+avec\b|\s+pour\b|\s+sur\b|[.,!?]|$)", text, re.I)
     return m.group(1).strip().capitalize() if m else ""
 
 
