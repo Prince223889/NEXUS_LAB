@@ -16,6 +16,8 @@ Corps des POST : `application/x-www-form-urlencoded` sauf mention **JSON**. 🔒
 |---|---|---|
 | GET | `/api/netmon?since=N` | `{armed, last, frames:[{seq,age_ms,dir,proto,worker,ip,len,summary}], metrics:[{worker,jitter_ms,loss,rx,last_ms}]}` — décodage des trames **du labo** (voir `PROTOCOLES.md`) |
 | POST 🔒 | `/api/netmon/arm` | **JSON** `{on:bool}` : arme/désarme la capture (désarmée = coût nul ; l'arrêt vide l'anneau) |
+| GET | `/api/link` | Liaison S3 → Pi (sondée toutes les 20 s) : `{pi, ok, rtt_ms, loss_pct, min_ms, max_ms, jitter_ms, samples, sent, lost, hello_age_s, last_ok_age_s, history[]}` (−1 = sonde perdue) |
+| GET | `/api/link/hello?port=8088` | Annonce du Pi (réservée aux clients 192.168.4.2-254 du point d'accès) ; le S3 retient son adresse |
 
 ## État et système
 | Méthode | Route | Description |
@@ -93,6 +95,8 @@ Types de job : `PING`, `SYSTEM_TEST` (alias `CHECKUP`), `BENCHMARK`, `FS_TEST`, 
 - `POST /api/v1/projects/save` : sauvegarde du sketch, `project.json` et README dans `PROJECTS/MY_PROJECTS` sur la carte FAT32 du Pi (ou microSD directe en mode S3 seul).
 - POST /api/v1/build : met le build en file Pi; le binaire final vérifié est publié dans FIRMWARE/ sur la microSD de données du Pi. La base de jobs reste dans /srv/nexus.
 - GET /api/v1/build/estimate?project=&board= : temps prévu avant que le firmware soit prêt (`build_s`, `wait_s`, `total_s`, `basis` = cache, project, board ou default, `ahead` = compilations en file).
+- `GET /api/v1/ping` (public) : réponse minimale pour les sondes du S3. `GET /api/v1/link[?now=1]` : liaison Pi → S3 (le Pi s'annonce au S3 toutes les 30 s, `NEXUS_S3_URL`, `NEXUS_LINK_PERIOD`) ; `now=1` mesure tout de suite.
+- `GET/POST /api/v1/patricia/github` : état ou réglage du jeton GitHub de Patricia (le jeton n'est jamais renvoyé).
 - Les routes Pi privées exigent `Authorization: Bearer <NEXUS_TOKEN>`. Le lien firmware temporaire signé est lu par le worker après autorisation explicite du MASTER S3.
 - `/api/v1/patricia/*` (assistante) et `/api/v1/fleet/*` (flotte de véhicules) : voir [PATRICIA.md](PATRICIA.md#api-pi-port-8088-jeton-bearer).
 - `/api/v1/appstudio/*` (Studio APK) et `/apps/<id>/` (appli web publique) : voir `pi/appstudio/api.py` et [STUDIO_APK.md](STUDIO_APK.md).

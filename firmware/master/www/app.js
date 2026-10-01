@@ -1,4 +1,4 @@
-/* ESP32 LAB — app.js généré depuis www/src (19 fichiers). Ne pas modifier : éditez www/src. */
+/* ESP32 LAB — app.js généré depuis www/src (20 fichiers). Ne pas modifier : éditez www/src. */
 /* ---- 10_core.js ---- */
 /* ESP32 LAB 6 — application web du MASTER (PC, tablette, téléphone).
  * Fichier source : les fichiers de www/src/ sont concaténés dans www/app.js par tools/bundle_www.py
@@ -1996,7 +1996,7 @@ A.piReadProject=async id=>{const {data}=await pi('/api/v1/projects/'+encodeURICo
 A.piSaveProject=async(id,files)=>{const {data}=await pi('/api/v1/projects/save',{method:'POST',body:JSON.stringify({project_id:id,files})});return data;};
 A.piRequest=async(path,opts)=>{const {data}=await pi(path,opts);return data;};
 A.piBase=()=>cleanUrl(cfg.url);A.piToken=()=>cfg.token;
-A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
+A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
 })();
 /* ---- 37_project_builder.js ---- */
 /* Créateur de projet guidé, local et explicable */
@@ -2739,6 +2739,59 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
       return () => clearInterval(timer);
     }
   });
+})();
+/* ---- 43_link.js ---- */
+/* Liaison S3 ↔ Pi : résultats des tests réguliers du canal Wi-Fi, dans les deux sens.
+ * Le S3 sonde le Pi toutes les 20 s (/api/link) ; le Pi s'annonce au S3 toutes les 30 s et mesure sa réponse (/api/v1/link). */
+(function () {
+  'use strict';
+  const A = window.APP;
+  const { $, esc, icon, api, lineChart, toast } = A;
+  const fmt = (v, u) => (v == null ? '—' : `${v} ${u}`);
+  const quality = (l) => (!l || !l.samples ? ['', 'aucune mesure'] : !l.up && !l.ok ? ['bad', 'coupée'] : l.loss_pct > 20 || l.rtt_ms > 300 ? ['warn', 'instable'] : ['ok', 'bonne']);
+
+  function side(title, sub, l, err) {
+    if (err) return `<section class="card"><div class="card-h"><h2 class="grow">${title}</h2><span class="badge">indisponible</span></div><div class="card-b small muted">${esc(err)}</div></section>`;
+    const [cls, word] = quality(l);
+    const hist = (l.history || []).map((v) => (v == null || v < 0 ? null : v));
+    const lost = (l.history || []).filter((v) => v == null || v < 0).length;
+    return `<section class="card"><div class="card-h"><h2 class="grow">${title}</h2><span class="badge ${cls}">${word}</span></div><div class="card-b">
+      <div class="small muted">${sub}</div>
+      <div class="grid g-4" style="margin:12px 0">
+        <div><div class="eyebrow">LATENCE</div><b>${fmt(l.rtt_ms, 'ms')}</b></div>
+        <div><div class="eyebrow">GIGUE</div><b>${fmt(l.jitter_ms, 'ms')}</b></div>
+        <div><div class="eyebrow">PERTE</div><b>${fmt(l.loss_pct, '%')}</b></div>
+        <div><div class="eyebrow">MIN / MAX</div><b>${l.min_ms == null ? '—' : l.min_ms + ' / ' + l.max_ms + ' ms'}</b></div>
+      </div>
+      ${hist.some((v) => v != null) ? lineChart([{ data: hist, fill: true, width: 1.6 }], { w: 600, h: 90, axis: false, dots: false, label: 'latence' }) : ''}
+      <div class="hint">${l.samples || 0} sonde(s) récentes, ${lost} perdue(s) · une série toutes les ${l.period_s || '?'} s</div></div></section>`;
+  }
+
+  async function load(el, now) {
+    let s3 = null, pi = null, e3 = '', ep = '';
+    try { s3 = await api('/api/link'); } catch (e) { e3 = 'Le MASTER ne répond pas : ' + e.message; }
+    try {
+      if (!A.piRequest || !(A.piToken && A.piToken())) throw new Error('configure le Pi dans Compagnon Pi');
+      pi = await A.piRequest('/api/v1/link' + (now ? '?now=1' : ''));
+    } catch (e) { ep = 'Pi injoignable : ' + e.message; }
+    const box = $('#lk-body', el); if (!box) return;
+    const piName = s3 && s3.pi ? `Pi annoncé en ${esc(s3.pi)}` : 'Le Pi ne s\'est pas encore annoncé au S3 (il le fait toutes les 30 s).';
+    box.innerHTML = `<div class="grid g-2">${side('S3 → Pi', piName, s3, e3)}${side('Pi → S3', pi ? `Le Pi interroge ${esc(pi.s3)}` : '', pi, ep)}</div>`;
+  }
+
+  A.page({
+    id: 'link', title: 'Liaison S3 ↔ Pi', icon: 'wifi', group: 'sys',
+    desc: 'Tests réguliers du canal Wi-Fi entre le MASTER et le Raspberry Pi',
+    render(el) {
+      el.innerHTML = `<div class="stack"><div class="hero"><div><div class="eyebrow">NEXUS · CANAL WI-FI</div><h1>Liaison S3 ↔ Pi</h1>
+        <p>Le S3 teste le Pi toutes les 20 s et le Pi teste le S3 toutes les 30 s. Une liaison perdue ou rétablie est notée dans le journal d'événements.</p></div>
+        <div><button class="btn primary" id="lk-now">${icon('refresh')}Tester maintenant</button></div></div><div id="lk-body"><div class="card pad muted">Mesure…</div></div></div>`;
+      $('#lk-now', el).onclick = async () => { await load(el, true); toast('Liaison testée', 'ok'); };
+      load(el, false);
+      const t = setInterval(() => { if (!el.isConnected) { clearInterval(t); return; } load(el, false); }, 10000);
+    }
+  });
+  A.commands.push({ title: 'Tester la liaison S3 ↔ Pi', group: 'Page', icon: 'wifi', run: () => A.go('link') });
 })();
 /* ---- 46_flash.js ---- */
 /* Flash & montages : page « USB & Flash » (Arduino, ESP32, ESP32-S3, ESP32-C3 par câble) avec moniteur de flash,
@@ -5794,7 +5847,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
     const open = $('#ph-open', el); if (open) open.onclick = () => N.openBox();
     const s = $('#ph-sync', el); if (s) s.onclick = async () => { s.disabled = true; await sync(false); render(el); };
   }
-  A.page({ id: 'phone', title: 'Téléphone', icon: 'phone', group: 'system', desc: 'Travail hors ligne sur le téléphone et envoi au box', render });
+  A.page({ id: 'phone', title: 'Téléphone', icon: 'phone', group: 'sys', desc: 'Travail hors ligne sur le téléphone et envoi au box', render });
 
   install();
   A.Phone.afterBoot = () => {
@@ -6088,6 +6141,7 @@ A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Comp
       const p = url.pathname, q = (k) => url.searchParams.get(k), b = body(opts);
       if (p === '/api/session') return ok({ admin, version: '6.0.0' });
       if (p === '/api/feeds') return ok(state().feeds);
+      if (p === '/api/link') { const h = Array.from({ length: 60 }, (_, i) => (i === 41 ? -1 : Math.round(rnd(9, 26) + (i % 17 === 0 ? 30 : 0)))); const okv = h.filter((v) => v >= 0); return ok({ pi: '192.168.4.2:8088', ok: true, rtt_ms: Math.round(okv.reduce((a, b) => a + b, 0) / okv.length), loss_pct: 2, min_ms: Math.min(...okv), max_ms: Math.max(...okv), jitter_ms: 5, samples: h.length, sent: 1420, lost: 3, period_s: 20, hello_age_s: 12, last_ok_age_s: 4, history: h }); }
       if (p === '/api/state') { const s = state(); s.events = events.filter((e) => e.seq > (A.S.lastSeq || 0)); return ok(s); }
       if (p === '/api/events') { const since = Number(q('since') || 0); return ok({ last: seq, events: events.filter((e) => e.seq > since) }); }
       if (p === '/api/logout') { admin = false; return ok({ ok: true }); }

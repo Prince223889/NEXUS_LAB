@@ -283,6 +283,7 @@
       const p = url.pathname, q = (k) => url.searchParams.get(k), b = body(opts);
       if (p === '/api/session') return ok({ admin, version: '6.0.0' });
       if (p === '/api/feeds') return ok(state().feeds);
+      if (p === '/api/link') { const h = Array.from({ length: 60 }, (_, i) => (i === 41 ? -1 : Math.round(rnd(9, 26) + (i % 17 === 0 ? 30 : 0)))); const okv = h.filter((v) => v >= 0); return ok({ pi: '192.168.4.2:8088', ok: true, rtt_ms: Math.round(okv.reduce((a, b) => a + b, 0) / okv.length), loss_pct: 2, min_ms: Math.min(...okv), max_ms: Math.max(...okv), jitter_ms: 5, samples: h.length, sent: 1420, lost: 3, period_s: 20, hello_age_s: 12, last_ok_age_s: 4, history: h }); }
       if (p === '/api/state') { const s = state(); s.events = events.filter((e) => e.seq > (A.S.lastSeq || 0)); return ok(s); }
       if (p === '/api/events') { const since = Number(q('since') || 0); return ok({ last: seq, events: events.filter((e) => e.seq > since) }); }
       if (p === '/api/logout') { admin = false; return ok({ ok: true }); }

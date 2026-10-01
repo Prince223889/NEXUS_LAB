@@ -60,6 +60,10 @@ Démarre Raspberry Pi OS Lite 64 bits depuis la clé USB 8 Go, active SSH et gar
     sudo systemctl status nexus-agent
     curl -s http://127.0.0.1:8088/api/v1/health
 
+`install.sh` active aussi le service `nexus-boot` : à chaque démarrage, SSH, connexion au Wi-Fi du S3, agent et scripts de `/etc/nexus/boot.d/` (commande seule : `sudo bash pi/enable_boot.sh`, détails dans `pi/README.md`).
+
+Le canal Wi-Fi est testé en continu dans les deux sens : le Pi s'annonce au S3 toutes les 30 s, le S3 sonde le Pi toutes les 20 s. Latence, gigue et perte sont visibles dans **Système › Liaison S3 ↔ Pi** ; une coupure et son rétablissement sont notés dans le journal.
+
 La préparation de carte est la seule étape qui efface un support, et elle exige confirmation interactive. Consulte le jeton localement avec sudo grep '^NEXUS_TOKEN=' /etc/nexus/nexus.env; ne le partage pas et n’expose pas le port 8088 à Internet. Garde Ethernet ou une session SSH accessible pendant la configuration Wi-Fi.
 
 ## Studio, projets et APK

@@ -166,7 +166,7 @@
     const open = $('#ph-open', el); if (open) open.onclick = () => N.openBox();
     const s = $('#ph-sync', el); if (s) s.onclick = async () => { s.disabled = true; await sync(false); render(el); };
   }
-  A.page({ id: 'phone', title: 'Téléphone', icon: 'phone', group: 'system', desc: 'Travail hors ligne sur le téléphone et envoi au box', render });
+  A.page({ id: 'phone', title: 'Téléphone', icon: 'phone', group: 'sys', desc: 'Travail hors ligne sur le téléphone et envoi au box', render });
 
   install();
   A.Phone.afterBoot = () => {

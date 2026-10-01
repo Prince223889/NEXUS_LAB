@@ -327,6 +327,14 @@ console.log(JSON.stringify(bad));
     check("copyNexusWww" in read(ROOT / "mobile" / "app" / "build.gradle"), "APK : l'interface n'est plus embarquée")
     check("nexus-apk" in read(ROOT / ".github" / "workflows" / "android.yml"), "fabrication de l'APK sur GitHub absente")
 
+    lk = read(ROOT / "firmware" / "master" / "main" / "linktest.c")
+    check('"/api/link/hello"' in read(ROOT / "firmware" / "master" / "main" / "web_api.c") and "linktest.c" in read(ROOT / "firmware" / "master" / "main" / "CMakeLists.txt") and "linktest_start()" in read(ROOT / "firmware" / "master" / "main" / "app_main.c"),
+          "tests de liaison du S3 non branchés")
+    check("o[2] == 4" in lk, "le S3 doit n'accepter l'annonce du Pi que depuis son point d'accès")
+    check('path=="/api/v1/ping"' in agent and "def link_loop" in agent, "tests de liaison du Pi absents")
+    check('"/api/v1/patricia/github"' in read(ROOT / "pi" / "patricia" / "api.py") and "github_push" in read(ROOT / "pi" / "patricia" / "engine.py"), "envoi GitHub de Patricia absent")
+    check("0o600" in read(ROOT / "pi" / "patricia" / "github.py"), "le jeton GitHub doit être stocké en 0600")
+
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):
         t = read(p)

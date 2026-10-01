@@ -537,6 +537,31 @@ class AgentHttpTests(unittest.TestCase):
                     c.execute("INSERT INTO jobs(id,project,board,status,priority,created,finished,elapsed,kind) VALUES('j9','serre','esp32s3','success',50,?,?,95,'esp')", (agent.now(), agent.now()))
                 st, est = call("/api/v1/build/estimate?project=serre&board=esp32s3")
                 self.assertEqual((est["basis"], est["build_s"]), ("project", 95))
+                # liaison Pi ↔ S3 : ping public, annonce au S3, perte quand le S3 ne répond plus
+                st, pg = call("/api/v1/ping", token=False)
+                self.assertEqual((st, pg), (200, {"ok": True}))
+                import http.server
+                seen = []
+
+                class S3(http.server.BaseHTTPRequestHandler):
+                    def log_message(self, *a):
+                        pass
+
+                    def do_GET(self):
+                        seen.append(self.path)
+                        self.send_response(200); self.send_header("Content-Type", "application/json"); self.end_headers(); self.wfile.write(b'{"ok":true}')
+                s3 = http.server.ThreadingHTTPServer(("127.0.0.1", 0), S3)
+                threading.Thread(target=s3.serve_forever, daemon=True).start()
+                agent.S3_URL = f"http://127.0.0.1:{s3.server_address[1]}"
+                st, lk = call("/api/v1/link?now=1")
+                self.assertTrue(lk["up"] and lk["samples"] == 1 and lk["loss_pct"] == 0 and lk["rtt_ms"] is not None)
+                self.assertTrue(seen[0].startswith("/api/link/hello?port="))
+                s3.shutdown(); s3.server_close()
+                for _ in range(3):
+                    agent.link_probe()
+                st, lk = call("/api/v1/link")
+                self.assertFalse(lk["up"])
+                self.assertEqual((lk["samples"], lk["loss_pct"], lk["history"][1:]), (4, 75, [None, None, None]))
                 srv.shutdown()
                 srv.server_close()
             finally:

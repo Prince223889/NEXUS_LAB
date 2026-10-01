@@ -422,6 +422,41 @@ def record_app_build(pid,artifact,digest):
     event("INFO","android","APK du Studio APK fabriquée",jid,pid,"android","success"); add_message("Studio APK",f"APK prête : {pid} · SHA-256 {digest[:12]}…")
     return jid
 
+# ----------------------------------------------------------------------------- liaison Wi-Fi Pi ↔ S3
+# Toutes les 30 s le Pi s'annonce au S3 (GET /api/link/hello) et mesure le temps de réponse ; le S3, lui, sonde le Pi
+# (GET /api/v1/ping) toutes les 20 s. Les deux côtés publient latence, gigue et perte (/api/link sur le S3, /api/v1/link ici).
+S3_URL=os.getenv("NEXUS_S3_URL","http://192.168.4.1").rstrip("/")
+LINK_PERIOD=float(os.getenv("NEXUS_LINK_PERIOD","30"))
+LINK={"hist":[],"sent":0,"lost":0,"last_ok":None,"up":None,"s3":S3_URL}
+LINK_LOCK=threading.Lock()
+def link_probe():
+    t0=time.monotonic()
+    try:
+        with urllib.request.urlopen(urllib.request.Request(f"{S3_URL}/api/link/hello?port={PORT}",headers={"User-Agent":"NEXUS-LAB-Pi"}),timeout=3) as r:
+            r.read(2048); ok=r.status==200
+    except (OSError,ValueError): ok=False
+    ms=round((time.monotonic()-t0)*1000) if ok else None
+    with LINK_LOCK:
+        LINK["hist"]=(LINK["hist"]+[ms])[-120:]; LINK["sent"]+=1
+        if ok: LINK["last_ok"]=now()
+        else: LINK["lost"]+=1
+        was=LINK["up"]; recent=LINK["hist"][-3:]
+        LINK["up"]=True if ok else (False if len(recent)==3 and all(v is None for v in recent) else was)
+    if was is not None and LINK["up"]!=was:
+        event("INFO" if LINK["up"] else "WARN","liaison","Liaison Pi ↔ S3 "+("rétablie" if LINK["up"] else "perdue : 3 essais sans réponse du S3"))
+    return ms
+def link_stats():
+    with LINK_LOCK:
+        h=list(LINK["hist"]); ok=[v for v in h if v is not None]
+        jit=[abs(a-b) for a,b in zip(ok,ok[1:])]
+        return {"s3":LINK["s3"],"up":bool(LINK["up"]),"samples":len(h),"rtt_ms":round(sum(ok)/len(ok)) if ok else None,"min_ms":min(ok) if ok else None,
+                "max_ms":max(ok) if ok else None,"jitter_ms":round(sum(jit)/len(jit)) if jit else 0,"loss_pct":round(100*(len(h)-len(ok))/len(h)) if h else 0,
+                "sent":LINK["sent"],"lost":LINK["lost"],"last_ok":LINK["last_ok"],"period_s":LINK_PERIOD,"history":h}
+def link_loop():
+    while True:
+        link_probe()
+        if stop.wait(LINK_PERIOD): break
+
 class AgentHost:
     """Ce que Patricia peut demander à l'agent : files de compilation, projets, bibliothèques, flotte."""
     def __init__(self,fleet): self.fleet=fleet
@@ -528,6 +563,7 @@ class Api(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed=urlparse(self.path); path=parsed.path; q=parse_qs(parsed.query)
         if path=="/webhooks/whatsapp": self.whatsapp_challenge(q); return
+        if path=="/api/v1/ping": self.sendj(200,{"ok":True}); return
         if path=="/api/v1/health":
             n=sum(1 for p in PROJECTS.iterdir() if p.is_dir()) if PROJECTS.exists() else 0
             try: shared_free=shutil.disk_usage(PROJECTS).free
@@ -544,6 +580,9 @@ class Api(BaseHTTPRequestHandler):
         if not (path.startswith("/download/apps/") or path.startswith("/download/firmware/")) and self.denied(): return
         if ENGINE and patricia_api.handle(self,"GET",path,q,ENGINE,FLEET,body_json): return
         if APPCTX and appstudio_api.handle(self,"GET",path,APPCTX,body_json): return
+        if path=="/api/v1/link":
+            if q.get("now"): link_probe()
+            self.sendj(200,link_stats()); return
         if path=="/api/v1/assistant/config":
             cfg=assistant_config()
             self.sendj(200,{"endpoint":cfg["endpoint"],"model":cfg["model"],"configured":bool(cfg["endpoint"] and cfg["key"]),"key_set":bool(cfg["key"])}); return
@@ -846,6 +885,7 @@ def main():
             stop.wait(86400)
     threading.Thread(target=backup_loop,name="patricia-backup",daemon=True).start()
     print("Patricia prête ; pilotage:", "actif" if FLEET.transport else FLEET.error,flush=True)
+    if LINK_PERIOD>0: threading.Thread(target=link_loop,name="nexus-link",daemon=True).start()
     for i in range(BUILD_WORKERS): threading.Thread(target=worker_loop,name=f"nexus-builder-{i+1}",daemon=True).start()
     server=ThreadingHTTPServer(("0.0.0.0",PORT),Api); print("NEXUS-AGENT sur le port",PORT,"; workers de compilation:",BUILD_WORKERS,flush=True)
     try: server.serve_forever()

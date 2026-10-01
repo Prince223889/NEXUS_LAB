@@ -7,6 +7,7 @@
 #include "bench.h"
 #include "captive_dns.h"
 #include "netmon.h"
+#include "linktest.h"
 #include "event_log.h"
 #include "http_util.h"
 #include "job_engine.h"
@@ -122,6 +123,7 @@ static esp_err_t health_get(httpd_req_t *r)
     cJSON_AddNumberToObject(j, "offline", total - online);
     cJSON_AddNumberToObject(j, "queue_limit", JOB_MAX);
     cJSON_AddNumberToObject(j, "heap", esp_get_free_heap_size());
+    linktest_summary_json(cJSON_AddObjectToObject(j, "link"));
     return http_json(r, j);
 }
 
@@ -1143,6 +1145,8 @@ void web_api_register(httpd_handle_t h)
         {.uri = "/api/feeds", .method = HTTP_GET, .handler = feeds_get},
         {.uri = "/api/events", .method = HTTP_GET, .handler = events_get},
         {.uri = "/api/netmon", .method = HTTP_GET, .handler = netmon_get},
+        {.uri = "/api/link", .method = HTTP_GET, .handler = linktest_get},
+        {.uri = "/api/link/hello", .method = HTTP_GET, .handler = linktest_hello_get},
         {.uri = "/api/netmon/arm", .method = HTTP_POST, .handler = netmon_arm_post},
         {.uri = "/api/selftest", .method = HTTP_GET, .handler = selftest_get},
         {.uri = "/api/report/snapshot", .method = HTTP_POST, .handler = report_snapshot_post},

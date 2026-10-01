@@ -40,6 +40,6 @@ A.piReadProject=async id=>{const {data}=await pi('/api/v1/projects/'+encodeURICo
 A.piSaveProject=async(id,files)=>{const {data}=await pi('/api/v1/projects/save',{method:'POST',body:JSON.stringify({project_id:id,files})});return data;};
 A.piRequest=async(path,opts)=>{const {data}=await pi(path,opts);return data;};
 A.piBase=()=>cleanUrl(cfg.url);A.piToken=()=>cfg.token;
-A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'system',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
+A.page({id:'companion',title:'Compagnon Pi',icon:'cpu',group:'sys',desc:'Compilation, APK de projet et messages sur le réseau local',render:panel});
 })();
 
