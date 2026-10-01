@@ -72,12 +72,13 @@ public final class MainActivity extends Activity {
   private void webApp(){
     FrameLayout root=new FrameLayout(this); web=new WebView(this); progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); progress.setMax(100); root.addView(web,new FrameLayout.LayoutParams(-1,-1)); FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-1,dp(3),Gravity.TOP);root.addView(progress,p);setContentView(root);
     WebSettings s=web.getSettings();s.setJavaScriptEnabled(true);s.setDomStorageEnabled(true);s.setAllowFileAccess(false);s.setAllowContentAccess(true);s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);s.setSupportMultipleWindows(false);web.setBackgroundColor(Color.rgb(16,22,33));
-    web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return route(r.getUrl());}@Override public void onPageFinished(WebView v,String u){progress.setVisibility(View.GONE);}});
+    web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return route(r.getUrl());}@Override public void onPageStarted(WebView v,String u,android.graphics.Bitmap f){pageUrl=u==null?"":u;}@Override public void onPageFinished(WebView v,String u){progress.setVisibility(View.GONE);}});
     web.setWebChromeClient(new WebChromeClient(){@Override public void onProgressChanged(WebView v,int n){progress.setProgress(n);progress.setVisibility(n>=100?View.GONE:View.VISIBLE);}@Override public boolean onShowFileChooser(WebView v,ValueCallback<Uri[]> cb,FileChooserParams params){if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=cb;try{startActivityForResult(params.createIntent(),PICK_FILE);return true;}catch(Exception e){fileCallback=null;return false;}}});
     web.setDownloadListener((u,a,d,m,z)->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(u)));}catch(Exception ignored){}});
     // Patricia : micro et voix natifs d'Android (les navigateurs refusent le micro sur http://192.168.4.1).
     web.addJavascriptInterface(new NativeBridge(),"NexusNative");
     tts=new TextToSpeech(this,status->{if(status==TextToSpeech.SUCCESS&&tts!=null)tts.setLanguage(Locale.FRANCE);});
+    outbox=new Outbox(this);
     loadMaster();
   }
 
@@ -93,6 +94,13 @@ public final class MainActivity extends Activity {
     @JavascriptInterface public void toast(String text){handler.post(()->Toast.makeText(MainActivity.this,text==null?"":text,Toast.LENGTH_SHORT).show());}
     @JavascriptInterface public void barColor(String hex){handler.post(()->{try{int c=Color.parseColor(hex);getWindow().setStatusBarColor(c);getWindow().setNavigationBarColor(c);}catch(Exception ignored){}});}
     @JavascriptInterface public void speakWith(String text,float rate,float pitch){handler.post(()->{if(tts==null||text==null)return;tts.setSpeechRate(Math.max(0.5f,Math.min(1.6f,rate)));tts.setPitch(Math.max(0.7f,Math.min(1.4f,pitch)));try{for(android.speech.tts.Voice v:tts.getVoices()){if(v.getLocale()!=null&&"fr".equals(v.getLocale().getLanguage())&&v.getName().toLowerCase(Locale.ROOT).contains("female")){tts.setVoice(v);break;}}}catch(RuntimeException e){}tts.speak(text.length()>3500?text.substring(0,3500):text,TextToSpeech.QUEUE_FLUSH,null,"patricia");});}
+    /* Mode téléphone : boîte d'envoi chiffrée, lisible seulement par la copie embarquée et par l'adresse du box. */
+    @JavascriptInterface public String phone(){return offlineMode?"offline":"";}
+    @JavascriptInterface public String outboxList(){if(!trusted()||outbox==null)return "[]";return outbox.list().toString();}
+    @JavascriptInterface public String outboxAdd(String json){if(!trusted()||outbox==null||json==null||json.length()>2_000_000)return "";try{return outbox.add(new JSONObject(json));}catch(Exception e){return "";}}
+    @JavascriptInterface public void outboxDone(String ids){if(!trusted()||outbox==null)return;try{outbox.remove(new JSONArray(ids));}catch(Exception ignored){}}
+    @JavascriptInterface public String boxUrl(){return trusted()?masterUrl():"";}
+    @JavascriptInterface public void openBox(){handler.post(()->{stopBoxWatch();offlineMode=false;web.loadUrl(masterUrl());});}
     @JavascriptInterface public void speak(String text){handler.post(()->{if(tts!=null&&text!=null)tts.speak(text.length()>3500?text.substring(0,3500):text,TextToSpeech.QUEUE_FLUSH,null,"patricia");});}
   }
   private void voiceResult(boolean ok,String text){if(web!=null)web.evaluateJavascript("window.__nexusVoice&&window.__nexusVoice("+ok+","+JSONObject.quote(text==null?"":text)+")",null);}
@@ -161,8 +169,23 @@ public final class MainActivity extends Activity {
   private View gap(int h){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(1,dp(h)));return v;}
   private final Runnable poll=new Runnable(){public void run(){refresh();handler.postDelayed(this,5000);}};
   private void refresh(){if(live==null||master==null)return;String base=clean(master.getText().toString());if(!valid(base)){live.setText("Saisis l’adresse du MASTER S3.");return;}io.execute(()->{HttpURLConnection c=null;try{c=(HttpURLConnection)new URL(base+"/api/state").openConnection();c.setConnectTimeout(3500);c.setReadTimeout(3500);StringBuilder b=new StringBuilder();BufferedReader r=new BufferedReader(new InputStreamReader(c.getInputStream(),"UTF-8"));String l;while((l=r.readLine())!=null)b.append(l);JSONObject data=new JSONObject(b.toString());JSONArray workers=data.optJSONArray("workers");String status="MASTER joignable · "+(workers==null?"état reçu":workers.length()+" worker(s)");runOnUiThread(()->live.setText(status));}catch(Exception e){runOnUiThread(()->live.setText("MASTER injoignable. Vérifie Wi‑Fi et adresse. L’application reste disponible hors ligne."));}finally{if(c!=null)c.disconnect();}});}
-  private boolean route(Uri u){if("nexus".equals(u.getScheme())&&"connect".equals(u.getHost())){String value=u.getQueryParameter("url");if(valid(value)){getPreferences(0).edit().putString("master_url",clean(value)).apply();web.post(this::loadMaster);}return true;}if("http".equals(u.getScheme())||"https".equals(u.getScheme())){String h=u.getHost()==null?"":u.getHost().toLowerCase();if(h.equals("192.168.4.1")||h.endsWith(".local")||h.startsWith("192.168.")||h.startsWith("10.")||h.equals("localhost"))return false;try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}return false;}
-  private void loadMaster(){String u=getPreferences(0).getString("master_url","http://192.168.4.1");if(valid(u))web.loadUrl(clean(u));else web.loadUrl("file:///android_asset/landing.html");}
+  private boolean route(Uri u){if("file".equals(u.getScheme())&&String.valueOf(u.getPath()).startsWith("/android_asset/"))return false;if("nexus".equals(u.getScheme())&&"offline".equals(u.getHost())){web.post(this::loadOffline);return true;}if("nexus".equals(u.getScheme())&&"connect".equals(u.getHost())){String value=u.getQueryParameter("url");if(valid(value)){getPreferences(0).edit().putString("master_url",clean(value)).apply();web.post(this::loadMaster);}return true;}if("http".equals(u.getScheme())||"https".equals(u.getScheme())){String h=u.getHost()==null?"":u.getHost().toLowerCase();if(h.equals("192.168.4.1")||h.endsWith(".local")||h.startsWith("192.168.")||h.startsWith("10.")||h.equals("localhost"))return false;try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}return true;}return false;}
+  private volatile String pageUrl=""; private volatile boolean offlineMode=false; private Outbox outbox; private boolean boxSeen=false;
+  private static final String OFFLINE_URL="file:///android_asset/www/index.html";
+  private String masterUrl(){return clean(getPreferences(0).getString("master_url","http://192.168.4.1"));}
+  private boolean trusted(){String u=pageUrl;if(u.startsWith("file:///android_asset/www/"))return true;Uri p=Uri.parse(u),m=Uri.parse(masterUrl());return p.getHost()!=null&&p.getHost().equals(m.getHost())&&p.getPort()==m.getPort()&&String.valueOf(p.getScheme()).equals(m.getScheme());}
+  /** Le box répond-il ? (GET /api/health, 2,5 s). */
+  private boolean boxReachable(String base){HttpURLConnection c=null;try{c=(HttpURLConnection)new URL(base+"/api/health").openConnection();c.setConnectTimeout(2500);c.setReadTimeout(2500);return c.getResponseCode()<500;}catch(Exception e){return false;}finally{if(c!=null)c.disconnect();}}
+  private void loadMaster(){
+    String u=getPreferences(0).getString("master_url","http://192.168.4.1");
+    if(!valid(u)){web.loadUrl("file:///android_asset/landing.html");return;}
+    String base=clean(u);
+    io.execute(()->{boolean ok=boxReachable(base);runOnUiThread(()->{if(web==null)return;if(ok){offlineMode=false;web.loadUrl(base);}else loadOffline();});});
+  }
+  /** Copie de l'interface embarquée dans l'APK : on continue à travailler sans le box. */
+  private void loadOffline(){offlineMode=true;boxSeen=false;web.loadUrl(OFFLINE_URL);handler.removeCallbacks(boxWatch);handler.postDelayed(boxWatch,15000);}
+  private void stopBoxWatch(){handler.removeCallbacks(boxWatch);}
+  private final Runnable boxWatch=new Runnable(){public void run(){if(!offlineMode)return;String base=masterUrl();io.execute(()->{boolean ok=boxReachable(base);runOnUiThread(()->{if(!offlineMode||web==null)return;if(ok&&!boxSeen){boxSeen=true;web.evaluateJavascript("window.__nexusBox&&window.__nexusBox("+JSONObject.quote(base)+")",null);}else if(!ok)boxSeen=false;handler.postDelayed(boxWatch,20000);});});}};
   private boolean valid(String v){if(v==null)return false;Uri u=Uri.parse(v.trim());return("http".equals(u.getScheme())||"https".equals(u.getScheme()))&&u.getHost()!=null&&u.getUserInfo()==null;}
   private String clean(String v){String x=v.trim();while(x.endsWith("/"))x=x.substring(0,x.length()-1);return x;}
   @Override protected void onActivityResult(int req,int result,Intent data){super.onActivityResult(req,result,data);if(req==PICK_FILE&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}

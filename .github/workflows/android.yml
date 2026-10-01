@@ -1,0 +1,86 @@
+name: APK NEXUS
+
+# Fabrique l'APK NEXUS sur les serveurs de GitHub (plus besoin du PC).
+# - à chaque pull request : APK en « artifact » téléchargeable depuis l'onglet Actions ;
+# - à chaque push sur main : publiée aussi dans la Release « nexus-apk », lien direct stable :
+#   https://github.com/<propriétaire>/<dépôt>/releases/download/nexus-apk/nexus-lab.apk
+# Signature : si les secrets NEXUS_KEYSTORE_B64 et NEXUS_KEYSTORE_PASS existent (voir docs/ANDROID_SECURITE.md),
+# l'APK est signée avec ta clé, toujours la même, donc les mises à jour s'installent par-dessus. Sinon, clé de
+# débogage gardée en cache (peut changer si le cache expire : il faudra alors désinstaller avant de réinstaller).
+
+on:
+  push:
+    branches: [main, master]
+    paths: ['mobile/**', 'firmware/master/www/**', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['mobile/**', 'firmware/master/www/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: APK NEXUS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17', cache: gradle }
+      - uses: android-actions/setup-android@v3
+      - name: Plateforme Android 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" > /dev/null
+      - name: Clé de débogage gardée entre les fabrications
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: nexus-debug-keystore
+      - name: Clé de signature (secrets)
+        env:
+          KEYSTORE_B64: ${{ secrets.NEXUS_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/nexus.jks"
+            echo "NEXUS_KEYSTORE=$RUNNER_TEMP/nexus.jks" >> "$GITHUB_ENV"
+            echo "Signature : clé NEXUS (secrets du dépôt)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Signature : clé de débogage (ajoute NEXUS_KEYSTORE_B64 pour une clé stable)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Fabriquer l'APK
+        working-directory: mobile
+        env:
+          NEXUS_KEYSTORE_PASS: ${{ secrets.NEXUS_KEYSTORE_PASS }}
+          NEXUS_KEY_ALIAS: ${{ secrets.NEXUS_KEY_ALIAS }}
+          NEXUS_KEY_PASS: ${{ secrets.NEXUS_KEY_PASS }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          mkdir -p ../dist
+          cp app/build/outputs/apk/release/app-release.apk ../dist/nexus-lab.apk
+          cd ../dist && sha256sum nexus-lab.apk > nexus-lab.apk.sha256
+          unzip -l nexus-lab.apk | grep -E "assets/(www|player)/" >> "$GITHUB_STEP_SUMMARY"
+          echo "SHA-256 : $(cut -d' ' -f1 nexus-lab.apk.sha256)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Vérifier la signature
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs dist/nexus-lab.apk | head -3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-lab-apk
+          path: dist/
+      - name: Publier dans la Release « nexus-apk »
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="APK NEXUS fabriquée par GitHub Actions depuis ${GITHUB_SHA::7}. Lien direct : https://github.com/${GITHUB_REPOSITORY}/releases/download/nexus-apk/nexus-lab.apk"
+          if gh release view nexus-apk > /dev/null 2>&1; then
+            gh release upload nexus-apk dist/nexus-lab.apk dist/nexus-lab.apk.sha256 --clobber
+            gh release edit nexus-apk --notes "$NOTES"
+          else
+            gh release create nexus-apk dist/nexus-lab.apk dist/nexus-lab.apk.sha256 --title "APK NEXUS" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi
+          echo "Lien direct : https://github.com/${GITHUB_REPOSITORY}/releases/download/nexus-apk/nexus-lab.apk" >> "$GITHUB_STEP_SUMMARY"

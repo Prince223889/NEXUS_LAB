@@ -403,7 +403,7 @@
     (async () => {
       const m = bubble(log, 'bot', '<span class="pa-typing"><i></i><i></i><i></i></span>');
       try { const r = await pi('/api/v1/patricia/hello'); piOk = true; renderReply(log, m, r); if (prefs.speak) Voice.speak(r.speak || r.answer); }
-      catch (e) { piOk = false; renderReply(log, m, { answer: 'Bonjour ! Je suis Patricia. Le Raspberry Pi n\'est pas joignable : je réponds avec le catalogue du MASTER en attendant. Configure le Pi dans « Compagnon Pi » pour la mémoire, l\'IA et le pilotage.', cards: [], actions: [], mode: 'MASTER seul', suggestions: ['Comment brancher un BME280 ?', 'État du labo'] }); }
+      catch (e) { piOk = false; if (A.S.phone) { renderReply(log, m, { answer: 'Bonjour ! Je suis Patricia, en mode téléphone. Je réponds avec le catalogue embarqué, et si tu écris « note que … », je garde ta note sur le téléphone et je l\'envoie au box dès que tu le rejoins.', cards: [], actions: [], mode: 'téléphone', suggestions: ['Comment brancher un BME280 ?', 'Note que '] }); } else renderReply(log, m, { answer: 'Bonjour ! Je suis Patricia. Le Raspberry Pi n\'est pas joignable : je réponds avec le catalogue du MASTER en attendant. Configure le Pi dans « Compagnon Pi » pour la mémoire, l\'IA et le pilotage.', cards: [], actions: [], mode: 'MASTER seul', suggestions: ['Comment brancher un BME280 ?', 'État du labo'] }); }
       setPiState();
       try { voiceCaps = await pi('/api/v1/patricia/voice'); if (Voice.available()) micBtn.classList.remove('pa-mic-off'); } catch (e) { /* voix du Pi indisponible */ }
       if (pending) { store.set('patricia.pending', null); P.ask(pending); }

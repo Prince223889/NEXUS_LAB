@@ -12,3 +12,7 @@ Le tableau de bord d'une APK projet peut joindre le MASTER par HTTP sur le rése
 ## Version 1.2 : lecteur du Studio APK
 
 Depuis la version 1.2, cette APK contient `assets/player/` : si le Pi y ajoute `player/app.js`, elle démarre l'application conçue dans le **Studio APK** au lieu de l'interface du MASTER. Le Pi la renomme et la signe lui-même, sans Gradle (voir `docs/STUDIO_APK.md`). Construis-la une fois avec `scripts\build_android.bat`, puis envoie `app-debug.apk` au Pi depuis Studio APK → Publier. `assets/player/runtime.js` est une copie de `firmware/master/www/src/57_appruntime.js` : après l'avoir modifié, lance `python3 scripts/sync_app_runtime.py`.
+
+## Version 1.3 : mode téléphone
+
+L'APK embarque l'interface du MASTER (copiée depuis `firmware/master/www/` à la fabrication). Sans le box, elle ouvre cette copie : Studio, Bibliothèque, Studio APK et notes de Patricia restent utilisables. Le travail attend dans une boîte d'envoi chiffrée (AES-256-GCM, clé du Keystore Android), puis part au box dès qu'il est joignable. Fabrication sur GitHub Actions (`.github/workflows/android.yml`) avec lien direct dans la Release « nexus-apk ». Détails et contrôles de sécurité : `docs/ANDROID_SECURITE.md`.

@@ -304,6 +304,29 @@ console.log(JSON.stringify(bad));
     r = subprocess.run([sys.executable, str(ROOT / "scripts" / "repair.py"), "--check"], capture_output=True, text=True, cwd=ROOT)
     check(r.returncode == 0, "scripts/repair.py --check signale des fichiers à régénérer : " + r.stdout.strip()[:300])
 
+    # 14. Phase 5 : personnalité de Patricia, démarrage du Pi, mode téléphone, APK sur GitHub
+    check("STYLE_KEY" in read(ROOT / "pi" / "patricia" / "style.py") and "persona.PROMPTS" in read(ROOT / "pi" / "patricia" / "engine.py"), "style de Patricia non branché")
+    pa = read(WWW / "src" / "55_patricia.js")
+    check("ps-speak" in pa and "ps-style" in pa and "speakWith" in pa, "réglages voix ou personnalité absents de l'écran Patricia")
+    for f in ("nexus-boot.sh", "nexus-boot.service", "enable_boot.sh", "nexus-motd.sh"):
+        check((ROOT / "pi" / f).exists(), f"pi/{f} absent (démarrage automatique du Pi)")
+        if f.endswith(".sh") and shutil.which("bash"):
+            check(subprocess.run(["bash", "-n", str(ROOT / "pi" / f)]).returncode == 0, f"pi/{f} : erreur de syntaxe")
+    check("enable_boot.sh" in read(ROOT / "pi" / "install.sh"), "install.sh n'active pas le démarrage automatique")
+    check("/usr/local/lib/nexus/nexus-boot.sh" in read(ROOT / "pi" / "nexus-boot.service"), "le service de démarrage doit lancer une copie appartenant à root")
+    ph = read(WWW / "src" / "89_phone.js")
+    check("outboxAdd" in ph and "A.Phone.sync" in ph and "__nexusBox" in ph, "mode téléphone incomplet (boîte d'envoi, envoi au box)")
+    act = read(ROOT / "mobile" / "app" / "src" / "main" / "java" / "local" / "nexus" / "lab" / "MainActivity.java")
+    check("trusted()" in act and "OFFLINE_URL" in act and "outboxList" in act, "APK : mode hors ligne ou contrôle d'origine absent")
+    ob = read(ROOT / "mobile" / "app" / "src" / "main" / "java" / "local" / "nexus" / "lab" / "Outbox.java")
+    check("AndroidKeyStore" in ob and "AES/GCM/NoPadding" in ob, "APK : boîte d'envoi non chiffrée")
+    man = read(ROOT / "mobile" / "app" / "src" / "main" / "AndroidManifest.xml")
+    check('allowBackup="false"' in man and "dataExtractionRules" in man and "networkSecurityConfig" in man, "APK : sauvegardes ou réseau non verrouillés")
+    perms = set(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', man))
+    check(perms <= {"INTERNET", "RECORD_AUDIO", "VIBRATE"}, f"APK : permission inattendue {sorted(perms - {'INTERNET', 'RECORD_AUDIO', 'VIBRATE'})}")
+    check("copyNexusWww" in read(ROOT / "mobile" / "app" / "build.gradle"), "APK : l'interface n'est plus embarquée")
+    check("nexus-apk" in read(ROOT / ".github" / "workflows" / "android.yml"), "fabrication de l'APK sur GitHub absente")
+
     # 8. secrets
     for p in list((ROOT / "CONFIG").glob("*.json")) + list((ROOT / "SD_CARD").rglob("*.example.*")):
         t = read(p)

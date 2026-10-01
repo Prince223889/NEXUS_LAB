@@ -470,7 +470,8 @@
     const st = S.state;
     const dot = $('#conn-dot'), txt = $('#conn-text');
     if (dot) {
-      if (S.demo) { dot.className = 'dot warn'; txt.textContent = 'Mode démonstration'; }
+      if (S.phone) { dot.className = 'dot warn'; txt.innerHTML = '<a href="#phone">Téléphone · hors ligne</a>'; }
+      else if (S.demo) { dot.className = 'dot warn'; txt.textContent = 'Mode démonstration'; }
       else if (!S.online) { dot.className = 'dot bad'; txt.textContent = 'MASTER injoignable'; }
       else { dot.className = 'dot ok'; txt.textContent = (S.wsOk ? 'Temps réel' : 'Connecté') + (st && st.master ? ' · ' + st.master.ap_ip : ''); }
     }
@@ -730,7 +731,7 @@
     document.getElementById('app').innerHTML = shellHtml();
     window.addEventListener('hashchange', route);
     let sess = null;
-    const forceDemo = /[?&]demo\b/.test(location.search) || location.protocol === 'file:' || window.LAB_FORCE_DEMO;
+    const forceDemo = /[?&]demo\b/.test(location.search) || location.protocol === 'file:' || window.LAB_FORCE_DEMO || !!(APP.Phone && APP.Phone.offline);
     if (!forceDemo) {
       try { sess = await api('/api/session'); } catch (e) { sess = null; }
     }
@@ -746,7 +747,8 @@
     }
     renderShellState();
     route();
-    if (S.demo) setTimeout(() => toast('Mode démonstration : MASTER non détecté, les données sont simulées.', 'warn', 6000), 400);
+    if (S.demo && !S.phone) setTimeout(() => toast('Mode démonstration : MASTER non détecté, les données sont simulées.', 'warn', 6000), 400);
+    if (APP.Phone) APP.Phone.afterBoot();
     if (location.hash === '#admin' && S.admin) toast('Session administrateur ouverte', 'ok');
   };
 })();
